@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Advocondo
+
+Front-end do **Advocondo**, sistema para advogados gerenciarem contratos. Construído com [Next.js](https://nextjs.org).
 
 ## Getting Started
 
-First, run the development server:
+Rode o servidor de desenvolvimento:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra [http://localhost:3000](http://localhost:3000) no navegador para ver o resultado.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Você pode começar a editar a página modificando `app/page.tsx`. A página é atualizada automaticamente conforme o arquivo é editado.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Docker
+
+O projeto é hospedado na Vercel, mas também é possível rodar em containers Docker (para desenvolvimento local padronizado, CI ou outros ambientes).
+
+### Desenvolvimento
+
+O `Dockerfile.dev` sobe o servidor de desenvolvimento do Next.js (`next dev`) dentro do container.
+
+```bash
+docker build -f Dockerfile.dev -t advocondo-front:dev .
+docker run --rm -it -p 3000:3000 -v "$(pwd)":/app -v /app/node_modules -v /app/.next advocondo-front:dev
+```
+
+Os volumes montam o código local no container para habilitar hot reload, mantendo `node_modules` e `.next` isolados no container.
+
+### Produção
+
+O `Dockerfile` faz um build multi-stage usando o [`output: "standalone"`](https://nextjs.org/docs/app/api-reference/config/next-config-js/output) do Next.js, gerando uma imagem final mínima com apenas os arquivos necessários para rodar o servidor.
+
+```bash
+docker build -t advocondo-front:latest .
+docker run --rm -p 3000:3000 advocondo-front:latest
+```
+
+O container expõe a porta `3000` (configurável via `PORT`).
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+Para aprender mais sobre Next.js, veja os seguintes recursos:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [Next.js Documentation](https://nextjs.org/docs) - conheça os recursos e a API do Next.js.
+- [Learn Next.js](https://nextjs.org/learn) - um tutorial interativo de Next.js.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploy
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+O deploy é feito na [Vercel](https://vercel.com), a partir da criadora do Next.js. Veja a [documentação de deploy do Next.js](https://nextjs.org/docs/app/getting-started/deploying) para mais detalhes.
