@@ -1,11 +1,12 @@
 name: CI
 
 on:
+  push:
   pull_request:
     branches: [main]
 
 concurrency:
-  group: ci-${{ github.head_ref }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -16,6 +17,12 @@ jobs:
       NEXT_TELEMETRY_DISABLED: 1
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # histórico completo para o gitleaks
+
+      # Falha se algum commit tiver algo que pareça um segredo.
+      - name: Segredos (gitleaks)
+        run: docker run --rm -v "$PWD":/repo ghcr.io/gitleaks/gitleaks:v8.30.1 git /repo --redact
 
       - uses: actions/setup-node@v4
         with:
@@ -31,6 +38,11 @@ jobs:
       - name: Checagem de tipos (tsc)
         # LayoutProps/PageProps são gerados pelo Next em .next/types
         run: npx next typegen && npx tsc --noEmit
+
+      # Sem script "test" ainda: o passo não faz nada até a issue de testes E2E
+      # adicionar um em package.json.
+      - name: Testes
+        run: npm run test --if-present
 
       - name: Build (next build)
         run: npm run build
