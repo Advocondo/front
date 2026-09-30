@@ -29,7 +29,8 @@ jobs:
         run: npm run lint
 
       - name: Checagem de tipos (tsc)
-        run: npx tsc --noEmit
+        # LayoutProps/PageProps são gerados pelo Next em .next/types
+        run: npx next typegen && npx tsc --noEmit
 
       - name: Build (next build)
         run: npm run build
