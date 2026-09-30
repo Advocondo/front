@@ -47,6 +47,10 @@ Para aprender mais sobre Next.js, veja os seguintes recursos:
 - [Next.js Documentation](https://nextjs.org/docs) - conheça os recursos e a API do Next.js.
 - [Learn Next.js](https://nextjs.org/learn) - um tutorial interativo de Next.js.
 
+## CI
+
+Todo PR para `main` roda o workflow `.github/workflows/ci.yml`: lint (eslint), checagem de tipos (tsc) e `next build`. O deploy (CD) é feito pela Vercel quando o código chega na `main`.
+
 ## Deploy
 
 O front-end é publicado na [Vercel](https://vercel.com), com build automático a cada push na branch `main`. O back-end fica na Oracle Cloud, gerenciado pelo Coolify (veja o [README do back-end](https://github.com/Advocondo/back)).
