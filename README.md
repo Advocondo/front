@@ -49,4 +49,6 @@ Para aprender mais sobre Next.js, veja os seguintes recursos:
 
 ## Deploy
 
-O deploy é feito na [Vercel](https://vercel.com), a partir da criadora do Next.js. Veja a [documentação de deploy do Next.js](https://nextjs.org/docs/app/getting-started/deploying) para mais detalhes.
+O front-end é publicado na [Vercel](https://vercel.com), com build automático a cada push na branch `main`. O back-end fica na Oracle Cloud, gerenciado pelo Coolify (veja o [README do back-end](https://github.com/Advocondo/back)).
+
+O `next.config.ts` só usa `output: "standalone"` fora da Vercel (`process.env.VERCEL` não definido). O standalone é necessário para o `Dockerfile`, mas quebra o build da Vercel (`ENOENT: ... .next/next-server.js.nft.json`).
