@@ -53,11 +53,12 @@ A interface usa o [`ui-kit`](https://github.com/Advocondo/ui-kit) (`edson-alexan
 ```
 app/
 ├── lib/api.ts            # cliente HTTP (ApiError, erros por campo do 422)
-├── components/           # PlataformaShell: barra lateral + barra superior
-└── condominios/          # US12: página, diálogo, api, validação, máscaras e testes
+├── components/           # PlataformaShell (barra lateral + superior) e FormField (Field, Section)
+└── condominios/          # US12: page.tsx (servidor) + CondominiosView (client), diálogo, api, validação, máscaras e testes
 ```
 
-Cada tela fica em `app/<dominio>/`, com o acesso à API em `api.ts`, as regras de formulário em `validation.ts`/`format.ts` e os testes ao lado dos arquivos (`*.test.ts(x)`).
+Cada tela fica em `app/<dominio>/`: `page.tsx` é um Server Component fino (metadata) que renderiza a view client, onde está a interação.
+O acesso à API fica em `api.ts`, as regras de formulário em `validation.ts`/`format.ts` e os testes ao lado dos arquivos (`*.test.ts(x)`).
 
 ## Testes
 

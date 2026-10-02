@@ -1,12 +1,13 @@
 "use client";
 
-import { Alert, Button, Dialog, FieldLabel, Input, Select } from "edson-alexandre-design-system";
-import { useState, type ReactNode } from "react";
+import { Alert, Button, Dialog, Input, Select } from "edson-alexandre-design-system";
+import { useState } from "react";
+import { Field, Section } from "@/app/components/FormField";
 import { ApiError } from "@/app/lib/api";
 import { createCondominio, updateCondominio } from "./api";
 import { emptyForm, maskCep, maskCnpj, maskTelefone, toForm, toPayload } from "./format";
 import type { Condominio, CondominioForm } from "./types";
-import { UFS } from "./UFS";
+import { UFS } from "./ufs";
 import { validate, type FormErrors } from "./validation";
 
 type Props = {
@@ -15,26 +16,6 @@ type Props = {
   onClose: () => void;
   onSaved: (saved: Condominio, mode: "criado" | "atualizado") => void;
 };
-
-function Field({ id, label, required, hint, children }: { id: string; label: string; required?: boolean; hint?: string; children: ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <FieldLabel htmlFor={id} required={required} hint={hint}>
-        {label}
-      </FieldLabel>
-      {children}
-    </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <fieldset className="grid grid-cols-1 gap-4 border-0 p-0 sm:grid-cols-2">
-      <legend className="mb-2 text-sm font-semibold uppercase tracking-wide">{title}</legend>
-      {children}
-    </fieldset>
-  );
-}
 
 export function CondominioDialog({ condominio, onClose, onSaved }: Props) {
   const editing = condominio !== undefined;
