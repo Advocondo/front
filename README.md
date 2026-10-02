@@ -40,6 +40,37 @@ docker run --rm -p 3000:3000 advocondo-front:latest
 
 O container expõe a porta `3000` (configurável via `PORT`).
 
+## Variáveis de ambiente
+
+Copie `.env.example` para `.env.local`. `NEXT_PUBLIC_API_URL` é a URL da API (padrão `http://localhost:8000`) e é embutida no bundle em tempo de build: na Vercel, defina-a nos *Environment Variables*; no Docker, use `--build-arg NEXT_PUBLIC_API_URL=...`. O back só aceita as origens listadas em `CORS_ALLOW_ORIGINS`.
+
+## Design system
+
+A interface usa o [`ui-kit`](https://github.com/Advocondo/ui-kit) (`edson-alexandre-design-system`), instalado como dependência git; o `prepare` do pacote gera o `dist/` no `npm install`. Os estilos entram uma vez em `app/layout.tsx` e os componentes são importados de `edson-alexandre-design-system`. Textos em PT-BR, sem emoji, moeda `R$ 1.234,56` e datas `dd/mm/aaaa`.
+
+## Estrutura
+
+```
+app/
+├── lib/api.ts            # cliente HTTP (ApiError, erros por campo do 422)
+├── components/           # PlataformaShell (barra lateral + superior) e FormField (Field, Section)
+└── condominios/          # US12: page.tsx (servidor) + CondominiosView (client), diálogo, api, validação, máscaras e testes
+```
+
+Cada tela fica em `app/<dominio>/`: `page.tsx` é um Server Component fino (metadata) que renderiza a view client, onde está a interação.
+O acesso à API fica em `api.ts`, as regras de formulário em `validation.ts`/`format.ts` e os testes ao lado dos arquivos (`*.test.ts(x)`).
+
+## Testes
+
+[Vitest](https://vitest.dev) + Testing Library, com a API simulada via `fetch`:
+
+```bash
+npm test          # uma execução (é o que o CI roda)
+npm run test:watch
+```
+
+Nomeie os testes que cobrem um critério de aceitação com o ID dele (ex.: `US12-CA02`).
+
 ## Learn More
 
 Para aprender mais sobre Next.js, veja os seguintes recursos:
