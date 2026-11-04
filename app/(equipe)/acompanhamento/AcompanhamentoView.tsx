@@ -145,7 +145,7 @@ export function AcompanhamentoView() {
             columns={[
               { key: "devedor", label: "Devedor", strong: true, render: (p: ParcelaDoMes) => <Link href={`/acordos/${p.agreement_id}`}>{p.debtor.name}</Link> },
               { key: "condominio", label: "Condomínio", render: (p: ParcelaDoMes) => `${p.condominium.name} · ${p.debtor.unit}` },
-              { key: "parcela", label: "Parcela", mono: true, align: "right", render: (p: ParcelaDoMes) => String(p.number) },
+              { key: "parcela", label: "Parcela", mono: true, align: "right", render: (p: ParcelaDoMes) => <Link href={`/faturas/${p.id}`} aria-label={`Ver a parcela ${p.number} de ${p.debtor.name}`}>{p.number}</Link> },
               { key: "vencimento", label: "Vencimento", mono: true, render: (p: ParcelaDoMes) => formatDate(p.due_date) },
               { key: "valor", label: "Valor", mono: true, align: "right", strong: true, render: (p: ParcelaDoMes) => formatBRL(p.amount) },
               {

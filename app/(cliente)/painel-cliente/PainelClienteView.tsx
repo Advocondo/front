@@ -8,6 +8,7 @@ import { ApiError } from "@/app/lib/api";
 import { useSession } from "@/app/lib/session";
 import { baixarRelatorioDoCondominio, listAcordosDoCliente, type AcordoDoCliente } from "./api";
 import { ClienteShell } from "./ClienteShell";
+import { ParcelasDialog } from "./ParcelasDialog";
 
 const SITUACAO = {
   em_dia: { label: "Em dia", tone: "ok" },
@@ -44,6 +45,7 @@ export function PainelClienteView() {
   const [acordos, setAcordos] = useState<AcordoDoCliente[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [recarregar, setRecarregar] = useState(0);
+  const [parcelasDe, setParcelasDe] = useState<AcordoDoCliente | null>(null);
   const [baixando, setBaixando] = useState<string | null>(null);
   const [erroDoRelatorio, setErroDoRelatorio] = useState<string | null>(null);
 
@@ -133,6 +135,16 @@ export function PainelClienteView() {
                     { key: "status", label: "Situação", render: (a: AcordoDoCliente) => <StatusPill label={SITUACAO[a.status].label} tone={SITUACAO[a.status].tone} /> },
                     { key: "overdue_installments", label: "Em atraso", render: (a: AcordoDoCliente) => (a.overdue_installments > 0 ? quantos(a.overdue_installments, "parcela", "parcelas") : "—") },
                     { key: "next_due_date", label: "Próximo vencimento", render: (a: AcordoDoCliente) => formatDate(a.next_due_date) },
+                    {
+                      key: "acoes",
+                      label: "",
+                      align: "right",
+                      render: (a: AcordoDoCliente) => (
+                        <Button size="sm" variant="ghost" aria-label={`Ver parcelas de ${a.debtor_name}`} onClick={() => setParcelasDe(a)}>
+                          Parcelas
+                        </Button>
+                      ),
+                    },
                   ]}
                 />
               </div>
@@ -140,6 +152,7 @@ export function PainelClienteView() {
           ))}
         </>
       )}
+      {parcelasDe && <ParcelasDialog acordo={parcelasDe} onClose={() => setParcelasDe(null)} />}
     </ClienteShell>
   );
 }

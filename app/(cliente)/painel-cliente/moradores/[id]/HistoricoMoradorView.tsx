@@ -40,7 +40,8 @@ export function HistoricoMoradorView({ id }: { id: string }) {
       .catch((e: unknown) => {
         if (controller.signal.aborted) return;
         // O back responde igual para morador inexistente e para o de condomínio não vinculado.
-        if (e instanceof ApiError && e.status === 404) setNaoEncontrado(true);
+        // 422 é um endereço com id malformado, que para quem abriu também não existe.
+        if (e instanceof ApiError && (e.status === 404 || e.status === 422)) setNaoEncontrado(true);
         else setErro(e instanceof ApiError ? e.message : "Tente novamente em instantes.");
       });
     return () => controller.abort();

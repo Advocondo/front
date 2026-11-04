@@ -34,6 +34,11 @@ export function registrarPagamento(parcelaId: string, data: string, valor?: stri
   });
 }
 
+/** Uma parcela, com o devedor e o condomínio (#47). */
+export function getParcela(id: string, signal?: AbortSignal): Promise<ParcelaDoMes> {
+  return apiFetch<ParcelaDoMes>(`/installments/${id}`, { signal });
+}
+
 export function listPagamentos(parcelaId: string, signal?: AbortSignal): Promise<Pagamento[]> {
   return apiFetch<Pagamento[]>(`/installments/${parcelaId}/payments`, { signal });
 }

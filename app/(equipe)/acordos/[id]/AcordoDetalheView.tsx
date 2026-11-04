@@ -113,7 +113,7 @@ export function AcordoDetalheView({ id }: { id: string }) {
             <DataTable
               rows={parcelas}
               columns={[
-                { key: "parcela", label: "Parcela", mono: true, render: (p: Parcela) => `${p.number}/${parcelas.length}` },
+                { key: "parcela", label: "Parcela", mono: true, render: (p: Parcela) => <Link href={`/faturas/${p.id}`}>{`${p.number}/${parcelas.length}`}</Link> },
                 { key: "vencimento", label: "Vencimento", mono: true, render: (p: Parcela) => formatDate(p.due_date) },
                 { key: "valor", label: "Valor", mono: true, align: "right", strong: true, render: (p: Parcela) => formatBRL(p.amount) },
                 { key: "condominio", label: "Condomínio", mono: true, align: "right", render: (p: Parcela) => formatBRL(p.condominium_amount) },
