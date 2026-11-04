@@ -70,13 +70,13 @@ async function lerTokenDoConvite(email: string): Promise<string> {
 }
 
 /** Cria um usuário ativo pelo fluxo real: o Administrador convida e o convidado define a senha. */
-export async function createUser(role: "operator" | "client"): Promise<TestUser> {
+export async function createUser(role: "operator" | "client", extras: Record<string, unknown> = {}): Promise<TestUser> {
   const admin = await ensureAdmin();
-  const email = `e2e-${role}-${Date.now()}@example.com`;
+  const email = `e2e-${role}-${Date.now()}-${randomUUID().slice(0, 8)}@example.com`;
   const convite = await chamarApi("/users/invites", {
     method: "POST",
     headers: { Authorization: `Bearer ${admin}` },
-    body: JSON.stringify({ email, name: `E2E ${role}`, role }),
+    body: JSON.stringify({ email, name: `E2E ${role}`, role, ...extras }),
   });
   const { id } = await esperarSucesso<{ id: string }>(convite, "Convidar usuário");
 
@@ -98,6 +98,25 @@ export async function createCondominium(name: string): Promise<TestCondominium> 
     body: JSON.stringify({ name }),
   });
   return esperarSucesso<TestCondominium>(resposta, "Criar condomínio");
+}
+
+export type TestDebtor = { id: string; name: string; unit: string };
+
+export async function createDebtor(condominiumId: string, name: string, unit: string): Promise<TestDebtor> {
+  const resposta = await chamarApi("/debtors", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${await ensureAdmin()}` },
+    body: JSON.stringify({ condominium_id: condominiumId, name, unit, phone: "61912345678" }),
+  });
+  return esperarSucesso<TestDebtor>(resposta, "Criar devedor");
+}
+
+export type TestLawyer = { id: string; name: string };
+
+/** Só usuário ativo, marcado como advogado no convite e com OAB pode ser responsável. */
+export async function createLawyer(name: string): Promise<TestLawyer> {
+  const { id } = await createUser("operator", { name, is_lawyer: true, oab_number: `DF${Date.now() % 1000000}` });
+  return { id, name };
 }
 
 export async function deactivateUser(id: string): Promise<void> {

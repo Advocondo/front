@@ -9,11 +9,12 @@ import { useSession } from "@/app/lib/session";
 // Cada US nova acrescenta aqui o seu item (Devedores, Acordos...).
 const NAV = [
   { section: "Acompanhamento" },
+  { id: "acordos", label: "Acordos", icon: "handshake" },
   { id: "condominios", label: "Condomínios", icon: "building-2" },
   { id: "devedores", label: "Devedores", icon: "users" },
 ];
 
-const ROTAS: Record<string, string> = { condominios: "/condominios", devedores: "/devedores" };
+const ROTAS: Record<string, string> = { acordos: "/acordos", condominios: "/condominios", devedores: "/devedores" };
 
 type Props = {
   activeId: string;

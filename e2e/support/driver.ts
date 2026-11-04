@@ -52,6 +52,16 @@ export async function replaceValue(element: WebElement, valor: string): Promise<
   await element.sendKeys(valor);
 }
 
+/** Preenche um campo de data pelo valor ISO: digitar depende do idioma do navegador. */
+export async function setDateValue(driver: WebDriver, element: WebElement, isoDate: string): Promise<void> {
+  await driver.executeScript(
+    `Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(arguments[0], arguments[1]);
+     arguments[0].dispatchEvent(new Event("input", { bubbles: true }));`,
+    element,
+    isoDate,
+  );
+}
+
 /**
  * Espera o React assumir o elemento. Antes disso, o HTML do servidor já aparece, mas um
  * clique em "enviar" faria o envio nativo do formulário em vez de chamar o código da tela.

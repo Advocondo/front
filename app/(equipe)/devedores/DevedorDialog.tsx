@@ -89,7 +89,7 @@ export function DevedorDialog({ devedor, condominios, condominioInicial = "", on
         </>
       }
     >
-      <form id="devedor-form" onSubmit={submit} noValidate className="flex max-h-[60vh] flex-col gap-4 overflow-y-auto pr-1">
+      <form id="devedor-form" onSubmit={submit} noValidate className="flex max-h-[60vh] flex-col [&>*]:shrink-0 gap-4 overflow-y-auto pr-1">
         {formError && (
           <Alert tone="risk" role="alert" title="Não foi possível salvar">
             {formError}
