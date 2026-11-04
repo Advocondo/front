@@ -15,7 +15,13 @@ const NAV = [
   { id: "devedores", label: "Devedores", icon: "users" },
 ];
 
-const ROTAS: Record<string, string> = { acordos: "/acordos", acompanhamento: "/acompanhamento", condominios: "/condominios", devedores: "/devedores" };
+// Só o Administrador vê e acessa a gestão de usuários (US07-CA02).
+const NAV_ADMIN = [
+  { section: "Controle" },
+  { id: "usuarios", label: "Gestão de usuários", icon: "users-round" },
+];
+
+const ROTAS: Record<string, string> = { usuarios: "/usuarios", acordos: "/acordos", acompanhamento: "/acompanhamento", condominios: "/condominios", devedores: "/devedores" };
 
 type Props = {
   activeId: string;
@@ -33,7 +39,7 @@ export function PlataformaShell({ activeId, title, subtitle, actions, children }
     <div className="flex min-h-screen">
       <div className="sticky top-0 h-screen">
         <SidebarNav
-          items={NAV}
+          items={session?.user.role === "admin" ? [...NAV, ...NAV_ADMIN] : NAV}
           activeId={activeId}
           onSelect={(id) => router.push(ROTAS[id] ?? "/")}
           header={<strong className="px-4 py-5 text-lg text-white">Advocondo</strong>}
