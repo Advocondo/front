@@ -9,8 +9,9 @@ import { listUsuarios, mudarStatus, reenviarConvite, ROTULO_DO_PERFIL, type Resu
 import { ConviteDialog } from "./ConviteDialog";
 import { InativarDialog } from "./InativarDialog";
 import { PerfilDialog } from "./PerfilDialog";
+import { VinculosDialog } from "./VinculosDialog";
 
-type Dialogo = { tipo: "convite" } | { tipo: "perfil"; usuario: Usuario } | { tipo: "inativar"; usuario: Usuario } | null;
+type Dialogo = { tipo: "convite" } | { tipo: "perfil"; usuario: Usuario } | { tipo: "inativar"; usuario: Usuario } | { tipo: "vinculos"; usuario: Usuario } | null;
 
 const DEBOUNCE_MS = 300;
 const FILTROS: { status: StatusUsuario | ""; label: string }[] = [
@@ -171,6 +172,11 @@ export function UsuariosView() {
                       <Button size="sm" variant="ghost" aria-label={`Definir nível de acesso de ${u.name}`} onClick={() => setDialogo({ tipo: "perfil", usuario: u })}>
                         Perfil
                       </Button>
+                      {u.role === "client" && (
+                        <Button size="sm" variant="ghost" aria-label={`Vincular condomínios de ${u.name}`} onClick={() => setDialogo({ tipo: "vinculos", usuario: u })}>
+                          Condomínios
+                        </Button>
+                      )}
                       {u.status === "pending" && (
                         <Button size="sm" variant="ghost" aria-label={`Reenviar convite de ${u.name}`} onClick={() => void reenviar(u)}>
                           Reenviar convite
@@ -196,6 +202,7 @@ export function UsuariosView() {
 
       {dialogo?.tipo === "convite" && <ConviteDialog onClose={() => setDialogo(null)} onSaved={(u) => concluirConvite(u, `Convite enviado para ${u.email}.`)} />}
       {dialogo?.tipo === "perfil" && <PerfilDialog usuario={dialogo.usuario} onClose={() => setDialogo(null)} onSaved={(u) => concluir(`${u.name} agora é ${ROTULO_DO_PERFIL[u.role]}.`)} />}
+      {dialogo?.tipo === "vinculos" && <VinculosDialog usuario={dialogo.usuario} onClose={() => setDialogo(null)} onSaved={() => concluir(`Condomínios de ${dialogo.usuario.name} atualizados.`)} />}
       {dialogo?.tipo === "inativar" && <InativarDialog usuario={dialogo.usuario} onClose={() => setDialogo(null)} onSaved={(u) => concluir(`Acesso de ${u.name} inativado.`)} />}
 
       {aviso && (

@@ -373,3 +373,134 @@ describe("Aceitar o convite (/convite)", () => {
     expect(screen.queryByRole("button", { name: "Criar acesso" })).not.toBeInTheDocument();
   });
 });
+
+describe("Vincular condomínios ao Cliente (US10)", () => {
+  const villa = { id: "c-villa", name: "Res. Villa Verde", manager_name: "Marcos Tavares", city: "Águas Claras", state: "DF" };
+  const parque = { id: "c-parque", name: "Cond. Parque das Águas", manager_name: null, city: null, state: null };
+
+  function rota({ condominios = [villa, parque], vinculos = [parque], salvar = { status: 200, body: [] } }: { condominios?: unknown[]; vinculos?: { id: string; name: string }[]; salvar?: Resposta } = {}): Rota {
+    return (url, init) => {
+      if (url.includes("/users/u-duda/condominiums")) return init?.method === "PUT" ? salvar : { status: 200, body: vinculos };
+      if (url.includes("/condominiums?")) return { status: 200, body: condominios };
+      return undefined;
+    };
+  }
+
+  async function abrir(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(await screen.findByRole("button", { name: "Vincular condomínios de Duda Pendente" }));
+  }
+
+  it("a ação aparece só para o perfil Cliente", async () => {
+    mockApi();
+    render(<UsuariosView />);
+    await screen.findByRole("button", { name: "Vincular condomínios de Duda Pendente" });
+    expect(screen.queryByRole("button", { name: "Vincular condomínios de Bia Equipe" })).not.toBeInTheDocument();
+  });
+
+  it("traz marcados os vínculos atuais e salva a lista inteira", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockApi({ rota: rota() });
+    render(<UsuariosView />);
+    await abrir(user);
+
+    expect(await screen.findByRole("checkbox", { name: /Cond\. Parque das Águas/ })).toBeChecked();
+    const villaVerde = screen.getByRole("checkbox", { name: /Res\. Villa Verde/ });
+    expect(villaVerde).not.toBeChecked();
+    expect(screen.getByText("Marcos Tavares · Águas Claras/DF")).toBeInTheDocument();
+
+    await user.click(villaVerde);
+    await user.click(screen.getByRole("button", { name: "Salvar vínculos" }));
+
+    expect(await screen.findByText("Condomínios de Duda Pendente atualizados.")).toBeInTheDocument();
+    expect(new Set(corpo(fetchMock, "PUT").condominium_ids)).toEqual(new Set(["c-villa", "c-parque"]));
+  });
+
+  it("desmarcar tudo envia a lista vazia (US10-CA02)", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockApi({ rota: rota() });
+    render(<UsuariosView />);
+    await abrir(user);
+    await user.click(await screen.findByRole("checkbox", { name: /Cond\. Parque das Águas/ }));
+    await user.click(screen.getByRole("button", { name: "Salvar vínculos" }));
+    await screen.findByText("Condomínios de Duda Pendente atualizados.");
+    expect(corpo(fetchMock, "PUT")).toEqual({ condominium_ids: [] });
+  });
+
+  it("não perde um vínculo que ficou fora do limite da listagem", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockApi({ rota: rota({ condominios: [villa], vinculos: [{ id: "c-fora", name: "Ed. Fora da Lista" }] }) });
+    render(<UsuariosView />);
+    await abrir(user);
+    expect(await screen.findByRole("checkbox", { name: /Ed\. Fora da Lista/ })).toBeChecked();
+    await user.click(screen.getByRole("button", { name: "Salvar vínculos" }));
+    await screen.findByText("Condomínios de Duda Pendente atualizados.");
+    expect(corpo(fetchMock, "PUT")).toEqual({ condominium_ids: ["c-fora"] });
+  });
+
+  it("o filtro ignora acentos e mantém as marcações escondidas", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockApi({ rota: rota() });
+    render(<UsuariosView />);
+    await abrir(user);
+    await screen.findByRole("checkbox", { name: /Res\. Villa Verde/ });
+    await user.type(screen.getByRole("textbox", { name: "Filtrar condomínios por nome" }), "villa");
+    expect(screen.queryByRole("checkbox", { name: /Parque/ })).not.toBeInTheDocument();
+    await user.clear(screen.getByRole("textbox", { name: "Filtrar condomínios por nome" }));
+    await user.type(screen.getByRole("textbox", { name: "Filtrar condomínios por nome" }), "aguas");
+    expect(screen.getByRole("checkbox", { name: /Parque/ })).toBeChecked();
+    await user.clear(screen.getByRole("textbox", { name: "Filtrar condomínios por nome" }));
+    await user.type(screen.getByRole("textbox", { name: "Filtrar condomínios por nome" }), "villa");
+    await user.click(screen.getByRole("checkbox", { name: /Res\. Villa Verde/ }));
+    await user.click(screen.getByRole("button", { name: "Salvar vínculos" }));
+    await screen.findByText("Condomínios de Duda Pendente atualizados.");
+    expect(new Set(corpo(fetchMock, "PUT").condominium_ids)).toEqual(new Set(["c-villa", "c-parque"]));
+  });
+
+  it("sem condomínios cadastrados, explica e não deixa salvar", async () => {
+    const user = userEvent.setup();
+    mockApi({ rota: rota({ condominios: [], vinculos: [] }) });
+    render(<UsuariosView />);
+    await abrir(user);
+    expect(await screen.findByText("Nenhum condomínio cadastrado")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Salvar vínculos" })).toBeDisabled();
+  });
+
+  it("mostra o erro ao salvar e mantém o diálogo aberto", async () => {
+    const user = userEvent.setup();
+    mockApi({ rota: rota({ salvar: { status: 422, body: { detail: "Somente usuários com perfil Cliente têm condomínios vinculados." } } }) });
+    render(<UsuariosView />);
+    await abrir(user);
+    await screen.findByRole("checkbox", { name: /Parque/ });
+    await user.click(screen.getByRole("button", { name: "Salvar vínculos" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Somente usuários com perfil Cliente");
+    expect(screen.getByText("Condomínios vinculados")).toBeInTheDocument();
+  });
+
+  it("deixa tentar de novo quando a carga falha", async () => {
+    const user = userEvent.setup();
+    let falhar = true;
+    mockApi({
+      rota: (url, init) => {
+        if (url.includes("/users/u-duda/condominiums") && falhar) return { status: 500, body: { detail: "Erro" } };
+        return rota()(url, init);
+      },
+    });
+    render(<UsuariosView />);
+    await abrir(user);
+    const tentar = await screen.findByRole("button", { name: "Tentar novamente" });
+    expect(screen.getByRole("button", { name: "Salvar vínculos" })).toBeDisabled();
+    falhar = false;
+    await user.click(tentar);
+    expect(await screen.findByRole("checkbox", { name: /Parque/ })).toBeChecked();
+  });
+
+  it("avisa que os vínculos se desfazem quando o Cliente muda de perfil", async () => {
+    const user = userEvent.setup();
+    mockApi();
+    render(<UsuariosView />);
+    await user.click(await screen.findByRole("button", { name: "Definir nível de acesso de Duda Pendente" }));
+    expect(screen.queryByText("Os vínculos serão desfeitos")).not.toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText(/Nível de acesso/), "operator");
+    expect(screen.getByText("Os vínculos serão desfeitos")).toBeInTheDocument();
+  });
+});

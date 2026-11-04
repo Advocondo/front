@@ -60,6 +60,11 @@ export function PerfilDialog({ usuario, onClose, onSaved }: Props) {
         <Field id="perfil-usuario" label="Nível de acesso" required>
           <Select id="perfil-usuario" options={PERFIS.map((p) => ({ value: p, label: ROTULO_DO_PERFIL[p] }))} value={perfil} onChange={(e) => setPerfil(e.target.value as Role)} />
         </Field>
+        {usuario.role === "client" && perfil !== "client" && (
+          <Alert tone="warn" title="Os vínculos serão desfeitos">
+            Ao deixar de ser Cliente, a pessoa perde os condomínios vinculados. Se voltar a ser Cliente, será preciso vincular de novo.
+          </Alert>
+        )}
       </form>
     </Dialog>
   );
