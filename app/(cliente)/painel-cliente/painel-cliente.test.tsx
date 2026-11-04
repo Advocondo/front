@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clearSession, getSession, saveSession } from "@/app/lib/session";
@@ -8,10 +8,10 @@ import { PainelClienteView } from "./PainelClienteView";
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), replace: vi.fn() }) }));
 
 // Mesmos campos de AgreementSummary no back, na ordem dele: atrasados primeiro.
-const atrasado: AcordoDoCliente = { id: "a-1", condominium_name: "Res. Villa Verde", debtor_id: "d-1", debtor_name: "Ana Moradora", debtor_unit: "101", status: "atrasado", overdue_installments: 2, next_due_date: "2026-12-10" };
-const umaParcela: AcordoDoCliente = { ...atrasado, id: "a-4", condominium_name: "Ed. Century", debtor_name: "Duda Moradora", overdue_installments: 1, next_due_date: null };
+const atrasado: AcordoDoCliente = { id: "a-1", condominium_id: "c-villa", condominium_name: "Res. Villa Verde", debtor_id: "d-1", debtor_name: "Ana Moradora", debtor_unit: "101", status: "atrasado", overdue_installments: 2, next_due_date: "2026-12-10" };
+const umaParcela: AcordoDoCliente = { ...atrasado, id: "a-4", condominium_id: "c-century", condominium_name: "Ed. Century", debtor_name: "Duda Moradora", overdue_installments: 1, next_due_date: null };
 const emDia: AcordoDoCliente = { ...atrasado, id: "a-2", debtor_id: "d-2", debtor_name: "Bruno Morador", debtor_unit: "202", status: "em_dia", overdue_installments: 0 };
-const semVencimento: AcordoDoCliente = { ...emDia, id: "a-3", condominium_name: "Cond. Parque", debtor_name: "Caio Morador", next_due_date: null };
+const semVencimento: AcordoDoCliente = { ...emDia, id: "a-3", condominium_id: "c-parque", condominium_name: "Cond. Parque", debtor_name: "Caio Morador", next_due_date: null };
 
 function mockApi(resposta: () => { status: number; body: unknown }) {
   const fn = vi.fn(() => {
@@ -100,5 +100,56 @@ describe("US37: Painel do Cliente", () => {
     await screen.findByText("Nenhum acordo para mostrar");
     await user.click(screen.getByRole("button", { name: "Sair" }));
     expect(getSession()).toBeNull();
+  });
+});
+
+describe("US39: relatório do condomínio", () => {
+  const nomesBaixados: string[] = [];
+
+  beforeEach(() => {
+    nomesBaixados.length = 0;
+    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: vi.fn(() => "blob:relatorio"), revokeObjectURL: vi.fn() }));
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
+      nomesBaixados.push(this.download);
+    });
+  });
+
+  afterEach(() => vi.restoreAllMocks());
+
+  function mockRelatorio(relatorio: () => Response) {
+    const fn = vi.fn((url: string) => Promise.resolve(url.includes("/report") ? relatorio() : new Response(JSON.stringify([atrasado, semVencimento]), { status: 200 })));
+    vi.stubGlobal("fetch", fn);
+    return fn;
+  }
+
+  const pdf = () => new Response("%PDF", { status: 200, headers: { "Content-Type": "application/pdf" } });
+
+  it("CA01: cada condomínio baixa o próprio relatório, como PDF", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockRelatorio(pdf);
+    render(<PainelClienteView />);
+    await user.click(await screen.findByRole("button", { name: "Baixar relatório de Cond. Parque" }));
+    await waitFor(() => expect(nomesBaixados).toEqual(["relatorio-cond-parque.pdf"]));
+    expect(fetchMock.mock.calls.map(([url]) => url).join()).toContain("/client-panel/condominiums/c-parque/report");
+    expect(URL.createObjectURL).toHaveBeenCalledOnce();
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:relatorio");
+  });
+
+  it("uma falha no download avisa e não salva nada", async () => {
+    const user = userEvent.setup();
+    mockRelatorio(() => new Response(JSON.stringify({ detail: "Condomínio não encontrado." }), { status: 404 }));
+    render(<PainelClienteView />);
+    await user.click(await screen.findByRole("button", { name: "Baixar relatório de Res. Villa Verde" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Condomínio não encontrado.");
+    expect(nomesBaixados).toEqual([]);
+    expect(screen.getByText("Ana Moradora")).toBeInTheDocument();
+  });
+
+  it("dois condomínios com o mesmo nome continuam separados", async () => {
+    const gemeo = { ...semVencimento, id: "a-9", condominium_id: "c-gemeo", condominium_name: atrasado.condominium_name, debtor_name: "Gemeo Morador" };
+    com([atrasado, gemeo]);
+    render(<PainelClienteView />);
+    await screen.findByText("Ana Moradora");
+    expect(screen.getAllByRole("table")).toHaveLength(2);
   });
 });

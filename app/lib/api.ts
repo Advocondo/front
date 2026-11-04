@@ -38,7 +38,7 @@ function parseError(status: number, body: unknown): ApiError {
   return new ApiError(status, "Não foi possível concluir a operação. Tente novamente.");
 }
 
-export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function enviar(path: string, init: RequestInit): Promise<Response> {
   const token = getSession()?.token;
   let response: Response;
   try {
@@ -55,7 +55,19 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   }
   // Token recusado: a sessão acabou no servidor, e o RequireAuth leva ao login.
   if (response.status === 401 && token) clearSession();
+  return response;
+}
+
+export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const response = await enviar(path, init);
   const body: unknown = await response.json().catch(() => null);
   if (!response.ok) throw parseError(response.status, body);
   return body as T;
+}
+
+/** Para respostas que não são JSON, como um PDF. Os erros continuam vindo em JSON. */
+export async function apiFetchBlob(path: string): Promise<Blob> {
+  const response = await enviar(path, {});
+  if (!response.ok) throw parseError(response.status, await response.json().catch(() => null));
+  return response.blob();
 }

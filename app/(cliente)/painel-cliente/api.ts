@@ -1,8 +1,9 @@
-import { apiFetch } from "@/app/lib/api";
+import { apiFetch, apiFetchBlob } from "@/app/lib/api";
 
 /** Resposta de GET /client-panel/agreements (US37). O back não devolve valores, honorários nem comissões. */
 export type AcordoDoCliente = {
   id: string;
+  condominium_id: string;
   condominium_name: string;
   debtor_id: string;
   debtor_name: string;
@@ -33,4 +34,9 @@ export type HistoricoDoMorador = {
 
 export function getHistoricoDoMorador(id: string, signal?: AbortSignal): Promise<HistoricoDoMorador> {
   return apiFetch<HistoricoDoMorador>(`/client-panel/debtors/${id}/history`, { signal });
+}
+
+/** Relatório simplificado em PDF (US39). O back não inclui honorários nem comissões. */
+export function baixarRelatorioDoCondominio(condominioId: string): Promise<Blob> {
+  return apiFetchBlob(`/client-panel/condominiums/${condominioId}/report`);
 }

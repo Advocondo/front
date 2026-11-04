@@ -1,8 +1,9 @@
 import { By, type WebDriver } from "selenium-webdriver";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createDriver, waitForElement, waitForPath, waitForText } from "./support/driver";
+import { env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
-import { createAgreement, createCondominium, createDebtor, createUser, linkCondominiums, type TestCondominium, type TestUser } from "./support/seed";
+import { apiToken, createAgreement, createCondominium, createDebtor, createUser, linkCondominiums, type TestCondominium, type TestUser } from "./support/seed";
 
 const VENCIDO = "2020-01-31";
 const FUTURO = "2030-01-31";
@@ -60,6 +61,25 @@ describe("Painel do Cliente", () => {
     expect(await textoDaLinha(atrasado)).toContain("Atrasado");
     expect(await textoDaLinha(emDia)).toContain("Em dia");
     expect(await driver.findElement(By.css("body")).getText()).not.toMatch(/R\$|honor[aá]rio|comiss[aã]o/i);
+  });
+
+  it("US39-CA01: o botão baixa o relatório do condomínio em PDF", async () => {
+    await entrar(cliente);
+    await waitForText(driver, vinculado.name);
+    // O navegador sem interface não guarda o arquivo: confere o que seria salvo.
+    await driver.executeScript(`
+      window.__arquivos = [];
+      const original = URL.createObjectURL;
+      URL.createObjectURL = (arquivo) => { window.__arquivos.push(arquivo.type); return original.call(URL, arquivo); };
+    `);
+    await (await waitForElement(driver, By.css(`button[aria-label="Baixar relatório de ${vinculado.name}"]`))).click();
+    await driver.wait(async () => (await driver.executeScript<string[]>("return window.__arquivos")).length === 1, 10_000);
+    expect(await driver.executeScript<string[]>("return window.__arquivos")).toEqual(["application/pdf"]);
+  });
+
+  it("US39-CA02: o PDF do condomínio não vinculado é recusado", async () => {
+    const resposta = await fetch(`${env.apiUrl}/client-panel/condominiums/${semVinculo.id}/report`, { headers: { Authorization: `Bearer ${await apiToken(cliente)}` } });
+    expect(resposta.status).toBe(404);
   });
 
   it("US10-CA02: sem vínculo, a tela explica que não há acordos", async () => {
