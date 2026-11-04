@@ -3,8 +3,8 @@ import { emptyForm } from "./format";
 import { isValidCnpj, validate } from "./validation";
 
 describe("isValidCnpj", () => {
-  it.each(["14.447.918/0001-98", "14447918000198"])("aceita %s", (v) => expect(isValidCnpj(v)).toBe(true));
-  it.each(["14447918000199", "11111111111111", "123", ""])("rejeita %s", (v) => expect(isValidCnpj(v)).toBe(false));
+  it.each(["14.447.918/0001-98", "14447918000198", "12.ABC.345/01DE-35", "12abc34501de35"])("aceita %s", (v) => expect(isValidCnpj(v)).toBe(true));
+  it.each(["14447918000199", "11111111111111", "123", "", "12ABC34501DE36", "12ABC34501DEAB"])("rejeita %s", (v) => expect(isValidCnpj(v)).toBe(false));
 });
 
 describe("validate", () => {

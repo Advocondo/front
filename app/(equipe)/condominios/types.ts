@@ -1,6 +1,23 @@
-/** Contrato do back-end: /condominios (US12). */
+/** Resposta do back-end em /condominiums. A tradução para os nomes da tela fica em api.ts. */
+export type CondominioApi = {
+  id: string;
+  name: string;
+  cnpj: string | null;
+  zip_code: string | null;
+  street: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  state: string | null;
+  manager_name: string | null;
+  manager_email: string | null;
+  manager_phone: string | null;
+  contract_start_date: string | null;
+  contract_renewal_date: string | null;
+  near_renewal: boolean;
+};
+
 export type Condominio = {
-  id: number;
+  id: string;
   nome: string;
   cnpj: string | null;
   cep: string | null;
@@ -13,8 +30,6 @@ export type Condominio = {
   sindico_telefone: string | null;
   contrato_inicio: string | null;
   contrato_renovacao: string | null;
-  created_at: string;
-  updated_at: string;
 };
 
 /** Valores de formulário: sempre texto; vazio significa "não informado". */

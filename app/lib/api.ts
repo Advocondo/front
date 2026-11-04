@@ -27,8 +27,10 @@ function parseError(status: number, body: unknown): ApiError {
     for (const item of detail as ValidationItem[]) {
       const field = item.loc?.filter((part) => typeof part === "string").at(-1);
       if (typeof field === "string" && field !== "body" && !(field in fieldErrors)) {
-        // O Pydantic prefixa a mensagem ("Value error, ..."); mostramos só o texto útil.
-        fieldErrors[field] = (item.msg ?? "Valor inválido.").replace(/^Value error, /, "");
+        // As mensagens em português são as do back, com o prefixo "Value error, " do Pydantic.
+        // As demais são do próprio Pydantic, em inglês, e não devem chegar ao usuário.
+        const msg = item.msg ?? "";
+        fieldErrors[field] = msg.startsWith("Value error, ") ? msg.replace("Value error, ", "") : "Valor inválido.";
       }
     }
     return new ApiError(status, "Verifique os campos destacados.", fieldErrors);

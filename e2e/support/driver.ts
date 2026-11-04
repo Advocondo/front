@@ -1,4 +1,4 @@
-import { Browser, Builder, until, type Locator, type WebDriver, type WebElement } from "selenium-webdriver";
+import { Browser, Builder, By, Key, until, type Locator, type WebDriver, type WebElement } from "selenium-webdriver";
 import chrome from "selenium-webdriver/chrome";
 import firefox from "selenium-webdriver/firefox";
 import { env } from "./env";
@@ -26,6 +26,30 @@ export function visit(driver: WebDriver, path: string): Promise<void> {
 
 export function waitForElement(driver: WebDriver, locator: Locator): Promise<WebElement> {
   return driver.wait(until.elementLocated(locator), ESPERA_MS);
+}
+
+/** Espera um botão com este texto visível, para clicar nele. */
+export function waitForButton(driver: WebDriver, texto: string): Promise<WebElement> {
+  return waitForElement(driver, By.xpath(`//button[normalize-space()="${texto}"]`));
+}
+
+/** Espera este texto aparecer em algum elemento da página. */
+export function waitForText(driver: WebDriver, texto: string): Promise<WebElement> {
+  return waitForElement(driver, By.xpath(`//*[contains(normalize-space(text()), "${texto}")]`));
+}
+
+/** Espera este texto sair da página, como a linha que a busca filtrou ou um diálogo fechado. */
+export async function waitForTextGone(driver: WebDriver, texto: string): Promise<void> {
+  await driver.wait(async () => {
+    const achados = await driver.findElements(By.xpath(`//*[contains(normalize-space(text()), "${texto}")]`));
+    return achados.length === 0;
+  }, ESPERA_MS);
+}
+
+/** Troca o conteúdo de um campo como o usuário faria, para o React receber os eventos. */
+export async function replaceValue(element: WebElement, valor: string): Promise<void> {
+  await element.sendKeys(Key.chord(Key.CONTROL, "a"), Key.BACK_SPACE);
+  await element.sendKeys(valor);
 }
 
 /**

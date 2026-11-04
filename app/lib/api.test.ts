@@ -49,6 +49,12 @@ describe("apiFetch com sessão", () => {
 });
 
 describe("apiFetch", () => {
+  it("não mostra ao usuário as mensagens em inglês do Pydantic (422)", async () => {
+    respond(422, { detail: [{ loc: ["body", "manager_email"], msg: "value is not a valid email address: bad domain" }] });
+    const error = await apiFetch("/x").catch((e: unknown) => e);
+    expect((error as ApiError).fieldErrors).toEqual({ manager_email: "Valor inválido." });
+  });
+
   it("devolve o JSON em caso de sucesso", async () => {
     respond(200, [{ id: 1 }]);
     await expect(apiFetch("/condominios")).resolves.toEqual([{ id: 1 }]);

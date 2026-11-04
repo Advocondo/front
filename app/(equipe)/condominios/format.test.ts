@@ -6,6 +6,7 @@ describe("máscaras", () => {
     ["14447918000198", "14.447.918/0001-98"],
     ["14447", "14.447"],
     ["144479180001989999", "14.447.918/0001-98"],
+    ["12abc34501de35", "12.ABC.345/01DE-35"],
     ["", ""],
   ])("CNPJ %s -> %s", (input, expected) => expect(maskCnpj(input)).toBe(expected));
 
@@ -24,6 +25,10 @@ it("formata datas em dd/mm/aaaa sem depender de fuso", () => {
 });
 
 describe("toPayload", () => {
+  it("mantém as letras do CNPJ alfanumérico, em maiúsculas e sem máscara", () => {
+    expect(toPayload({ ...emptyForm, nome: "X", cnpj: "12.abc.345/01de-35" }).cnpj).toBe("12ABC34501DE35");
+  });
+
   it("troca vazio por null e envia só dígitos nos campos numéricos", () => {
     const payload = toPayload({ ...emptyForm, nome: "  Mirante ", cnpj: "14.447.918/0001-98", uf: "df", sindico_telefone: "(61) 91234-5678" });
     expect(payload).toMatchObject({ nome: "Mirante", cnpj: "14447918000198", uf: "DF", sindico_telefone: "61912345678", cep: null, bairro: null });
