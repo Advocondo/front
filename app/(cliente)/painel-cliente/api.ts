@@ -16,3 +16,21 @@ export type AcordoDoCliente = {
 export function listAcordosDoCliente(signal?: AbortSignal): Promise<AcordoDoCliente[]> {
   return apiFetch<AcordoDoCliente[]>("/client-panel/agreements", { signal });
 }
+
+/** Uma competência (mês de vencimento) do histórico: só totais, sem honorários (US38-CA01). */
+export type CompetenciaDoHistorico = {
+  month: string;
+  paid_amount: string;
+  open_amount: string;
+  status: "pago" | "em_aberto" | "atrasado";
+};
+
+export type HistoricoDoMorador = {
+  debtor_name: string;
+  debtor_unit: string;
+  months: CompetenciaDoHistorico[];
+};
+
+export function getHistoricoDoMorador(id: string, signal?: AbortSignal): Promise<HistoricoDoMorador> {
+  return apiFetch<HistoricoDoMorador>(`/client-panel/debtors/${id}/history`, { signal });
+}
