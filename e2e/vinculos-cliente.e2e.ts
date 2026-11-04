@@ -62,7 +62,7 @@ describe("Vincular Cliente a condomínios", () => {
     cliente = await createUser("client");
     await openLogin(driver);
     await submitLogin(driver, env.adminEmail, env.adminPassword);
-    await waitForPath(driver, "/condominios");
+    await waitForPath(driver, "/painel");
   });
 
   it("US10-CA02: sem vínculo, o Cliente não vê nenhum acordo", async () => {

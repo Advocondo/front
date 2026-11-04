@@ -46,7 +46,7 @@ describe("Faturas do mês", () => {
   async function entrar(email: string, senha: string): Promise<void> {
     await openLogin(driver);
     await submitLogin(driver, email, senha);
-    await waitForPath(driver, "/condominios");
+    await waitForPath(driver, email === env.adminEmail ? "/painel" : "/condominios");
   }
 
   beforeAll(async () => {

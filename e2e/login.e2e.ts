@@ -36,9 +36,9 @@ describe("Login", () => {
   });
 
   describe("US02-CA01: redireciona para o painel do perfil", () => {
-    it("Administrador vai para condomínios", async () => {
+    it("Administrador vai para o Painel", async () => {
       await submitLogin(driver, env.adminEmail, env.adminPassword);
-      await waitForPath(driver, "/condominios");
+      await waitForPath(driver, "/painel");
     });
 
     it("Equipe Operacional vai para condomínios", async () => {

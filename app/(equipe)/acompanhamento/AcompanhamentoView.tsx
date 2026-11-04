@@ -1,11 +1,11 @@
 "use client";
 
-import { Alert, Button, DataTable, EmptyState, IconButton, MetricCard, Select, Tabs, Toast, ToastStack } from "edson-alexandre-design-system";
+import { Alert, Button, DataTable, EmptyState, MetricCard, Select, Tabs, Toast, ToastStack } from "edson-alexandre-design-system";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { PlataformaShell } from "@/app/components/PlataformaShell";
+import { mesAtual, SeletorDeMes } from "@/app/components/SeletorDeMes";
 import { ApiError } from "@/app/lib/api";
-import { hojeEmBrasilia } from "@/app/lib/dates";
 import { centsFromApi, formatBRL } from "@/app/lib/money";
 import { listAdvogados } from "@/app/(equipe)/acordos/api";
 import type { Advogado } from "@/app/(equipe)/acordos/types";
@@ -19,12 +19,7 @@ import { SituacaoParcela, temPagamentoParcial } from "./situacao";
 
 type Aba = "todas" | "open" | "overdue" | "paid";
 
-const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
-function mesAtual() {
-  const [ano, mes] = hojeEmBrasilia().split("-").map(Number);
-  return { ano, mes };
-}
 
 const soma = (valores: bigint[]): bigint => valores.reduce((total, valor) => total + valor, 0n);
 const descricaoDe = (p: ParcelaDoMes): string => `${p.debtor.name} · ${p.condominium.name} · ${p.debtor.unit}`;
@@ -95,10 +90,6 @@ export function AcompanhamentoView() {
 
   const visiveis = aba === "todas" ? parcelas : parcelas?.filter((p) => p.status === aba);
 
-  function mudarDeMes(delta: number) {
-    const indice = ano * 12 + (mes - 1) + delta;
-    setPeriodo({ ano: Math.floor(indice / 12), mes: (indice % 12) + 1 });
-  }
 
   const concluir = (texto: string) => {
     setBaixa(null);
@@ -110,11 +101,7 @@ export function AcompanhamentoView() {
   return (
     <PlataformaShell activeId="acompanhamento" title="Faturas do mês" subtitle={`Competência ${String(mes).padStart(2, "0")}/${ano}`}>
       <div className="grid gap-5">
-        <div className="flex items-center justify-center gap-4">
-          <IconButton icon="chevron-left" label="Mês anterior" onClick={() => mudarDeMes(-1)} />
-          <h2 className="min-w-48 text-center text-xl font-semibold" style={{ fontFamily: "var(--font-sans)" }}>{`${MESES[mes - 1]} ${ano}`}</h2>
-          <IconButton icon="chevron-right" label="Próximo mês" onClick={() => mudarDeMes(1)} />
-        </div>
+        <SeletorDeMes ano={ano} mes={mes} onChange={setPeriodo} />
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard label="Previsto" value={formatBRL(totais.previsto)} />

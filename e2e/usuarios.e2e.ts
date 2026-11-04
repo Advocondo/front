@@ -23,7 +23,7 @@ describe("Gestão de usuários", () => {
     await waitForPath(driver, destino);
   }
 
-  const entrarComoAdmin = () => entrar(env.adminEmail, env.adminPassword);
+  const entrarComoAdmin = () => entrar(env.adminEmail, env.adminPassword, "/painel");
 
   async function abrirTela(busca: string): Promise<void> {
     await visit(driver, "/usuarios");

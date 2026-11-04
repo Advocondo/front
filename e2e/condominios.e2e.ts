@@ -41,7 +41,7 @@ describe("Condomínios", () => {
     driver = await createDriver();
     await openLogin(driver);
     await submitLogin(driver, env.adminEmail, env.adminPassword);
-    await waitForPath(driver, "/condominios");
+    await waitForPath(driver, "/painel");
   });
 
   afterAll(async () => {
