@@ -3,7 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createDriver, replaceValue, setDateValue, visit, waitForButton, waitForElement, waitForPath, waitForText, waitForTextGone } from "./support/driver";
 import { env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
-import { createCondominium, createDebtor, createLawyer, type TestCondominium, type TestDebtor, type TestLawyer } from "./support/seed";
+import { createAgreement, createCondominium, createDebtor, createLawyer, type TestCondominium, type TestDebtor, type TestLawyer } from "./support/seed";
 
 const BUSCA = By.css('input[aria-label="Buscar por devedor, condomínio ou responsável"]');
 
@@ -80,6 +80,45 @@ describe("Acordos", () => {
     await (await waitForElement(driver, BUSCA)).sendKeys(devedor.name);
     await waitForText(driver, `${condominio.name} · ${devedor.unit}`);
     await waitForText(driver, "R$ 5.500,00");
+  });
+
+  describe("US22: buscar e filtrar", () => {
+    async function acordoCom(condominioId: string): Promise<TestDebtor> {
+      sequencia += 1;
+      const devedor = await createDebtor(condominioId, `E2E Busca ${Date.now()}${sequencia}`, `Unidade ${Date.now()}${sequencia}`);
+      await createAgreement(condominioId, devedor.id);
+      return devedor;
+    }
+
+    it("CA01: encontra por parte do nome do devedor", async () => {
+      const procurado = await acordoCom(condominio.id);
+      const outro = await acordoCom(condominio.id);
+      await driver.navigate().refresh();
+      await (await waitForElement(driver, BUSCA)).sendKeys(procurado.name.slice(9));
+      await waitForTextGone(driver, outro.name);
+      await waitForText(driver, procurado.name);
+    });
+
+    it("CA02: combina condomínio, status e responsável", async () => {
+      const outroCondominio = await createCondominium(`E2E Busca Outro ${Date.now()}`);
+      const aqui = await acordoCom(condominio.id);
+      const la = await acordoCom(outroCondominio.id);
+      await driver.navigate().refresh();
+      await waitForText(driver, aqui.name);
+
+      await (await waitForElement(driver, By.css(`#filtro-condominio option[value="${outroCondominio.id}"]`))).click();
+      await waitForTextGone(driver, aqui.name);
+      await waitForText(driver, la.name);
+
+      await (await waitForElement(driver, By.xpath('//button[normalize-space()="Cancelados"]'))).click();
+      await waitForTextGone(driver, la.name);
+      await waitForText(driver, "Nenhum acordo encontrado");
+
+      await (await waitForElement(driver, By.xpath('//button[normalize-space()="Ativos"]'))).click();
+      await waitForText(driver, la.name);
+      await (await waitForElement(driver, By.css(`#filtro-responsavel option[value="${advogado.id}"]`))).click();
+      await waitForTextGone(driver, la.name);
+    });
   });
 
   it("US15-CA02: não salva sem os campos obrigatórios", async () => {

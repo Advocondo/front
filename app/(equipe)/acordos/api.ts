@@ -3,13 +3,14 @@ import type { Acordo, Advogado, AtribuicaoDeAdvogado, NovoAcordo, Parcela } from
 
 export const LIMITE_LISTAGEM = 200;
 
-export type FiltrosAcordo = { busca: string; status: string; responsavelId: string };
+export type FiltrosAcordo = { busca: string; status: string; responsavelId: string; condominioId: string };
 
-export function listAcordos({ busca, status, responsavelId }: FiltrosAcordo, signal?: AbortSignal): Promise<Acordo[]> {
+export function listAcordos({ busca, status, responsavelId, condominioId }: FiltrosAcordo, signal?: AbortSignal): Promise<Acordo[]> {
   const params = new URLSearchParams({ limit: String(LIMITE_LISTAGEM) });
   if (busca.trim()) params.set("search", busca.trim());
   if (status) params.set("status", status);
   if (responsavelId) params.set("responsible_lawyer_id", responsavelId);
+  if (condominioId) params.set("condominium_id", condominioId);
   return apiFetch<Acordo[]>(`/agreements?${params}`, { signal });
 }
 
