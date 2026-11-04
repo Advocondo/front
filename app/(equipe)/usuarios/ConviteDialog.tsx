@@ -4,11 +4,11 @@ import { Alert, Button, Card, Dialog, Input, Select, Switch } from "edson-alexan
 import { useState } from "react";
 import { Field } from "@/app/components/FormField";
 import { ApiError } from "@/app/lib/api";
-import { convidarUsuario, ROTULO_DO_PERFIL, type NovoConvite, type Usuario } from "./api";
+import { convidarUsuario, ROTULO_DO_PERFIL, type NovoConvite, type ResultadoDoConvite } from "./api";
 
 type Props = {
   onClose: () => void;
-  onSaved: (convidado: Usuario) => void;
+  onSaved: (convidado: ResultadoDoConvite) => void;
 };
 
 type Campo = "name" | "email" | "role" | "oab_number";

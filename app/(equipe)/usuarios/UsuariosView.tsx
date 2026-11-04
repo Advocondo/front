@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { PlataformaShell } from "@/app/components/PlataformaShell";
 import { ApiError } from "@/app/lib/api";
 import { useSession } from "@/app/lib/session";
-import { listUsuarios, mudarStatus, ROTULO_DO_PERFIL, type StatusUsuario, type Usuario } from "./api";
+import { listUsuarios, mudarStatus, reenviarConvite, ROTULO_DO_PERFIL, type ResultadoDoConvite, type StatusUsuario, type Usuario } from "./api";
 import { ConviteDialog } from "./ConviteDialog";
 import { InativarDialog } from "./InativarDialog";
 import { PerfilDialog } from "./PerfilDialog";
@@ -35,6 +35,7 @@ export function UsuariosView() {
   const [recarregar, setRecarregar] = useState(0);
   const [dialogo, setDialogo] = useState<Dialogo>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [falhaDeEnvio, setFalhaDeEnvio] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -70,8 +71,27 @@ export function UsuariosView() {
   function concluir(texto: string) {
     setDialogo(null);
     setErroDaAcao(null);
+    setFalhaDeEnvio(null);
     setAviso(texto);
     setRecarregar((n) => n + 1);
+  }
+
+  /** O usuário existe mesmo sem o e-mail: o aviso fica na tela até o Administrador agir. */
+  function concluirConvite(resultado: ResultadoDoConvite, texto: string) {
+    concluir(texto);
+    if (!resultado.invite_sent) {
+      setAviso(null);
+      setFalhaDeEnvio(`O e-mail de convite para ${resultado.email} não saiu. A pessoa está cadastrada como pendente: use Reenviar convite para tentar de novo.`);
+    }
+  }
+
+  async function reenviar(usuario: Usuario) {
+    setErroDaAcao(null);
+    try {
+      concluirConvite(await reenviarConvite(usuario.id), `Convite reenviado para ${usuario.email}. O link anterior deixou de valer.`);
+    } catch (e) {
+      setErroDaAcao(e instanceof ApiError ? e.message : "Não foi possível reenviar o convite. Tente novamente.");
+    }
   }
 
   async function reativar(usuario: Usuario) {
@@ -105,6 +125,11 @@ export function UsuariosView() {
         {erro && (
           <Alert tone="risk" title="Não foi possível carregar a lista" action={<Button size="sm" variant="secondary" onClick={() => setRecarregar((n) => n + 1)}>Tentar novamente</Button>}>
             {erro}
+          </Alert>
+        )}
+        {falhaDeEnvio && (
+          <Alert tone="warn" role="alert" title="O e-mail não saiu" onClose={() => setFalhaDeEnvio(null)}>
+            {falhaDeEnvio}
           </Alert>
         )}
         {erroDaAcao && (
@@ -146,6 +171,11 @@ export function UsuariosView() {
                       <Button size="sm" variant="ghost" aria-label={`Definir nível de acesso de ${u.name}`} onClick={() => setDialogo({ tipo: "perfil", usuario: u })}>
                         Perfil
                       </Button>
+                      {u.status === "pending" && (
+                        <Button size="sm" variant="ghost" aria-label={`Reenviar convite de ${u.name}`} onClick={() => void reenviar(u)}>
+                          Reenviar convite
+                        </Button>
+                      )}
                       {u.status === "active" && (
                         <Button size="sm" variant="ghost" aria-label={`Inativar ${u.name}`} onClick={() => setDialogo({ tipo: "inativar", usuario: u })}>
                           Inativar
@@ -164,7 +194,7 @@ export function UsuariosView() {
         )}
       </div>
 
-      {dialogo?.tipo === "convite" && <ConviteDialog onClose={() => setDialogo(null)} onSaved={(u) => concluir(`Convite enviado para ${u.email}.`)} />}
+      {dialogo?.tipo === "convite" && <ConviteDialog onClose={() => setDialogo(null)} onSaved={(u) => concluirConvite(u, `Convite enviado para ${u.email}.`)} />}
       {dialogo?.tipo === "perfil" && <PerfilDialog usuario={dialogo.usuario} onClose={() => setDialogo(null)} onSaved={(u) => concluir(`${u.name} agora é ${ROTULO_DO_PERFIL[u.role]}.`)} />}
       {dialogo?.tipo === "inativar" && <InativarDialog usuario={dialogo.usuario} onClose={() => setDialogo(null)} onSaved={(u) => concluir(`Acesso de ${u.name} inativado.`)} />}
 

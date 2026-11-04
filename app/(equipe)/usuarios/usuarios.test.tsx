@@ -117,7 +117,7 @@ describe("US07: convite", () => {
     await user.type(screen.getByLabelText(/E-mail/), "carla@example.com");
     await user.selectOptions(screen.getByLabelText(/Nível de acesso/), "operator");
   }
-  const convidado: Usuario = { ...duda, id: "u-n", name: "Carla Menezes", email: "carla@example.com", role: "operator" };
+  const convidado = { ...duda, id: "u-n", name: "Carla Menezes", email: "carla@example.com", role: "operator", invite_sent: true };
   const ok: Rota = (_, init) => (init?.method === "POST" ? { status: 201, body: convidado } : undefined);
 
   it("CA01: envia exatamente os campos que o back aceita", async () => {
@@ -129,6 +129,16 @@ describe("US07: convite", () => {
     expect(await screen.findByText("Convite enviado para carla@example.com.")).toBeInTheDocument();
     expect(chamada(fetchMock, "POST")?.[0]).toMatch(/\/users\/invites$/);
     expect(corpo(fetchMock, "POST")).toEqual({ name: "Carla Menezes", email: "carla@example.com", role: "operator", is_lawyer: false, oab_number: null });
+  });
+
+  it("avisa quando o e-mail não saiu, sem dizer que o convite foi enviado", async () => {
+    mockApi({ rota: (_, init) => (init?.method === "POST" ? { status: 201, body: { ...convidado, invite_sent: false } } : undefined) });
+    const user = userEvent.setup();
+    await abrir(user);
+    await preencher(user);
+    await enviar(user);
+    expect(await screen.findByText(/O e-mail de convite para carla@example.com não saiu/)).toBeInTheDocument();
+    expect(screen.queryByText(/Convite enviado/)).not.toBeInTheDocument();
   });
 
   it("o convite não oferece o perfil Administrador, que o back recusa", async () => {
@@ -192,6 +202,62 @@ describe("US07: convite", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("convidar outro Administrador");
     await enviar(user);
     expect(await screen.findByText("Valor inválido.")).toBeInTheDocument();
+  });
+});
+
+describe("Reenviar convite", () => {
+  const resposta = (invite_sent: boolean): Rota => (_, init) => (init?.method === "POST" ? { status: 200, body: { ...duda, invite_sent } } : undefined);
+
+  it("reenvia para quem está pendente e avisa que o link anterior não vale mais", async () => {
+    const fetchMock = mockApi({ rota: resposta(true) });
+    const user = userEvent.setup();
+    render(<UsuariosView />);
+    await user.click(await screen.findByRole("button", { name: "Reenviar convite de Duda Pendente" }));
+    expect(await screen.findByText("Convite reenviado para duda@example.com. O link anterior deixou de valer.")).toBeInTheDocument();
+    expect(chamada(fetchMock, "POST")?.[0]).toMatch(/\/users\/u-duda\/invite\/resend$/);
+  });
+
+  it("avisa quando o reenvio também não saiu", async () => {
+    mockApi({ rota: resposta(false) });
+    const user = userEvent.setup();
+    render(<UsuariosView />);
+    await user.click(await screen.findByRole("button", { name: "Reenviar convite de Duda Pendente" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("não saiu");
+    expect(screen.queryByText(/Convite reenviado/)).not.toBeInTheDocument();
+  });
+
+  it("um envio bem-sucedido depois tira o aviso de falha", async () => {
+    let tentativa = 0;
+    mockApi({
+      rota: (_, init) => {
+        if (init?.method !== "POST") return undefined;
+        tentativa += 1;
+        return { status: 200, body: { ...duda, invite_sent: tentativa > 1 } };
+      },
+    });
+    const user = userEvent.setup();
+    render(<UsuariosView />);
+    const botao = await screen.findByRole("button", { name: "Reenviar convite de Duda Pendente" });
+    await user.click(botao);
+    await screen.findByRole("alert");
+    await user.click(screen.getByRole("button", { name: "Reenviar convite de Duda Pendente" }));
+    await screen.findByText(/Convite reenviado/);
+    expect(screen.queryByText("O e-mail não saiu")).not.toBeInTheDocument();
+  });
+
+  it("só aparece para quem está pendente", async () => {
+    mockApi();
+    render(<UsuariosView />);
+    await screen.findByText("Bia Equipe");
+    expect(screen.queryByRole("button", { name: /Reenviar convite de (Bia|Caio)/ })).not.toBeInTheDocument();
+  });
+
+  it("mostra a recusa do servidor", async () => {
+    mockApi({ rota: (_, init) => (init?.method === "POST" ? { status: 422, body: { detail: "Este usuário já aceitou o convite." } } : undefined) });
+    const user = userEvent.setup();
+    render(<UsuariosView />);
+    await user.click(await screen.findByRole("button", { name: "Reenviar convite de Duda Pendente" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("já aceitou");
   });
 });
 

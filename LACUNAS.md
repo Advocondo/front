@@ -19,8 +19,6 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 
 | Lacuna | Efeito na tela | Referência |
 | --- | --- | --- |
-| Não há como reenviar um convite | O link vale 24 horas. Vencido, a pessoa fica pendente para sempre, e o mesmo e-mail não pode ser convidado de novo | Issue a abrir no `back` |
-| Falha no envio do convite parece sucesso | O back registra no log e responde `201`, e a tela diz "Convite enviado" | Issue a abrir no `back` |
 | Marcar advogado só no convite | Quem foi convidado sem a marcação não pode virar responsável por acordos | Sem issue |
 | Editar nome ou e-mail de outra pessoa | O protótipo mostra esses campos, mas o diálogo traz só o nível de acesso | Sem issue |
 | Busca não ignora acentos | Procurar `jose` não encontra "José", em acordos, devedores e condomínios | Sem issue |
