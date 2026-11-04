@@ -61,11 +61,12 @@ export async function contactEmailWasLogged(texto: string): Promise<boolean> {
   return (await logDaApi()).includes(texto);
 }
 
-export async function readInviteToken(email: string): Promise<string> {
+/** O token do último e-mail para este endereço, com link de convite ou de redefinição. */
+export async function readEmailToken(email: string): Promise<string> {
   const stdout = await logDaApi();
   const mensagem = stdout.slice(stdout.lastIndexOf(`Para: ${email}`));
   const achado = stdout.includes(`Para: ${email}`) ? /[?&]token=([^\s&]+)/.exec(mensagem) : null;
-  if (!achado) throw new Error(`Convite de ${email} não encontrado em "docker compose logs api".`);
+  if (!achado) throw new Error(`E-mail com link para ${email} não encontrado em "docker compose logs api".`);
   return decodeURIComponent(achado[1]);
 }
 
@@ -83,7 +84,7 @@ export async function createUser(role: "operator" | "client", extras: Record<str
   const password = randomUUID();
   const aceite = await chamarApi("/users/invites/accept", {
     method: "POST",
-    body: JSON.stringify({ token: await readInviteToken(email), password }),
+    body: JSON.stringify({ token: await readEmailToken(email), password }),
   });
   await esperarSucesso(aceite, "Aceitar o convite");
   return { id, email, password };
@@ -113,7 +114,7 @@ export async function createDebtor(condominiumId: string, name: string, unit: st
 
 export type TestLawyer = TestUser & { name: string };
 
-async function tokenDe(usuario: TestUser): Promise<string> {
+export async function apiToken(usuario: TestUser): Promise<string> {
   const resposta = await chamarApi("/auth/login", { method: "POST", body: JSON.stringify({ email: usuario.email, password: usuario.password }) });
   return (await esperarSucesso<{ access_token: string }>(resposta, "Entrar")).access_token;
 }
@@ -122,7 +123,7 @@ async function tokenDe(usuario: TestUser): Promise<string> {
 export async function createAgreementAs(usuario: TestUser, condominiumId: string, debtorId: string, firstDueDate: string): Promise<{ id: string }> {
   const resposta = await chamarApi("/agreements", {
     method: "POST",
-    headers: { Authorization: `Bearer ${await tokenDe(usuario)}` },
+    headers: { Authorization: `Bearer ${await apiToken(usuario)}` },
     body: JSON.stringify({ condominium_id: condominiumId, debtor_id: debtorId, total_amount: "900.00", installment_count: 3, first_due_date: firstDueDate, fee_percentage: "10.00" }),
   });
   return esperarSucesso<{ id: string }>(resposta, "Criar acordo");

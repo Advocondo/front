@@ -3,7 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createDriver, visit, waitForButton, waitForElement, waitForHydration, waitForPath, waitForText } from "./support/driver";
 import { env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
-import { createUser, readInviteToken, type TestUser } from "./support/seed";
+import { createUser, readEmailToken, type TestUser } from "./support/seed";
 
 const SENHA = `e2e-${Date.now()}-acesso`;
 
@@ -65,7 +65,7 @@ describe("Gestão de usuários", () => {
     await abrirTela(nome);
     await waitForText(driver, "Pendente");
 
-    const token = await readInviteToken(email);
+    const token = await readEmailToken(email);
     await visit(driver, `/convite?token=${encodeURIComponent(token)}`);
     const senha = await waitForElement(driver, By.id("convite-senha"));
     await waitForHydration(driver, senha);
@@ -83,12 +83,12 @@ describe("Gestão de usuários", () => {
     await convidar(nome, email);
     await enviarConvite();
     await waitForText(driver, `Convite enviado para ${email}.`);
-    const tokenAntigo = await readInviteToken(email);
+    const tokenAntigo = await readEmailToken(email);
 
     await abrirTela(nome);
     await (await waitForElement(driver, By.css(`button[aria-label="Reenviar convite de ${nome}"]`))).click();
     await waitForText(driver, "O link anterior deixou de valer.");
-    const tokenNovo = await readInviteToken(email);
+    const tokenNovo = await readEmailToken(email);
     expect(tokenNovo).not.toBe(tokenAntigo);
 
     for (const [token, esperado] of [[tokenAntigo, "O convite é inválido ou já expirou."], [tokenNovo, "Sua senha foi definida."]]) {
@@ -107,7 +107,7 @@ describe("Gestão de usuários", () => {
     await convidar(`E2E Duas Vezes ${Date.now()}`, email);
     await enviarConvite();
     await waitForText(driver, `Convite enviado para ${email}.`);
-    const token = await readInviteToken(email);
+    const token = await readEmailToken(email);
 
     for (const esperado of ["Sua senha foi definida.", "O convite é inválido ou já expirou."]) {
       await visit(driver, `/convite?token=${encodeURIComponent(token)}`);
