@@ -39,8 +39,7 @@ jobs:
         # LayoutProps/PageProps são gerados pelo Next em .next/types
         run: npx next typegen && npx tsc --noEmit
 
-      # Sem script "test" ainda: o passo não faz nada até a issue de testes E2E
-      # adicionar um em package.json.
+      # Só os testes de unidade. Os E2E com Selenium não rodam no CI (ver e2e/README.md).
       - name: Testes
         run: npm run test --if-present
 
