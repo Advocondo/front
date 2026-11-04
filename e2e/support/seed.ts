@@ -61,7 +61,7 @@ export async function contactEmailWasLogged(texto: string): Promise<boolean> {
   return (await logDaApi()).includes(texto);
 }
 
-async function lerTokenDoConvite(email: string): Promise<string> {
+export async function readInviteToken(email: string): Promise<string> {
   const stdout = await logDaApi();
   const mensagem = stdout.slice(stdout.lastIndexOf(`Para: ${email}`));
   const achado = stdout.includes(`Para: ${email}`) ? /[?&]token=([^\s&]+)/.exec(mensagem) : null;
@@ -83,7 +83,7 @@ export async function createUser(role: "operator" | "client", extras: Record<str
   const password = randomUUID();
   const aceite = await chamarApi("/users/invites/accept", {
     method: "POST",
-    body: JSON.stringify({ token: await lerTokenDoConvite(email), password }),
+    body: JSON.stringify({ token: await readInviteToken(email), password }),
   });
   await esperarSucesso(aceite, "Aceitar o convite");
   return { id, email, password };
@@ -124,7 +124,7 @@ export async function createAgreement(condominiumId: string, debtorId: string, f
 
 /** Só usuário ativo, marcado como advogado no convite e com OAB pode ser responsável. */
 export async function createLawyer(name: string): Promise<TestLawyer> {
-  const usuario = await createUser("operator", { name, is_lawyer: true, oab_number: `DF${Date.now() % 1000000}` });
+  const usuario = await createUser("operator", { name, is_lawyer: true, oab_number: `DF${String(Date.now() % 1000000).padStart(6, "0")}` });
   return { ...usuario, name };
 }
 
