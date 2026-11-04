@@ -50,6 +50,10 @@ Copie `.env.example` para `.env.local`. `NEXT_PUBLIC_API_URL` é a URL da API (p
 
 Os fluxos principais têm testes de ponta a ponta com Selenium, executados manualmente com `npm run test:e2e` e fora do CI. Veja [e2e/README.md](e2e/README.md).
 
+## Lacunas
+
+O que falta, está pendente ou não foi verificado fica em [LACUNAS.md](LACUNAS.md). Cada PR que encontra uma lacuna a registra lá.
+
 ## Design system
 
 A interface usa o [`ui-kit`](https://github.com/Advocondo/ui-kit) (`edson-alexandre-design-system`), instalado como dependência git; o `prepare` do pacote gera o `dist/` no `npm install`. Os estilos entram uma vez em `app/layout.tsx` e os componentes são importados de `edson-alexandre-design-system`. Textos em PT-BR, sem emoji, moeda `R$ 1.234,56` e datas `dd/mm/aaaa`.

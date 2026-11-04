@@ -30,6 +30,7 @@ export function AcordosView() {
   const [busca, setBusca] = useState("");
   const [status, setStatus] = useState("active");
   const [responsavelId, setResponsavelId] = useState("");
+  const [condominioId, setCondominioId] = useState("");
   const [acordos, setAcordos] = useState<Acordo[] | null>(null);
   const [condominios, setCondominios] = useState<Condominio[] | null>(null);
   const [advogados, setAdvogados] = useState<Advogado[]>([]);
@@ -55,7 +56,7 @@ export function AcordosView() {
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      listAcordos({ busca, status, responsavelId }, controller.signal)
+      listAcordos({ busca, status, responsavelId, condominioId }, controller.signal)
         .then((lista) => {
           setAcordos(lista);
           setErro(null);
@@ -69,7 +70,7 @@ export function AcordosView() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [busca, status, responsavelId, recarregar]);
+  }, [busca, status, responsavelId, condominioId, recarregar]);
 
   useEffect(() => {
     if (!aviso) return;
@@ -81,7 +82,7 @@ export function AcordosView() {
   // Só aparece para quem pode ser responsável (US18-CA03).
   const meuId = advogados.some((a) => a.id === session?.user.id) ? session?.user.id : undefined;
   const vazio =
-    busca.trim() || responsavelId || status !== "active" ? (
+    busca.trim() || responsavelId || condominioId || status !== "active" ? (
       <EmptyState icon="search" title="Nenhum acordo encontrado" description="Revise a busca ou o filtro." />
     ) : (
       <EmptyState icon="handshake" title="Nenhum acordo ativo" description="Cadastre um acordo para gerar as parcelas e acompanhar os pagamentos." />
@@ -99,6 +100,9 @@ export function AcordosView() {
               <Tag selected={status === filtro.status}>{filtro.label}</Tag>
             </button>
           ))}
+          <div style={{ width: 220 }}>
+            <Select id="filtro-condominio" aria-label="Filtrar por condomínio" placeholder="Todos os condomínios" options={(condominios ?? []).map((c) => ({ value: c.id, label: c.nome }))} value={condominioId} onChange={(e) => setCondominioId(e.target.value)} />
+          </div>
           <div style={{ width: 220 }}>
             <Select id="filtro-responsavel" aria-label="Filtrar por responsável" placeholder="Todos os responsáveis" options={advogados.map((a) => ({ value: a.id, label: a.name }))} value={responsavelId} onChange={(e) => setResponsavelId(e.target.value)} />
           </div>

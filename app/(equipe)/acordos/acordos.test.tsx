@@ -102,6 +102,31 @@ describe("Listagem de acordos", () => {
     await waitFor(() => expect(fetchMock.mock.calls.at(-1)?.[0]).not.toContain("status="));
   });
 
+  it("US22-CA02: combina busca, condomínio, responsável e status na mesma consulta", async () => {
+    const fetchMock = mockApi();
+    const user = userEvent.setup();
+    render(<AcordosView />);
+    await screen.findByRole("option", { name: "Ed. Century" });
+    await user.selectOptions(screen.getByLabelText("Filtrar por condomínio"), CONDO_ID);
+    await user.selectOptions(screen.getByLabelText("Filtrar por responsável"), "l-1");
+    await user.click(screen.getByRole("button", { name: "Cancelados" }));
+    await user.type(screen.getByLabelText(/Buscar por devedor/), "sim");
+    await waitFor(() => {
+      const url = new URL(fetchMock.mock.calls.at(-1)?.[0] as string);
+      expect(Object.fromEntries(url.searchParams)).toMatchObject({ condominium_id: CONDO_ID, responsible_lawyer_id: "l-1", status: "cancelled", search: "sim" });
+    });
+  });
+
+  it("com filtro e sem resultado, orienta a revisar em vez de pedir um cadastro", async () => {
+    mockApi({ acordos: [] });
+    const user = userEvent.setup();
+    render(<AcordosView />);
+    await screen.findByText("Nenhum acordo ativo");
+    await screen.findByRole("option", { name: "Ed. Century" });
+    await user.selectOptions(screen.getByLabelText("Filtrar por condomínio"), CONDO_ID);
+    expect(await screen.findByText("Nenhum acordo encontrado")).toBeInTheDocument();
+  });
+
   it("leva ao detalhe do acordo", async () => {
     mockApi();
     const user = userEvent.setup();
