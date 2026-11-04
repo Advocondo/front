@@ -5,6 +5,8 @@ FROM node:22-alpine AS base
 # --- Dependencies ---------------------------------------------------------
 FROM base AS deps
 WORKDIR /app
+# O design system é uma dependência git (github:Advocondo/ui-kit); o npm precisa do git.
+RUN apk add --no-cache git
 COPY package.json package-lock.json ./
 RUN npm ci
 
@@ -14,6 +16,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+# NEXT_PUBLIC_* é embutida no bundle em tempo de build: passe --build-arg.
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN npm run build
 
 # --- Runtime (standalone output, minimal image) -----------------------------
