@@ -113,11 +113,11 @@ export async function createDebtor(condominiumId: string, name: string, unit: st
 
 export type TestLawyer = TestUser & { name: string };
 
-export async function createAgreement(condominiumId: string, debtorId: string): Promise<{ id: string }> {
+export async function createAgreement(condominiumId: string, debtorId: string, firstDueDate = "2030-01-31"): Promise<{ id: string }> {
   const resposta = await chamarApi("/agreements", {
     method: "POST",
     headers: { Authorization: `Bearer ${await ensureAdmin()}` },
-    body: JSON.stringify({ condominium_id: condominiumId, debtor_id: debtorId, total_amount: "900.00", installment_count: 3, first_due_date: "2030-01-31", fee_percentage: "10.00" }),
+    body: JSON.stringify({ condominium_id: condominiumId, debtor_id: debtorId, total_amount: "900.00", installment_count: 3, first_due_date: firstDueDate, fee_percentage: "10.00" }),
   });
   return esperarSucesso<{ id: string }>(resposta, "Criar acordo");
 }
