@@ -2,13 +2,16 @@ import type { Condominio, CondominioForm, CondominioPayload } from "./types";
 
 export const onlyDigits = (value: string): string => value.replace(/\D/g, "");
 
+/** Desde julho de 2026 o CNPJ pode ter letras nos 12 primeiros caracteres (IN RFB 2.229/2024). */
+export const normalizeCnpj = (value: string): string => value.toUpperCase().replace(/[^0-9A-Z]/g, "");
+
 export function maskCnpj(value: string): string {
-  const d = onlyDigits(value).slice(0, 14);
-  return d
-    .replace(/^(\d{2})(\d)/, "$1.$2")
-    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-    .replace(/\.(\d{3})(\d)/, ".$1/$2")
-    .replace(/(\d{4})(\d)/, "$1-$2");
+  return normalizeCnpj(value)
+    .slice(0, 14)
+    .replace(/^(.{2})(.)/, "$1.$2")
+    .replace(/^(.{2}\..{3})(.)/, "$1.$2")
+    .replace(/^(.{2}\..{3}\..{3})(.)/, "$1/$2")
+    .replace(/^(.{2}\..{3}\..{3}\/.{4})(.)/, "$1-$2");
 }
 
 export function maskCep(value: string): string {
@@ -64,10 +67,10 @@ export function toForm(c: Condominio): CondominioForm {
 
 /** Campo vazio vira null: no PATCH isso limpa o valor; no POST, "não informado". */
 export function toPayload(form: CondominioForm): CondominioPayload {
-  const digits = new Set<keyof CondominioForm>(["cnpj", "cep", "sindico_telefone"]);
+  const digits = new Set<keyof CondominioForm>(["cep", "sindico_telefone"]);
   const payload = {} as CondominioPayload;
   for (const key of Object.keys(form) as (keyof CondominioForm)[]) {
-    const raw = digits.has(key) ? onlyDigits(form[key]) : form[key].trim();
+    const raw = key === "cnpj" ? normalizeCnpj(form[key]) : digits.has(key) ? onlyDigits(form[key]) : form[key].trim();
     payload[key] = raw === "" ? null : key === "uf" ? raw.toUpperCase() : raw;
   }
   return payload;

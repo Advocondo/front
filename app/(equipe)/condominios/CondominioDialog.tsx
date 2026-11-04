@@ -84,7 +84,7 @@ export function CondominioDialog({ condominio, onClose, onSaved }: Props) {
             <Input id="nome" value={form.nome} onChange={set("nome")} error={errors.nome} autoFocus />
           </Field>
           <Field id="cnpj" label="CNPJ">
-            <Input id="cnpj" mono inputMode="numeric" placeholder="00.000.000/0000-00" value={form.cnpj} onChange={set("cnpj", maskCnpj)} error={errors.cnpj} />
+            <Input id="cnpj" mono placeholder="00.000.000/0000-00" value={form.cnpj} onChange={set("cnpj", maskCnpj)} error={errors.cnpj} />
           </Field>
         </Section>
 
