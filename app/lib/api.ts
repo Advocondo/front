@@ -9,6 +9,8 @@ export class ApiError extends Error {
     message: string,
     /** Erros por campo (422), com o nome do campo do back-end como chave. */
     readonly fieldErrors: Record<string, string> = {},
+    /** Corpo da resposta, para os erros que trazem mais que a mensagem. */
+    readonly body?: unknown,
   ) {
     super(message);
     this.name = "ApiError";
@@ -19,7 +21,7 @@ type ValidationItem = { loc?: unknown[]; msg?: string };
 
 function parseError(status: number, body: unknown): ApiError {
   const detail = (body as { detail?: unknown } | null)?.detail;
-  if (typeof detail === "string") return new ApiError(status, detail);
+  if (typeof detail === "string") return new ApiError(status, detail, {}, body);
   if (Array.isArray(detail)) {
     const fieldErrors: Record<string, string> = {};
     for (const item of detail as ValidationItem[]) {

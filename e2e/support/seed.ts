@@ -89,6 +89,17 @@ export async function createUser(role: "operator" | "client"): Promise<TestUser>
   return { id, email, password };
 }
 
+export type TestCondominium = { id: string; name: string };
+
+export async function createCondominium(name: string): Promise<TestCondominium> {
+  const resposta = await chamarApi("/condominiums", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${await ensureAdmin()}` },
+    body: JSON.stringify({ name }),
+  });
+  return esperarSucesso<TestCondominium>(resposta, "Criar condomínio");
+}
+
 export async function deactivateUser(id: string): Promise<void> {
   const resposta = await chamarApi(`/users/${id}/status`, {
     method: "PATCH",

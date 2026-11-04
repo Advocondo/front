@@ -60,6 +60,11 @@ describe("apiFetch", () => {
     await expect(apiFetch("/condominios")).resolves.toEqual([{ id: 1 }]);
   });
 
+  it("guarda o corpo dos erros que trazem mais que a mensagem", async () => {
+    respond(409, { detail: "Parecido.", similar_debtors: [{ id: "1" }] });
+    await expect(apiFetch("/x")).rejects.toMatchObject({ status: 409, body: { similar_debtors: [{ id: "1" }] } });
+  });
+
   it("usa a mensagem do servidor em erros simples (409)", async () => {
     respond(409, { detail: "Já existe um condomínio com este CNPJ." });
     await expect(apiFetch("/condominios")).rejects.toMatchObject({ status: 409, message: "Já existe um condomínio com este CNPJ." });
