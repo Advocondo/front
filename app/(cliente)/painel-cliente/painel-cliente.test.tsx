@@ -68,6 +68,7 @@ describe("US37: Painel do Cliente", () => {
     await screen.findByText("Ana Moradora");
     expect(within(linha("Ana Moradora")).getByText("10/12/2026")).toBeInTheDocument();
     expect(within(linha("Ana Moradora")).getByText("Unidade 101")).toBeInTheDocument();
+    expect(within(linha("Ana Moradora")).getByRole("link", { name: "Ana Moradora" })).toHaveAttribute("href", "/painel-cliente/moradores/d-1");
     expect(within(linha("Duda Moradora")).getByText("1 parcela")).toBeInTheDocument();
   });
 
