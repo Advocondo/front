@@ -55,3 +55,15 @@ export function mudarStatus(id: string, status: "active" | "inactive"): Promise<
 export function mudarPerfil(id: string, role: Role): Promise<Usuario> {
   return apiFetch<Usuario>(`/users/${id}/role`, { method: "PATCH", body: JSON.stringify({ role }) });
 }
+
+/** Condomínio vinculado a um Cliente (US10). */
+export type Vinculo = { id: string; name: string };
+
+export function listVinculos(id: string, signal?: AbortSignal): Promise<Vinculo[]> {
+  return apiFetch<Vinculo[]>(`/users/${id}/condominiums`, { signal });
+}
+
+/** Substitui a lista inteira: quem não vier nela deixa de estar vinculado. */
+export function salvarVinculos(id: string, condominiumIds: string[]): Promise<Vinculo[]> {
+  return apiFetch<Vinculo[]>(`/users/${id}/condominiums`, { method: "PUT", body: JSON.stringify({ condominium_ids: condominiumIds }) });
+}

@@ -36,7 +36,6 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Lacuna | O que acontece hoje | Issue |
 | --- | --- | --- |
 | Painel do Cliente | O Cliente entra e vê uma página provisória | [#36](https://github.com/Advocondo/front/issues/36) |
-| Vincular condomínios ao Cliente | Um Cliente convidado não tem nenhum dado | [#10](https://github.com/Advocondo/front/issues/10) |
 | Painel de indicadores | Depois do login, a equipe cai em Condomínios | [#33](https://github.com/Advocondo/front/issues/33) |
 | Editar perfil e encerrar sessões | O usuário não troca os próprios dados nem a própria senha pela tela | [#5](https://github.com/Advocondo/front/issues/5), [#6](https://github.com/Advocondo/front/issues/6) |
 | Histórico de ações do usuário | O back registra, mas não há tela | [#11](https://github.com/Advocondo/front/issues/11) |
@@ -67,6 +66,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Redefinir senha | Mínimo de 8 caracteres, sem exigir letras e números, e a tela não cita a validade em minutos. O protótipo pede 10 caracteres com letras e números, e link de 30 minutos | O back aceita 8 caracteres e usa 60 minutos por padrão. Mudar a regra é decisão de segurança |
 | Redefinir senha | A tela não mostra o e-mail da conta | A rota de confirmação recebe só o token e não devolve o e-mail |
 | Landing | Sem WhatsApp, redes sociais, avaliações e fotos, os blocos ficam escondidos | O conteúdo inicial não os traz, e as avaliações do protótipo são parafraseadas |
+| Gestão de usuários | Os condomínios do Cliente ficam em um diálogo próprio, não em uma tela única de edição com histórico | Editar nome e e-mail não existe no back, e o histórico é a [#11](https://github.com/Advocondo/front/issues/11) |
 | Faturas do mês | Sem calendário e sem exportar | O calendário é herança de Prazos; exportar é a [#34](https://github.com/Advocondo/front/issues/34) |
 | Metas e comissões | Indicadores do Administrador: faturamento, acordos ativos e inadimplência, em vez de recuperado e acordos fechados; a meta é definida no mês da tela, sem seletor de mês no diálogo | O back não devolve recuperado nem acordos fechados; o seletor do diálogo seria redundante com o da tela |
 
