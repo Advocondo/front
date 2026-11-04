@@ -10,9 +10,10 @@ import { useSession } from "@/app/lib/session";
 const NAV = [
   { section: "Acompanhamento" },
   { id: "condominios", label: "Condomínios", icon: "building-2" },
+  { id: "devedores", label: "Devedores", icon: "users" },
 ];
 
-const ROTAS: Record<string, string> = { condominios: "/condominios" };
+const ROTAS: Record<string, string> = { condominios: "/condominios", devedores: "/devedores" };
 
 type Props = {
   activeId: string;
