@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { resolveBaseUrl, resolveBrowser } from "./env";
+import { resolveApiUrl, resolveBaseUrl, resolveBrowser } from "./env";
+
+describe("resolveApiUrl", () => {
+  it("usa a API local por padrão", () => {
+    expect(resolveApiUrl()).toBe("http://localhost:8000");
+  });
+
+  it("recusa a API de produção", () => {
+    expect(() => resolveApiUrl("https://api.advocondo.com.br")).toThrow("E2E_API_URL precisa ser um endereço local");
+  });
+});
 
 describe("resolveBaseUrl", () => {
   it("usa o front local por padrão", () => {

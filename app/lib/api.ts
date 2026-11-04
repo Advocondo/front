@@ -1,5 +1,7 @@
 /** Cliente HTTP da API do back-end. A URL vem de NEXT_PUBLIC_API_URL (ver .env.example). */
 
+import { clearSession, getSession } from "./session";
+
 const baseUrl = (): string =>
   (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/+$/, "");
 
@@ -35,15 +37,22 @@ function parseError(status: number, body: unknown): ApiError {
 }
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = getSession()?.token;
   let response: Response;
   try {
     response = await fetch(`${baseUrl()}${path}`, {
       ...init,
-      headers: { "Content-Type": "application/json", ...init.headers },
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...init.headers,
+      },
     });
   } catch {
     throw new ApiError(0, "Sem conexão com o servidor. Verifique sua internet e tente novamente.");
   }
+  // Token recusado: a sessão acabou no servidor, e o RequireAuth leva ao login.
+  if (response.status === 401 && token) clearSession();
   const body: unknown = await response.json().catch(() => null);
   if (!response.ok) throw parseError(response.status, body);
   return body as T;
