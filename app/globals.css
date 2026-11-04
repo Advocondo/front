@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* Os tokens de fonte do design system, apontando para as fontes do next/font (layout.tsx). */
+:root {
+  --font-sans: var(--font-poppins), "Helvetica Neue", Helvetica, sans-serif;
+  --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
+  --font-logotype: var(--font-cinzel), var(--font-playfair), Georgia, serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", Menlo, monospace;
+}
+
 /* Cores, tipografia e espaçamento vêm dos tokens do design system (styles.css). */
 body {
   background: var(--surface-page, #f4f3f2);
