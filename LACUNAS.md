@@ -35,7 +35,6 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 
 | Lacuna | O que acontece hoje | Issue |
 | --- | --- | --- |
-| Recuperação de senha | "Esqueci minha senha" leva a uma página 404 | [#3](https://github.com/Advocondo/front/issues/3) |
 | Painel do Cliente | O Cliente entra e vê uma página provisória | [#36](https://github.com/Advocondo/front/issues/36) |
 | Vincular condomínios ao Cliente | Um Cliente convidado não tem nenhum dado | [#10](https://github.com/Advocondo/front/issues/10) |
 | Painel de indicadores | Depois do login, a equipe cai em Condomínios | [#33](https://github.com/Advocondo/front/issues/33) |
@@ -65,6 +64,8 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Acordos | "Meus acordos" é um atalho, não uma restrição: o advogado continua vendo todos | É assim que o back trata o perfil dele |
 | Devedores | Item próprio no menu, e o formulário é um diálogo | O protótipo é só mobile e trata o devedor dentro de Acordos |
 | Login | Texto do painel navy vem do mobile ("acordos extrajudiciais") | O desktop ainda fala em "processos" |
+| Redefinir senha | Mínimo de 8 caracteres, sem exigir letras e números, e a tela não cita a validade em minutos. O protótipo pede 10 caracteres com letras e números, e link de 30 minutos | O back aceita 8 caracteres e usa 60 minutos por padrão. Mudar a regra é decisão de segurança |
+| Redefinir senha | A tela não mostra o e-mail da conta | A rota de confirmação recebe só o token e não devolve o e-mail |
 | Landing | Sem WhatsApp, redes sociais, avaliações e fotos, os blocos ficam escondidos | O conteúdo inicial não os traz, e as avaliações do protótipo são parafraseadas |
 | Faturas do mês | Sem calendário e sem exportar | O calendário é herança de Prazos; exportar é a [#34](https://github.com/Advocondo/front/issues/34) |
 | Metas e comissões | Indicadores do Administrador: faturamento, acordos ativos e inadimplência, em vez de recuperado e acordos fechados; a meta é definida no mês da tela, sem seletor de mês no diálogo | O back não devolve recuperado nem acordos fechados; o seletor do diálogo seria redundante com o da tela |

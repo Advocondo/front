@@ -1,9 +1,10 @@
 "use client";
 
-import { Alert, Button, Checkbox, IconButton, Input, Logo } from "edson-alexandre-design-system";
+import { Alert, Button, Checkbox, IconButton, Input } from "edson-alexandre-design-system";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
+import { AuthShell } from "@/app/components/AuthShell";
 import { Field } from "@/app/components/FormField";
 import { ApiError } from "@/app/lib/api";
 import { homeForRole, logIn } from "@/app/lib/auth";
@@ -47,15 +48,7 @@ export function LoginView() {
   const recusado = erro?.status === 401;
 
   return (
-    <div className={styles.pagina}>
-      <div className={styles.marca}>
-        <Logo variant="lockup" height={150} base="/brand/" />
-        <div className="grid justify-items-center gap-4">
-          <h1 className={styles.titulo}>Plataforma de acompanhamento</h1>
-          <p className={styles.descricao}>Administração e acompanhamento dos acordos extrajudiciais das carteiras de condomínios.</p>
-        </div>
-      </div>
-      <main className={styles.conteudo}>
+    <AuthShell>
         <form onSubmit={entrar} className={styles.formulario}>
           <div>
             <h2 className={styles.entrar}>Entrar</h2>
@@ -91,7 +84,6 @@ export function LoginView() {
             Voltar ao site
           </Link>
         </form>
-      </main>
-    </div>
+    </AuthShell>
   );
 }
