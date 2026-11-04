@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CondominioApi } from "@/app/(equipe)/condominios/types";
 import type { Devedor } from "@/app/(equipe)/devedores/types";
+import { clearSession, saveSession } from "@/app/lib/session";
 import { AcordoDetalheView } from "./[id]/AcordoDetalheView";
 import { AcordosView } from "./AcordosView";
 import type { Acordo, Advogado, Parcela } from "./types";
@@ -38,6 +39,7 @@ function mockApi({ rota, acordos = [acordo], devedores = [devedor], plano = [p1,
       if (url.includes("/users/lawyers")) return { status: 200, body: [advogada] };
       if (url.includes("/debtors")) return { status: 200, body: devedores };
       if (url.includes("/installments")) return { status: 200, body: plano };
+      if (url.includes("/lawyer-history")) return { status: 200, body: [] };
       if (url.includes("/agreements/")) return { status: 200, body: dadosAcordo };
       return { status: 200, body: acordos };
     };
@@ -297,6 +299,137 @@ describe("Cadastro de acordo", () => {
 
     await waitFor(() => expect(screen.getByLabelText(/^Devedor/)).toHaveValue("d-2"));
     expect(screen.getByLabelText("Unidade", { selector: "#acordo-unidade" })).toHaveValue("202");
+  });
+});
+
+describe("US18: responsável", () => {
+  const segundo: Advogado = { id: "l-2", name: "Dr. Paulo", oab_number: "DF999" };
+  const historico = [
+    { id: "h-1", previous_lawyer: null, new_lawyer: advogada, assigned_by: { id: "u-1", name: "Ana Admin" }, assigned_at: "2026-11-04T15:30:00Z" },
+    { id: "h-2", previous_lawyer: advogada, new_lawyer: segundo, assigned_by: { id: "u-2", name: "Bia Equipe" }, assigned_at: "2026-11-05T02:10:00Z" },
+  ];
+  const comHistorico: Rota = (url) => (url.includes("/lawyer-history") ? { status: 200, body: historico } : url.includes("/users/lawyers") ? { status: 200, body: [advogada, segundo] } : undefined);
+
+  it("CA01: a lista de seleção traz os advogados da API, com a OAB", async () => {
+    const fetchMock = mockApi();
+    const user = userEvent.setup();
+    render(<AcordoDetalheView id="a-1" />);
+    await user.click(await screen.findByRole("button", { name: "Atribuir responsável" }));
+    expect(screen.getByRole("option", { name: "Dra. Sarah · OAB DF12345" })).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url]) => url.includes("/users/lawyers"))).toBe(true);
+  });
+
+  it("sem advogado disponível, explica o que fazer e não deixa salvar", async () => {
+    mockApi({ rota: (url) => (url.includes("/users/lawyers") ? { status: 200, body: [] } : undefined) });
+    const user = userEvent.setup();
+    render(<AcordoDetalheView id="a-1" />);
+    await user.click(await screen.findByRole("button", { name: "Atribuir responsável" }));
+    expect(screen.getByText("Nenhum advogado disponível")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Salvar responsável" })).toBeDisabled();
+  });
+
+  it("CA02: atribui, atualiza a tela e recarrega o histórico", async () => {
+    let salvo = false;
+    const fetchMock = mockApi({
+      rota: (url, init) => {
+        if (init?.method === "PUT") {
+          salvo = true;
+          return { status: 200, body: { ...acordo, responsible_lawyer: advogada } };
+        }
+        if (url.includes("/lawyer-history")) return { status: 200, body: salvo ? historico.slice(0, 1) : [] };
+        if (url.match(/\/agreements\/a-1$/)) return { status: 200, body: salvo ? { ...acordo, responsible_lawyer: advogada } : acordo };
+        return undefined;
+      },
+    });
+    const user = userEvent.setup();
+    render(<AcordoDetalheView id="a-1" />);
+    expect(await screen.findByText("Nenhuma atribuição ainda.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Atribuir responsável" }));
+    expect(screen.getByRole("button", { name: "Salvar responsável" })).toBeDisabled();
+    await user.selectOptions(screen.getByLabelText(/Advogado responsável/), "l-1");
+    await user.click(screen.getByRole("button", { name: "Salvar responsável" }));
+
+    expect(await screen.findByText("Responsável atualizado com sucesso.")).toBeInTheDocument();
+    expect(chamada(fetchMock, "PUT")[0]).toMatch(/\/agreements\/a-1\/responsible-lawyer$/);
+    expect(corpo(fetchMock, "PUT")).toEqual({ lawyer_id: "l-1" });
+    expect(screen.getByText("Responsável: Dra. Sarah")).toBeInTheDocument();
+    expect(await screen.findByText("Atribuído a Dra. Sarah")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Trocar responsável" })).toBeInTheDocument();
+  });
+
+  it("CA02: mostra o histórico do mais recente ao mais antigo, com quem, quando e por quem", async () => {
+    mockApi({ rota: comHistorico, dadosAcordo: { ...acordo, responsible_lawyer: segundo } });
+    render(<AcordoDetalheView id="a-1" />);
+    const recente = await screen.findByText("De Dra. Sarah para Dr. Paulo");
+    const antiga = screen.getByText("Atribuído a Dra. Sarah");
+    expect(recente.compareDocumentPosition(antiga) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText("por Bia Equipe")).toBeInTheDocument();
+    // 15:30 UTC = 12:30 em Brasília; 02:10 UTC do dia 5 ainda é dia 4 em Brasília.
+    expect(screen.getByText("04/11/2026 12:30")).toBeInTheDocument();
+    expect(screen.getByText("04/11/2026 23:10")).toBeInTheDocument();
+  });
+
+  it("não deixa salvar o mesmo advogado, e abre com o atual selecionado", async () => {
+    const fetchMock = mockApi({ rota: comHistorico, dadosAcordo: { ...acordo, responsible_lawyer: segundo } });
+    const user = userEvent.setup();
+    render(<AcordoDetalheView id="a-1" />);
+    await user.click(await screen.findByRole("button", { name: "Trocar responsável" }));
+    expect(screen.getByLabelText(/Advogado responsável/)).toHaveValue("l-2");
+    expect(screen.getByRole("button", { name: "Salvar responsável" })).toBeDisabled();
+    expect(chamada(fetchMock, "PUT")).toBeUndefined();
+  });
+
+  it("mostra a recusa do back", async () => {
+    mockApi({ rota: (_, init) => (init?.method === "PUT" ? { status: 422, body: { detail: "O responsável precisa ser um advogado ativo, com OAB cadastrada." } } : undefined) });
+    const user = userEvent.setup();
+    render(<AcordoDetalheView id="a-1" />);
+    await user.click(await screen.findByRole("button", { name: "Atribuir responsável" }));
+    await user.selectOptions(screen.getByLabelText(/Advogado responsável/), "l-1");
+    await user.click(screen.getByRole("button", { name: "Salvar responsável" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("advogado ativo, com OAB");
+  });
+
+  it("acordo cancelado não oferece a troca", async () => {
+    mockApi({ dadosAcordo: { ...acordo, status: "cancelled" } });
+    render(<AcordoDetalheView id="a-1" />);
+    await screen.findByRole("heading", { name: "Cláudio Bezerra" });
+    expect(screen.queryByRole("button", { name: /responsável/ })).not.toBeInTheDocument();
+  });
+
+  it("filtra a lista por responsável no servidor", async () => {
+    const fetchMock = mockApi();
+    const user = userEvent.setup();
+    render(<AcordosView />);
+    await screen.findByRole("option", { name: "Dra. Sarah" });
+    await user.selectOptions(screen.getByLabelText("Filtrar por responsável"), "l-1");
+    await waitFor(() => expect(fetchMock.mock.calls.at(-1)?.[0]).toContain("responsible_lawyer_id=l-1"));
+  });
+
+  describe("CA03: Meus acordos", () => {
+    afterEach(() => clearSession());
+    const entrarComo = (id: string) =>
+      saveSession({ token: "t", expiresAt: "2999-01-01T00:00:00Z", user: { id, name: "X", email: "x@example.com", role: "operator" } }, true);
+
+    it("o advogado filtra pelos próprios acordos, e desfaz no mesmo botão", async () => {
+      entrarComo("l-1");
+      const fetchMock = mockApi();
+      const user = userEvent.setup();
+      render(<AcordosView />);
+      const meus = await screen.findByRole("button", { name: "Meus acordos" });
+      await user.click(meus);
+      await waitFor(() => expect(fetchMock.mock.calls.at(-1)?.[0]).toContain("responsible_lawyer_id=l-1"));
+      expect(meus).toHaveAttribute("aria-pressed", "true");
+      await user.click(meus);
+      await waitFor(() => expect(fetchMock.mock.calls.at(-1)?.[0]).not.toContain("responsible_lawyer_id"));
+    });
+
+    it("quem não é advogado não vê o atalho", async () => {
+      entrarComo("outro");
+      mockApi();
+      render(<AcordosView />);
+      await screen.findByRole("option", { name: "Dra. Sarah" });
+      expect(screen.queryByRole("button", { name: "Meus acordos" })).not.toBeInTheDocument();
+    });
   });
 });
 

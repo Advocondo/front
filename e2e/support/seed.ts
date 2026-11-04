@@ -111,12 +111,21 @@ export async function createDebtor(condominiumId: string, name: string, unit: st
   return esperarSucesso<TestDebtor>(resposta, "Criar devedor");
 }
 
-export type TestLawyer = { id: string; name: string };
+export type TestLawyer = TestUser & { name: string };
+
+export async function createAgreement(condominiumId: string, debtorId: string): Promise<{ id: string }> {
+  const resposta = await chamarApi("/agreements", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${await ensureAdmin()}` },
+    body: JSON.stringify({ condominium_id: condominiumId, debtor_id: debtorId, total_amount: "900.00", installment_count: 3, first_due_date: "2030-01-31", fee_percentage: "10.00" }),
+  });
+  return esperarSucesso<{ id: string }>(resposta, "Criar acordo");
+}
 
 /** Só usuário ativo, marcado como advogado no convite e com OAB pode ser responsável. */
 export async function createLawyer(name: string): Promise<TestLawyer> {
-  const { id } = await createUser("operator", { name, is_lawyer: true, oab_number: `DF${Date.now() % 1000000}` });
-  return { id, name };
+  const usuario = await createUser("operator", { name, is_lawyer: true, oab_number: `DF${Date.now() % 1000000}` });
+  return { ...usuario, name };
 }
 
 export async function deactivateUser(id: string): Promise<void> {

@@ -1,11 +1,12 @@
 "use client";
 
-import { Alert, Button, DataTable, EmptyState, Input, StatusPill, Tag, Toast, ToastStack } from "edson-alexandre-design-system";
+import { Alert, Button, DataTable, EmptyState, Input, Select, StatusPill, Tag, Toast, ToastStack } from "edson-alexandre-design-system";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PlataformaShell } from "@/app/components/PlataformaShell";
 import { ApiError } from "@/app/lib/api";
 import { formatBRL } from "@/app/lib/money";
+import { useSession } from "@/app/lib/session";
 import { listCondominios } from "@/app/(equipe)/condominios/api";
 import type { Condominio } from "@/app/(equipe)/condominios/types";
 import { AcordoDialog } from "./AcordoDialog";
@@ -25,8 +26,10 @@ export function StatusAcordo({ status }: { status: Acordo["status"] }) {
 
 export function AcordosView() {
   const router = useRouter();
+  const session = useSession();
   const [busca, setBusca] = useState("");
   const [status, setStatus] = useState("active");
+  const [responsavelId, setResponsavelId] = useState("");
   const [acordos, setAcordos] = useState<Acordo[] | null>(null);
   const [condominios, setCondominios] = useState<Condominio[] | null>(null);
   const [advogados, setAdvogados] = useState<Advogado[]>([]);
@@ -52,7 +55,7 @@ export function AcordosView() {
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      listAcordos(busca, status, controller.signal)
+      listAcordos({ busca, status, responsavelId }, controller.signal)
         .then((lista) => {
           setAcordos(lista);
           setErro(null);
@@ -66,7 +69,7 @@ export function AcordosView() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [busca, status, recarregar]);
+  }, [busca, status, responsavelId, recarregar]);
 
   useEffect(() => {
     if (!aviso) return;
@@ -75,8 +78,10 @@ export function AcordosView() {
   }, [aviso]);
 
   const semCondominio = condominios?.length === 0;
+  // Só aparece para quem pode ser responsável (US18-CA03).
+  const meuId = advogados.some((a) => a.id === session?.user.id) ? session?.user.id : undefined;
   const vazio =
-    busca.trim() || status !== "active" ? (
+    busca.trim() || responsavelId || status !== "active" ? (
       <EmptyState icon="search" title="Nenhum acordo encontrado" description="Revise a busca ou o filtro." />
     ) : (
       <EmptyState icon="handshake" title="Nenhum acordo ativo" description="Cadastre um acordo para gerar as parcelas e acompanhar os pagamentos." />
@@ -94,6 +99,14 @@ export function AcordosView() {
               <Tag selected={status === filtro.status}>{filtro.label}</Tag>
             </button>
           ))}
+          <div style={{ width: 220 }}>
+            <Select id="filtro-responsavel" aria-label="Filtrar por responsável" placeholder="Todos os responsáveis" options={advogados.map((a) => ({ value: a.id, label: a.name }))} value={responsavelId} onChange={(e) => setResponsavelId(e.target.value)} />
+          </div>
+          {meuId && (
+            <button type="button" aria-pressed={responsavelId === meuId} onClick={() => setResponsavelId(responsavelId === meuId ? "" : meuId)}>
+              <Tag selected={responsavelId === meuId}>Meus acordos</Tag>
+            </button>
+          )}
           <div className="flex-1" />
           <Button icon="plus" disabled={!condominios || semCondominio} onClick={() => setDialogo(true)}>
             Novo acordo

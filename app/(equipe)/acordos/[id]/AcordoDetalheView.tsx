@@ -1,16 +1,18 @@
 "use client";
 
-import { Alert, Button, Card, DataTable, IconButton, MetricCard, StatusPill, Toast, ToastStack } from "edson-alexandre-design-system";
+import { Alert, Button, Card, DataTable, IconButton, MetricCard, StatusPill, Timeline, Toast, ToastStack } from "edson-alexandre-design-system";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { PlataformaShell } from "@/app/components/PlataformaShell";
 import { ApiError } from "@/app/lib/api";
+import { formatDateTime } from "@/app/lib/dates";
 import { centsFromApi, formatBRL } from "@/app/lib/money";
 import { formatDate } from "@/app/(equipe)/condominios/format";
-import { getAcordo, listParcelas } from "../api";
+import { getAcordo, listAdvogados, listHistoricoDeResponsaveis, listParcelas } from "../api";
 import { StatusAcordo } from "../AcordosView";
-import type { Acordo, Parcela } from "../types";
+import type { Acordo, Advogado, AtribuicaoDeAdvogado, Parcela } from "../types";
 import { ParcelaDialog } from "./ParcelaDialog";
+import { ResponsavelDialog } from "./ResponsavelDialog";
 
 const SITUACAO: Record<Parcela["status"], { label: string; tone: "ok" | "info" | "risk" }> = {
   paid: { label: "Paga", tone: "ok" },
@@ -28,14 +30,19 @@ export function AcordoDetalheView({ id }: { id: string }) {
   const [erro, setErro] = useState<string | null>(null);
   const [recarregar, setRecarregar] = useState(0);
   const [editando, setEditando] = useState<Parcela | null>(null);
+  const [advogados, setAdvogados] = useState<Advogado[]>([]);
+  const [historico, setHistorico] = useState<AtribuicaoDeAdvogado[]>([]);
+  const [trocandoResponsavel, setTrocandoResponsavel] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    Promise.all([getAcordo(id, controller.signal), listParcelas(id, controller.signal)])
-      .then(([dadosDoAcordo, plano]) => {
+    Promise.all([getAcordo(id, controller.signal), listParcelas(id, controller.signal), listAdvogados(controller.signal), listHistoricoDeResponsaveis(id, controller.signal)])
+      .then(([dadosDoAcordo, plano, listaDeAdvogados, atribuicoes]) => {
         setAcordo(dadosDoAcordo);
         setParcelas(plano);
+        setAdvogados(listaDeAdvogados);
+        setHistorico(atribuicoes);
         setErro(null);
       })
       .catch((e: unknown) => {
@@ -83,7 +90,15 @@ export function AcordoDetalheView({ id }: { id: string }) {
                   <p className="text-sm">{`${acordo.condominium.name} · ${acordo.debtor.unit}`}</p>
                   <p className="mt-1 text-sm">Responsável: {acordo.responsible_lawyer?.name ?? "não atribuído"}</p>
                 </div>
-                <StatusAcordo status={acordo.status} />
+                <div className="flex items-center gap-3">
+                  {/* O back não aceita mudar o responsável de acordo cancelado. */}
+                  {acordo.status === "active" && (
+                    <Button size="sm" variant="secondary" icon="user-check" onClick={() => setTrocandoResponsavel(true)}>
+                      {acordo.responsible_lawyer ? "Trocar responsável" : "Atribuir responsável"}
+                    </Button>
+                  )}
+                  <StatusAcordo status={acordo.status} />
+                </div>
               </div>
               <p className="mt-4 text-sm font-medium">
                 {pagas} de {parcelas.length} parcelas pagas ({porcentagemPaga}%)
@@ -122,9 +137,38 @@ export function AcordoDetalheView({ id }: { id: string }) {
                 },
               ]}
             />
+
+            <Card title="Histórico de responsáveis">
+              {historico.length === 0 ? (
+                <p className="text-sm">Nenhuma atribuição ainda.</p>
+              ) : (
+                <Timeline
+                  items={[...historico].reverse().map((atribuicao) => ({
+                    title: atribuicao.previous_lawyer ? `De ${atribuicao.previous_lawyer.name} para ${atribuicao.new_lawyer.name}` : `Atribuído a ${atribuicao.new_lawyer.name}`,
+                    date: formatDateTime(atribuicao.assigned_at),
+                    meta: `por ${atribuicao.assigned_by.name}`,
+                    icon: "user-check",
+                  }))}
+                />
+              )}
+            </Card>
           </>
         )}
       </div>
+
+      {trocandoResponsavel && acordo && (
+        <ResponsavelDialog
+          acordo={acordo}
+          advogados={advogados}
+          onClose={() => setTrocandoResponsavel(false)}
+          onSaved={(atualizado) => {
+            setAcordo(atualizado);
+            setTrocandoResponsavel(false);
+            setAviso("Responsável atualizado com sucesso.");
+            setRecarregar((n) => n + 1);
+          }}
+        />
+      )}
 
       {editando && (
         <ParcelaDialog

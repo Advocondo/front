@@ -15,6 +15,14 @@ export type Acordo = {
   cancellation_reason: string | null;
 };
 
+export type AtribuicaoDeAdvogado = {
+  id: string;
+  previous_lawyer: Advogado | null;
+  new_lawyer: Advogado;
+  assigned_by: { id: string; name: string };
+  assigned_at: string;
+};
+
 export type Parcela = {
   id: string;
   agreement_id: string;
