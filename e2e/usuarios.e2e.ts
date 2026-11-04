@@ -77,6 +77,31 @@ describe("Gestão de usuários", () => {
     await entrar(email, SENHA);
   });
 
+  it("reenviar o convite gera um link novo, e o anterior deixa de valer", async () => {
+    const nome = `E2E Reenvio ${Date.now()}`;
+    const email = novoEmail();
+    await convidar(nome, email);
+    await enviarConvite();
+    await waitForText(driver, `Convite enviado para ${email}.`);
+    const tokenAntigo = await readInviteToken(email);
+
+    await abrirTela(nome);
+    await (await waitForElement(driver, By.css(`button[aria-label="Reenviar convite de ${nome}"]`))).click();
+    await waitForText(driver, "O link anterior deixou de valer.");
+    const tokenNovo = await readInviteToken(email);
+    expect(tokenNovo).not.toBe(tokenAntigo);
+
+    for (const [token, esperado] of [[tokenAntigo, "O convite é inválido ou já expirou."], [tokenNovo, "Sua senha foi definida."]]) {
+      await visit(driver, `/convite?token=${encodeURIComponent(token)}`);
+      const senha = await waitForElement(driver, By.id("convite-senha"));
+      await waitForHydration(driver, senha);
+      await senha.sendKeys(SENHA);
+      await driver.findElement(By.id("convite-confirmacao")).sendKeys(SENHA);
+      await (await waitForButton(driver, "Criar acesso")).click();
+      await waitForText(driver, esperado);
+    }
+  });
+
   it("o link de convite não vale duas vezes", async () => {
     const email = novoEmail();
     await convidar(`E2E Duas Vezes ${Date.now()}`, email);
