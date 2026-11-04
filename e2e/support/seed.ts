@@ -160,6 +160,15 @@ export async function createLawyer(name: string): Promise<TestLawyer> {
   return { ...usuario, name };
 }
 
+export async function cancelAgreement(id: string): Promise<void> {
+  const resposta = await chamarApi(`/agreements/${id}/cancel`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${await ensureAdmin()}` },
+    body: JSON.stringify({ reason: "Cancelado pelo teste E2E", confirm_open_installments: true }),
+  });
+  await esperarSucesso(resposta, "Cancelar acordo");
+}
+
 export async function deactivateUser(id: string): Promise<void> {
   const resposta = await chamarApi(`/users/${id}/status`, {
     method: "PATCH",

@@ -69,8 +69,8 @@ describe("US38: histórico de pagamentos do morador", () => {
     expect(await screen.findByRole("link", { name: /Voltar ao painel/ })).toHaveAttribute("href", "/painel-cliente");
   });
 
-  it("morador de outro condomínio responde como não encontrado", async () => {
-    mockApi(() => ({ status: 404, body: { detail: "Devedor não encontrado." } }));
+  it.each([404, 422])("responde %i como morador não encontrado", async (status) => {
+    mockApi(() => ({ status, body: { detail: "Devedor não encontrado." } }));
     render(<HistoricoMoradorView id="d-outro" />);
     expect(await screen.findByText("Morador não encontrado")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Tentar novamente" })).not.toBeInTheDocument();

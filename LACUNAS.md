@@ -37,7 +37,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 
 | Lacuna | O que acontece hoje | Issue |
 | --- | --- | --- |
-| Parcelas no Painel do Cliente | O Cliente vê a situação de cada acordo e o histórico do morador, mas não abre as parcelas. O back já tem a rota | [#47](https://github.com/Advocondo/front/issues/47) |
+| Destino da notificação de atraso | O sino ainda não existe. Quando existir, a notificação deve levar a `/faturas/{id}`, a tela do detalhe | [#29](https://github.com/Advocondo/front/issues/29) |
 | Relatório de condomínio sem acordos | O botão fica no card do condomínio, e o card só existe quando há acordo. Sem acordo, não há o que baixar pela tela, embora a rota responda | Sem issue |
 | Painel da Equipe Operacional | Depois do login, a pessoa cai em Condomínios. O protótipo mobile tem uma visão própria, com totais do mês, meta, vencimentos da semana e últimas baixas | Sem issue |
 | Editar perfil e encerrar sessões | O usuário não troca os próprios dados nem a própria senha pela tela | [#5](https://github.com/Advocondo/front/issues/5), [#6](https://github.com/Advocondo/front/issues/6) |
@@ -71,6 +71,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Landing | Sem WhatsApp, redes sociais, avaliações e fotos, os blocos ficam escondidos | O conteúdo inicial não os traz, e as avaliações do protótipo são parafraseadas |
 | Gestão de usuários | Os condomínios do Cliente ficam em um diálogo próprio, não em uma tela única de edição com histórico | Editar nome e e-mail não existe no back, e o histórico é a [#11](https://github.com/Advocondo/front/issues/11) |
 | Painel | Seletor de mês por setas, como em Faturas e Metas, e não uma lista. Sem o aviso de renovação de contrato. "Comissões pagas" soma os honorários das parcelas pagas no mês, e o mesmo valor aparece como "Faturamento do mês" em Metas | Consistência entre as telas. O aviso é a [#23](https://github.com/Advocondo/front/issues/23). O nome depende da decisão sobre o percentual de comissão |
+| Detalhe da fatura e parcelas do Cliente | A [#47](https://github.com/Advocondo/front/issues/47) não tem história de usuário nem protótipo, e os critérios são propostos. A construção foi aprovada pelo responsável em 04/11/2026 | Falta validar com o time |
 | Painel do Cliente e histórico do morador | Não há protótipo: as telas foram montadas com o design system | O perfil Cliente ainda não foi prototipado |
 | Faturas do mês | Sem calendário e sem exportar | O calendário é herança de Prazos; exportar é a [#34](https://github.com/Advocondo/front/issues/34) |
 | Metas e comissões | Indicadores do Administrador: faturamento, acordos ativos e inadimplência, em vez de recuperado e acordos fechados; a meta é definida no mês da tela, sem seletor de mês no diálogo | O back não devolve recuperado nem acordos fechados; o seletor do diálogo seria redundante com o da tela |

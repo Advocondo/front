@@ -153,3 +153,66 @@ describe("US39: relatório do condomínio", () => {
     expect(screen.getAllByRole("table")).toHaveLength(2);
   });
 });
+
+describe("#47: parcelas do acordo para o Cliente", () => {
+  const parcelas = [
+    { number: 2, due_date: "2026-10-30", amount: "300.00", remaining_amount: "200.00", status: "overdue" },
+    { number: 3, due_date: "2026-11-30", amount: "300.00", remaining_amount: "300.00", status: "open" },
+  ];
+
+  function mockParcelas(resposta: { status: number; body: unknown }) {
+    const fn = vi.fn((url: string) => {
+      const r = url.includes("/installments") ? resposta : { status: 200, body: [atrasado] };
+      return Promise.resolve(new Response(JSON.stringify(r.body), { status: r.status }));
+    });
+    vi.stubGlobal("fetch", fn);
+    return fn;
+  }
+
+  const abrir = async (user: ReturnType<typeof userEvent.setup>) => user.click(await screen.findByRole("button", { name: "Ver parcelas de Ana Moradora" }));
+
+  it("CA02: mostra número, vencimento, valor, saldo e situação, sem honorários", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockParcelas({ status: 200, body: parcelas });
+    render(<PainelClienteView />);
+    await abrir(user);
+
+    const dialogo = await screen.findByRole("dialog");
+    const atrasada = (await within(dialogo).findByText("30/10/2026")).closest("tr") as HTMLElement;
+    expect(within(atrasada).getByText("R$ 300,00")).toBeInTheDocument();
+    expect(within(atrasada).getByText("R$ 200,00")).toBeInTheDocument();
+    expect(within(atrasada).getByText("Atrasada")).toBeInTheDocument();
+    expect(within(dialogo).getByText("Em aberto")).toBeInTheDocument();
+    expect(dialogo.textContent).not.toMatch(/honor[aá]rio|comiss[aã]o/i);
+    expect(fetchMock.mock.calls.map(([url]) => url).join()).toContain("/client-panel/agreements/a-1/installments");
+  });
+
+  it("explica quando não há parcelas em aberto", async () => {
+    const user = userEvent.setup();
+    mockParcelas({ status: 200, body: [] });
+    render(<PainelClienteView />);
+    await abrir(user);
+    expect(await screen.findByText("Nenhuma parcela em aberto")).toBeInTheDocument();
+  });
+
+  it("CA03: um acordo cancelado depois de a lista abrir avisa, em vez de mostrar parcelas", async () => {
+    const user = userEvent.setup();
+    mockParcelas({ status: 404, body: { detail: "Acordo não encontrado." } });
+    render(<PainelClienteView />);
+    await abrir(user);
+    expect(await screen.findByRole("alert")).toHaveTextContent("não está mais disponível");
+    expect(screen.queryByText("30/10/2026")).not.toBeInTheDocument();
+  });
+
+  it("fecha o diálogo e volta ao painel", async () => {
+    const user = userEvent.setup();
+    mockParcelas({ status: 200, body: parcelas });
+    render(<PainelClienteView />);
+    await abrir(user);
+    const dialogo = await screen.findByRole("dialog");
+    await within(dialogo).findByText("30/10/2026");
+    await user.click(within(dialogo).getAllByRole("button", { name: "Fechar" }).at(-1) as HTMLElement);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByText("Ana Moradora")).toBeInTheDocument();
+  });
+});

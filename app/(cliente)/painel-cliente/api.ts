@@ -40,3 +40,16 @@ export function getHistoricoDoMorador(id: string, signal?: AbortSignal): Promise
 export function baixarRelatorioDoCondominio(condominioId: string): Promise<Blob> {
   return apiFetchBlob(`/client-panel/condominiums/${condominioId}/report`);
 }
+
+/** Parcela sem pagamento completo (#47). O back não devolve honorários nem a divisão do valor. */
+export type ParcelaDoCliente = {
+  number: number;
+  due_date: string;
+  amount: string;
+  remaining_amount: string;
+  status: "open" | "overdue";
+};
+
+export function listParcelasDoAcordo(acordoId: string, signal?: AbortSignal): Promise<ParcelaDoCliente[]> {
+  return apiFetch<ParcelaDoCliente[]>(`/client-panel/agreements/${acordoId}/installments`, { signal });
+}
