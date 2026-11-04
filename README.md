@@ -44,6 +44,10 @@ O container expõe a porta `3000` (configurável via `PORT`).
 
 Copie `.env.example` para `.env.local`. `NEXT_PUBLIC_API_URL` é a URL da API (padrão `http://localhost:8000`) e é embutida no bundle em tempo de build: na Vercel, defina-a nos *Environment Variables*; no Docker, use `--build-arg NEXT_PUBLIC_API_URL=...`. O back só aceita as origens listadas em `CORS_ALLOW_ORIGINS`.
 
+## Testes E2E
+
+Os fluxos principais têm testes de ponta a ponta com Selenium, executados manualmente com `npm run test:e2e` e fora do CI. Veja [e2e/README.md](e2e/README.md).
+
 ## Design system
 
 A interface usa o [`ui-kit`](https://github.com/Advocondo/ui-kit) (`edson-alexandre-design-system`), instalado como dependência git; o `prepare` do pacote gera o `dist/` no `npm install`. Os estilos entram uma vez em `app/layout.tsx` e os componentes são importados de `edson-alexandre-design-system`. Textos em PT-BR, sem emoji, moeda `R$ 1.234,56` e datas `dd/mm/aaaa`.
