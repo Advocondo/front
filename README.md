@@ -44,6 +44,8 @@ O container expõe a porta `3000` (configurável via `PORT`).
 
 Copie `.env.example` para `.env.local`. `NEXT_PUBLIC_API_URL` é a URL da API (padrão `http://localhost:8000`) e é embutida no bundle em tempo de build: na Vercel, defina-a nos *Environment Variables*; no Docker, use `--build-arg NEXT_PUBLIC_API_URL=...`. O back só aceita as origens listadas em `CORS_ALLOW_ORIGINS`.
 
+`NEXT_PUBLIC_TURNSTILE_SITE_KEY` é a chave pública do [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/), o captcha do formulário de contato da landing. Fica vazia em desenvolvimento. Em produção, defina-a junto com `TURNSTILE_SECRET_KEY` no back; sem as duas, o site funciona, mas o formulário responde com erro.
+
 ## Testes E2E
 
 Os fluxos principais têm testes de ponta a ponta com Selenium, executados manualmente com `npm run test:e2e` e fora do CI. Veja [e2e/README.md](e2e/README.md).

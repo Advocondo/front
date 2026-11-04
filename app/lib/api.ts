@@ -1,9 +1,7 @@
 /** Cliente HTTP da API do back-end. A URL vem de NEXT_PUBLIC_API_URL (ver .env.example). */
 
+import { apiBaseUrl } from "./api-url";
 import { clearSession, getSession } from "./session";
-
-const baseUrl = (): string =>
-  (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/+$/, "");
 
 export class ApiError extends Error {
   constructor(
@@ -42,7 +40,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   const token = getSession()?.token;
   let response: Response;
   try {
-    response = await fetch(`${baseUrl()}${path}`, {
+    response = await fetch(`${apiBaseUrl()}${path}`, {
       ...init,
       headers: {
         "Content-Type": "application/json",

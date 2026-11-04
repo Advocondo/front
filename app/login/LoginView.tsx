@@ -87,6 +87,9 @@ export function LoginView() {
             Entrar na plataforma
           </Button>
           <p className={styles.ajuda}>Dúvidas de acesso: (61) 3021-8539 · seg a sex, 09h às 17h</p>
+          <Link href="/" className={styles.voltar}>
+            Voltar ao site
+          </Link>
         </form>
       </main>
     </div>

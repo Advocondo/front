@@ -41,6 +41,8 @@ npm run test:e2e -- e2e/login.e2e.ts            # um arquivo
 E2E_HEADLESS=false npm run test:e2e             # vendo o navegador
 ```
 
+Deixe `NEXT_PUBLIC_TURNSTILE_SITE_KEY` e `TURNSTILE_SECRET_KEY` vazias: com `ENVIRONMENT=local`, o back aceita o formulário de contato sem captcha, e o e-mail vai para o log em vez de sair de verdade.
+
 Os usuários de teste são criados pelo fluxo real de convite. Sem SMTP, o back escreve o e-mail no log, e os testes leem o link com `docker compose logs api`. Por isso o back precisa estar no Compose, com `SMTP_HOST` vazio. Cada execução cria usuários novos no banco local.
 
 ## Variáveis de ambiente

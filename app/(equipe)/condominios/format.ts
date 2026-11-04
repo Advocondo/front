@@ -1,6 +1,7 @@
+import { maskTelefone, onlyDigits } from "@/app/lib/masks";
 import type { Condominio, CondominioForm, CondominioPayload } from "./types";
 
-export const onlyDigits = (value: string): string => value.replace(/\D/g, "");
+export { maskTelefone, onlyDigits };
 
 /** Desde julho de 2026 o CNPJ pode ter letras nos 12 primeiros caracteres (IN RFB 2.229/2024). */
 export const normalizeCnpj = (value: string): string => value.toUpperCase().replace(/[^0-9A-Z]/g, "");
@@ -16,14 +17,6 @@ export function maskCnpj(value: string): string {
 
 export function maskCep(value: string): string {
   return onlyDigits(value).slice(0, 8).replace(/^(\d{5})(\d)/, "$1-$2");
-}
-
-export function maskTelefone(value: string): string {
-  const d = onlyDigits(value).slice(0, 11);
-  if (d.length <= 2) return d;
-  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
-  const split = d.length === 11 ? 7 : 6;
-  return `(${d.slice(0, 2)}) ${d.slice(2, split)}-${d.slice(split)}`;
 }
 
 /** 2026-01-31 -> 31/01/2026 (sem passar por Date, para não sofrer com fuso). */
