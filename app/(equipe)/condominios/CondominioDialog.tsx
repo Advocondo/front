@@ -72,7 +72,7 @@ export function CondominioDialog({ condominio, onClose, onSaved }: Props) {
         </>
       }
     >
-      <form id="condominio-form" onSubmit={submit} noValidate className="flex max-h-[60vh] flex-col gap-6 overflow-y-auto pr-1">
+      <form id="condominio-form" onSubmit={submit} noValidate className="flex max-h-[60vh] flex-col [&>*]:shrink-0 gap-6 overflow-y-auto pr-1">
         {formError && (
           <Alert tone="risk" title="Não foi possível salvar">
             {formError}
