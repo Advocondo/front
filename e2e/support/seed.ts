@@ -101,6 +101,15 @@ export async function createCondominium(name: string): Promise<TestCondominium> 
   return esperarSucesso<TestCondominium>(resposta, "Criar condomínio");
 }
 
+export async function linkCondominiums(userId: string, condominiumIds: string[]): Promise<void> {
+  const resposta = await chamarApi(`/users/${userId}/condominiums`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${await ensureAdmin()}` },
+    body: JSON.stringify({ condominium_ids: condominiumIds }),
+  });
+  await esperarSucesso(resposta, "Vincular condomínios");
+}
+
 export type TestDebtor = { id: string; name: string; unit: string };
 
 export async function createDebtor(condominiumId: string, name: string, unit: string): Promise<TestDebtor> {

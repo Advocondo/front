@@ -7,7 +7,7 @@ type LoginResponse = {
   user: Session["user"];
 };
 
-/** Tela inicial de cada perfil (US02-CA01). A Equipe Operacional ainda não tem painel próprio, e o do Cliente é a US37. */
+/** Tela inicial de cada perfil (US02-CA01). A Equipe Operacional ainda não tem painel próprio. */
 export function homeForRole(role: Role): string {
   if (role === "admin") return "/painel";
   return role === "client" ? "/painel-cliente" : "/condominios";
