@@ -469,12 +469,48 @@ describe("Detalhes do acordo", () => {
     expect(screen.getByRole("button", { name: "Editar parcela 3" })).toBeInTheDocument();
   });
 
-  it("acordo cancelado não oferece edição", async () => {
+  it("acordo cancelado não oferece edição nem baixa", async () => {
     mockApi({ dadosAcordo: { ...acordo, status: "cancelled" } });
     render(<AcordoDetalheView id="a-1" />);
     await screen.findByRole("heading", { name: "Cláudio Bezerra" });
     expect(screen.getByText("Cancelado")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Editar parcela 1" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Dar baixa/ })).not.toBeInTheDocument();
+  });
+
+  it("registra a baixa e recarrega o plano", async () => {
+    let paga = false;
+    const fetchMock = mockApi({
+      rota: (url, init) => {
+        if (init?.method === "POST") {
+          paga = true;
+          return { status: 200, body: { ...p1, status: "paid", remaining_amount: "0.00", payment_date: "2026-11-01" } };
+        }
+        if (url.endsWith("/installments")) return { status: 200, body: paga ? [{ ...p1, status: "paid", remaining_amount: "0.00", payment_date: "2026-11-01" }, p2] : [p1, p2] };
+        return undefined;
+      },
+    });
+    const user = userEvent.setup();
+    render(<AcordoDetalheView id="a-1" />);
+    await user.click(await screen.findByRole("button", { name: "Dar baixa na parcela 1 de Cláudio Bezerra" }));
+    await user.click(screen.getByRole("button", { name: "Confirmar pagamento" }));
+    expect(await screen.findByText("Baixa registrada com sucesso.")).toBeInTheDocument();
+    expect(chamada(fetchMock, "POST")[0]).toMatch(/\/installments\/i-1\/payment$/);
+    expect(await screen.findByText("1 de 2 parcelas pagas (50%)")).toBeInTheDocument();
+  });
+
+  it("pagamento parcial mostra o saldo no plano e abre o histórico", async () => {
+    const parcial: Parcela = { ...p1, remaining_amount: "2000.00" };
+    const fetchMock = mockApi({ plano: [parcial, p2], rota: (url) => (url.endsWith("/payments") ? { status: 200, body: [{ id: "p-1", amount: "750.00", payment_date: "2026-10-01", created_at: "2026-10-01T12:00:00Z" }] } : undefined) });
+    const user = userEvent.setup();
+    render(<AcordoDetalheView id="a-1" />);
+    expect(await screen.findByText("saldo R$ 2.000,00")).toBeInTheDocument();
+    expect(screen.getByText("Parcial")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Pagamentos da parcela 1 de Cláudio Bezerra" }));
+    expect(await screen.findByText("R$ 750,00")).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/installments/i-1/payments"))).toBe(true);
+    await user.click(screen.getAllByRole("button", { name: "Fechar" }).at(-1) as HTMLElement);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("mostra o erro de carregamento", async () => {

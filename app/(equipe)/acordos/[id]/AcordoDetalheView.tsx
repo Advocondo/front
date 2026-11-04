@@ -1,6 +1,6 @@
 "use client";
 
-import { Alert, Button, Card, DataTable, IconButton, MetricCard, StatusPill, Timeline, Toast, ToastStack } from "edson-alexandre-design-system";
+import { Alert, Button, Card, DataTable, IconButton, MetricCard, Timeline, Toast, ToastStack } from "edson-alexandre-design-system";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { PlataformaShell } from "@/app/components/PlataformaShell";
@@ -8,17 +8,14 @@ import { ApiError } from "@/app/lib/api";
 import { formatDateTime } from "@/app/lib/dates";
 import { centsFromApi, formatBRL } from "@/app/lib/money";
 import { formatDate } from "@/app/(equipe)/condominios/format";
+import { BaixaDialog } from "@/app/(equipe)/acompanhamento/BaixaDialog";
+import { PagamentosDialog } from "@/app/(equipe)/acompanhamento/PagamentosDialog";
+import { SituacaoParcela, temPagamentoParcial } from "@/app/(equipe)/acompanhamento/situacao";
 import { getAcordo, listAdvogados, listHistoricoDeResponsaveis, listParcelas } from "../api";
 import { StatusAcordo } from "../AcordosView";
 import type { Acordo, Advogado, AtribuicaoDeAdvogado, Parcela } from "../types";
 import { ParcelaDialog } from "./ParcelaDialog";
 import { ResponsavelDialog } from "./ResponsavelDialog";
-
-const SITUACAO: Record<Parcela["status"], { label: string; tone: "ok" | "info" | "risk" }> = {
-  paid: { label: "Paga", tone: "ok" },
-  open: { label: "Em aberto", tone: "info" },
-  overdue: { label: "Atrasada", tone: "risk" },
-};
 
 /** Parcela paga, com pagamento parcial ou de acordo cancelado não pode ser editada no back. */
 const podeEditar = (acordo: Acordo, parcela: Parcela): boolean =>
@@ -33,6 +30,8 @@ export function AcordoDetalheView({ id }: { id: string }) {
   const [advogados, setAdvogados] = useState<Advogado[]>([]);
   const [historico, setHistorico] = useState<AtribuicaoDeAdvogado[]>([]);
   const [trocandoResponsavel, setTrocandoResponsavel] = useState(false);
+  const [baixa, setBaixa] = useState<Parcela | null>(null);
+  const [pagamentos, setPagamentos] = useState<Parcela | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
 
   useEffect(() => {
@@ -124,8 +123,9 @@ export function AcordoDetalheView({ id }: { id: string }) {
                   label: "Situação",
                   render: (p: Parcela) => (
                     <span className="inline-flex flex-wrap items-center gap-2">
-                      <StatusPill label={SITUACAO[p.status].label} tone={SITUACAO[p.status].tone} />
+                      <SituacaoParcela parcela={p} />
                       {p.payment_date && <span className="text-sm">{`pago em ${formatDate(p.payment_date)}`}</span>}
+                      {temPagamentoParcial(p) && <span className="text-sm">{`saldo ${formatBRL(p.remaining_amount)}`}</span>}
                     </span>
                   ),
                 },
@@ -133,7 +133,13 @@ export function AcordoDetalheView({ id }: { id: string }) {
                   key: "acoes",
                   label: "",
                   align: "right",
-                  render: (p: Parcela) => podeEditar(acordo, p) && <IconButton icon="pencil" label={`Editar parcela ${p.number}`} onClick={() => setEditando(p)} />,
+                  render: (p: Parcela) => (
+                    <span className="inline-flex items-center justify-end gap-1">
+                      {(p.status === "paid" || temPagamentoParcial(p)) && <Button size="sm" variant="ghost" aria-label={`Pagamentos da parcela ${p.number} de ${acordo.debtor.name}`} onClick={() => setPagamentos(p)}>Pagamentos</Button>}
+                      {acordo.status === "active" && p.status !== "paid" && <Button size="sm" variant="secondary" icon="banknote" aria-label={`Dar baixa na parcela ${p.number} de ${acordo.debtor.name}`} onClick={() => setBaixa(p)}>Dar baixa</Button>}
+                      {podeEditar(acordo, p) && <IconButton icon="pencil" label={`Editar parcela ${p.number}`} onClick={() => setEditando(p)} />}
+                    </span>
+                  ),
                 },
               ]}
             />
@@ -155,6 +161,32 @@ export function AcordoDetalheView({ id }: { id: string }) {
           </>
         )}
       </div>
+
+      {baixa && acordo && (
+        <BaixaDialog
+          parcela={baixa}
+          descricao={acordo.debtor.name}
+          onClose={() => setBaixa(null)}
+          onSaved={(atualizada) => {
+            setBaixa(null);
+            setAviso(atualizada.status === "paid" ? "Baixa registrada com sucesso." : "Pagamento parcial registrado com sucesso.");
+            setRecarregar((n) => n + 1);
+          }}
+        />
+      )}
+
+      {pagamentos && acordo && (
+        <PagamentosDialog
+          parcela={pagamentos}
+          descricao={acordo.debtor.name}
+          onClose={() => setPagamentos(null)}
+          onChanged={(_, texto) => {
+            setPagamentos(null);
+            setAviso(texto);
+            setRecarregar((n) => n + 1);
+          }}
+        />
+      )}
 
       {trocandoResponsavel && acordo && (
         <ResponsavelDialog
