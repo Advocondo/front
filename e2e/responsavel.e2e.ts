@@ -26,7 +26,7 @@ describe("Advogado responsável", () => {
   async function entrarComoAdmin(): Promise<void> {
     await openLogin(driver);
     await submitLogin(driver, env.adminEmail, env.adminPassword);
-    await waitForPath(driver, "/condominios");
+    await waitForPath(driver, "/painel");
   }
 
   async function abrirDialogo(botao: string): Promise<void> {

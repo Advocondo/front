@@ -3,33 +3,15 @@
 import { Alert, Button, Card, EmptyState, IconButton, MetricCard, Toast, ToastStack } from "edson-alexandre-design-system";
 import { useEffect, useState } from "react";
 import { PlataformaShell } from "@/app/components/PlataformaShell";
+import { mesAtual, nomeDoMes, SeletorDeMes } from "@/app/components/SeletorDeMes";
 import { ApiError } from "@/app/lib/api";
-import { hojeEmBrasilia } from "@/app/lib/dates";
 import { centsFromApi, formatBRL } from "@/app/lib/money";
 import { useSession } from "@/app/lib/session";
 import { getIndicadores, getMinhaMeta, getResumoDoEscritorio, getResumoDoOperador, listMetasDaEquipe, type IndicadoresDoMes, type MetaDoColaborador, type MinhaMeta, type ResumoDoEscritorio } from "./api";
+import { BarraDeAtingimento, formatarPercentual } from "./atingimento";
 import { MetaDialog } from "./MetaDialog";
 
-const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-
-function mesAtual() {
-  const [ano, mes] = hojeEmBrasilia().split("-").map(Number);
-  return { ano, mes };
-}
-
 const naoEncontrado = (e: unknown): boolean => e instanceof ApiError && e.status === 404;
-
-/** "27.40" -> "27,4%". A barra para em 100%, mas o texto mostra quando a meta é superada. */
-const formatarPercentual = (valor: string): string => `${Number(valor).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
-
-function BarraDeAtingimento({ percentual, rotulo }: { percentual: string; rotulo: string }) {
-  const largura = Math.min(Number(percentual), 100);
-  return (
-    <div role="progressbar" aria-label={rotulo} aria-valuenow={Math.round(largura)} aria-valuemin={0} aria-valuemax={100} className="h-2 w-full overflow-hidden rounded" style={{ background: "var(--stone-200)" }}>
-      <div className="h-full" style={{ width: `${largura}%`, background: "var(--navy-600)" }} />
-    </div>
-  );
-}
 
 type Periodo = { ano: number; mes: number; ehMesAtual: boolean };
 
@@ -216,7 +198,7 @@ function VisaoDoEscritorio({ ano, mes, ehMesAtual }: Periodo) {
           colaboradorInicial={dialogo.colaborador}
           ano={ano}
           mes={mes}
-          nomeDoMes={`${MESES[mes - 1]} ${ano}`}
+          nomeDoMes={nomeDoMes({ ano, mes })}
           onClose={() => setDialogo(null)}
           onSaved={(nome) => {
             setDialogo(null);
@@ -242,19 +224,10 @@ export function MetasView() {
   const ehMesAtual = ano === atual.ano && mes === atual.mes;
   const administrador = session?.user.role === "admin";
 
-  function mudarDeMes(delta: number) {
-    const indice = ano * 12 + (mes - 1) + delta;
-    setPeriodo({ ano: Math.floor(indice / 12), mes: (indice % 12) + 1 });
-  }
-
   return (
     <PlataformaShell activeId="metas" title="Metas e comissões" subtitle={administrador ? "Visão do escritório" : session?.user.name}>
       <div className="grid gap-5">
-        <div className="flex items-center justify-center gap-4">
-          <IconButton icon="chevron-left" label="Mês anterior" onClick={() => mudarDeMes(-1)} />
-          <h2 className="min-w-48 text-center text-xl font-semibold" style={{ fontFamily: "var(--font-sans)" }}>{`${MESES[mes - 1]} ${ano}`}</h2>
-          <IconButton icon="chevron-right" label="Próximo mês" onClick={() => mudarDeMes(1)} />
-        </div>
+        <SeletorDeMes ano={ano} mes={mes} onChange={setPeriodo} />
         {administrador ? <VisaoDoEscritorio ano={ano} mes={mes} ehMesAtual={ehMesAtual} /> : <VisaoDoColaborador ano={ano} mes={mes} ehMesAtual={ehMesAtual} />}
       </div>
     </PlataformaShell>

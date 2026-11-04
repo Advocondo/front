@@ -38,7 +38,7 @@ afterEach(() => {
 
 describe("Login", () => {
   it.each<[Role, string]>([
-    ["admin", "/condominios"],
+    ["admin", "/painel"],
     ["operator", "/condominios"],
     ["client", "/painel-cliente"],
   ])("US02-CA01: leva o perfil %s para %s", async (role, destino) => {
