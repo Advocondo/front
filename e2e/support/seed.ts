@@ -48,12 +48,21 @@ export async function ensureAdmin(): Promise<string> {
   return token;
 }
 
-/** Sem SMTP em ambiente local, o back escreve o e-mail de convite no log (docs/auth.md do back). */
-async function lerTokenDoConvite(email: string): Promise<string> {
+/** Sem SMTP em ambiente local, o back escreve os e-mails no log (docs/auth.md do back). */
+async function logDaApi(): Promise<string> {
   const { stdout } = await executar("docker", ["compose", "logs", "--no-log-prefix", "api"], {
     cwd: env.backDir,
     maxBuffer: 50 * 1024 * 1024,
   });
+  return stdout;
+}
+
+export async function contactEmailWasLogged(texto: string): Promise<boolean> {
+  return (await logDaApi()).includes(texto);
+}
+
+async function lerTokenDoConvite(email: string): Promise<string> {
+  const stdout = await logDaApi();
   const mensagem = stdout.slice(stdout.lastIndexOf(`Para: ${email}`));
   const achado = stdout.includes(`Para: ${email}`) ? /[?&]token=([^\s&]+)/.exec(mensagem) : null;
   if (!achado) throw new Error(`Convite de ${email} não encontrado em "docker compose logs api".`);

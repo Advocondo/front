@@ -83,6 +83,11 @@
   text-align: center;
 }
 
+.voltar {
+  font: var(--fw-medium) var(--fs-caption) / 1.4 var(--font-sans);
+  text-align: center;
+}
+
 .alternarSenha {
   display: block;
 }

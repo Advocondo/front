@@ -19,6 +19,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # NEXT_PUBLIC_* é embutida no bundle em tempo de build: passe --build-arg.
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY
+ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY
 RUN npm run build
 
 # --- Runtime (standalone output, minimal image) -----------------------------

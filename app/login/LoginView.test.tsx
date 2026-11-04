@@ -103,6 +103,11 @@ describe("Login", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it("o link Voltar ao site leva à landing", () => {
+    render(<LoginView />);
+    expect(screen.getByRole("link", { name: "Voltar ao site" })).toHaveAttribute("href", "/");
+  });
+
   it("o link Esqueci minha senha aponta para a recuperação", () => {
     render(<LoginView />);
     expect(screen.getByRole("link", { name: "Esqueci minha senha" })).toHaveAttribute("href", "/recuperar-senha");

@@ -77,11 +77,6 @@ describe("Login", () => {
       await waitForPath(driver, "/login");
     });
 
-    it("sem sessão, a home leva ao login", async () => {
-      await visit(driver, "/");
-      await waitForPath(driver, "/login");
-    });
-
     it("Cliente não fica em tela do escritório", async () => {
       await submitLogin(driver, client.email, client.password);
       await waitForPath(driver, "/painel-cliente");

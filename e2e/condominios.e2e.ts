@@ -53,11 +53,6 @@ describe("Condomínios", () => {
     await waitForElement(driver, BUSCA);
   });
 
-  it("com sessão, a home redireciona para a tela de condomínios", async () => {
-    await visit(driver, "/");
-    await waitForPath(driver, "/condominios");
-  });
-
   it("mostra a barra lateral, o título e a busca", async () => {
     const texto = await driver.findElement(By.css("body")).getText();
     expect(texto).toContain("Advocondo");
