@@ -37,7 +37,8 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 
 | Lacuna | O que acontece hoje | Issue |
 | --- | --- | --- |
-| Parcelas e relatório no Painel do Cliente | O Cliente vê a situação de cada acordo e o histórico do morador, mas não abre as parcelas nem baixa relatório. O back já tem as rotas | [#47](https://github.com/Advocondo/front/issues/47), [#38](https://github.com/Advocondo/front/issues/38) |
+| Parcelas no Painel do Cliente | O Cliente vê a situação de cada acordo e o histórico do morador, mas não abre as parcelas. O back já tem a rota | [#47](https://github.com/Advocondo/front/issues/47) |
+| Relatório de condomínio sem acordos | O botão fica no card do condomínio, e o card só existe quando há acordo. Sem acordo, não há o que baixar pela tela, embora a rota responda | Sem issue |
 | Painel da Equipe Operacional | Depois do login, a pessoa cai em Condomínios. O protótipo mobile tem uma visão própria, com totais do mês, meta, vencimentos da semana e últimas baixas | Sem issue |
 | Editar perfil e encerrar sessões | O usuário não troca os próprios dados nem a própria senha pela tela | [#5](https://github.com/Advocondo/front/issues/5), [#6](https://github.com/Advocondo/front/issues/6) |
 | Histórico de ações do usuário | O back registra, mas não há tela | [#11](https://github.com/Advocondo/front/issues/11) |
