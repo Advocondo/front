@@ -28,6 +28,9 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Acordo não tem status "concluído" nem "em atraso" | O protótipo tem esses filtros; o back só tem ativo e cancelado | Sem issue |
 | Código do acordo (`ACD-2026-…`) | Está nos protótipos, mas não existe no back | Sem issue |
 | Meio de pagamento da baixa | Está no protótipo, mas não existe no back | Sem issue |
+| Comissão por parcela paga | O protótipo lista cada parcela, mas o back só devolve o total do mês | Sem issue |
+| Comissão e faturamento de meses anteriores | `/operator-panel/financial` e `/admin-panel/financial` só respondem o mês atual, então em outros meses a tela só mostra a meta | Sem issue |
+| "Acordos fechados" no mês | Está no protótipo, mas o back não devolve esse número | Sem issue |
 | Observações do devedor | Estão no protótipo, mas não existem no back | Sem issue |
 
 ## Telas e fluxos que ainda não existem
@@ -37,7 +40,6 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Recuperação de senha | "Esqueci minha senha" leva a uma página 404 | [#3](https://github.com/Advocondo/front/issues/3) |
 | Painel do Cliente | O Cliente entra e vê uma página provisória | [#36](https://github.com/Advocondo/front/issues/36) |
 | Vincular condomínios ao Cliente | Um Cliente convidado não tem nenhum dado | [#10](https://github.com/Advocondo/front/issues/10) |
-| Metas e comissões | A comissão é calculada no back, mas não aparece em nenhuma tela | [#31](https://github.com/Advocondo/front/issues/31), [#35](https://github.com/Advocondo/front/issues/35) |
 | Painel de indicadores | Depois do login, a equipe cai em Condomínios | [#33](https://github.com/Advocondo/front/issues/33) |
 | Editar perfil e encerrar sessões | O usuário não troca os próprios dados nem a própria senha pela tela | [#5](https://github.com/Advocondo/front/issues/5), [#6](https://github.com/Advocondo/front/issues/6) |
 | Histórico de ações do usuário | O back registra, mas não há tela | [#11](https://github.com/Advocondo/front/issues/11) |
@@ -47,6 +49,15 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Importar inadimplentes em lote | O back aceita a planilha, mas não há tela | [#14](https://github.com/Advocondo/front/issues/14) |
 | Sinalizar renovação de contrato | A API devolve `near_renewal`, mas a lista não mostra | [#23](https://github.com/Advocondo/front/issues/23) |
 | Página de política de privacidade e de cookies | No rodapé, são só texto | Sem issue |
+
+## Regras de negócio a decidir
+
+| Lacuna | Situação | Decisão necessária |
+| --- | --- | --- |
+| Meta e comissão usam bases diferentes | O atingimento da meta soma os honorários dos acordos que a pessoa **cadastrou**. A comissão soma os dos acordos em que ela é a **advogada responsável**. Quem cadastra para outro advogado atinge a meta sem ganhar comissão, e o contrário também acontece. A tela identifica as duas bases | Qual base vale para as duas |
+| `remaining_to_goal` mistura as bases | `/operator-panel/financial` calcula quanto falta comparando a meta com a comissão, enquanto `/goals/me` compara com os honorários dos acordos cadastrados. A tela usa só a segunda conta | Depende da decisão acima |
+| Percentual de comissão | Hoje a comissão é 100% dos honorários. Os protótipos mostram 8% e 30% | Definir o percentual e onde ele é configurado |
+| Pagamento parcial na comissão | Só conta quando quita a parcela; o protótipo não define | Confirmar |
 
 ## Diferenças em relação aos protótipos
 
@@ -58,6 +69,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Login | Texto do painel navy vem do mobile ("acordos extrajudiciais") | O desktop ainda fala em "processos" |
 | Landing | Sem WhatsApp, redes sociais, avaliações e fotos, os blocos ficam escondidos | O conteúdo inicial não os traz, e as avaliações do protótipo são parafraseadas |
 | Faturas do mês | Sem calendário e sem exportar | O calendário é herança de Prazos; exportar é a [#34](https://github.com/Advocondo/front/issues/34) |
+| Metas e comissões | Indicadores do Administrador: faturamento, acordos ativos e inadimplência, em vez de recuperado e acordos fechados; a meta é definida no mês da tela, sem seletor de mês no diálogo | O back não devolve recuperado nem acordos fechados; o seletor do diálogo seria redundante com o da tela |
 
 ## Limitações técnicas
 

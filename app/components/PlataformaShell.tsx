@@ -11,6 +11,7 @@ const NAV = [
   { section: "Acompanhamento" },
   { id: "acordos", label: "Acordos", icon: "handshake" },
   { id: "acompanhamento", label: "Faturas do mês", icon: "calendar-check" },
+  { id: "metas", label: "Metas e comissões", icon: "target" },
   { id: "condominios", label: "Condomínios", icon: "building-2" },
   { id: "devedores", label: "Devedores", icon: "users" },
 ];
@@ -21,7 +22,7 @@ const NAV_ADMIN = [
   { id: "usuarios", label: "Gestão de usuários", icon: "users-round" },
 ];
 
-const ROTAS: Record<string, string> = { usuarios: "/usuarios", acordos: "/acordos", acompanhamento: "/acompanhamento", condominios: "/condominios", devedores: "/devedores" };
+const ROTAS: Record<string, string> = { metas: "/metas", usuarios: "/usuarios", acordos: "/acordos", acompanhamento: "/acompanhamento", condominios: "/condominios", devedores: "/devedores" };
 
 type Props = {
   activeId: string;

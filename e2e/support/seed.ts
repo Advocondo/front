@@ -113,6 +113,28 @@ export async function createDebtor(condominiumId: string, name: string, unit: st
 
 export type TestLawyer = TestUser & { name: string };
 
+async function tokenDe(usuario: TestUser): Promise<string> {
+  const resposta = await chamarApi("/auth/login", { method: "POST", body: JSON.stringify({ email: usuario.email, password: usuario.password }) });
+  return (await esperarSucesso<{ access_token: string }>(resposta, "Entrar")).access_token;
+}
+
+/** Cadastra como este usuário: a meta conta os acordos que ele mesmo cadastrou. */
+export async function createAgreementAs(usuario: TestUser, condominiumId: string, debtorId: string, firstDueDate: string): Promise<{ id: string }> {
+  const resposta = await chamarApi("/agreements", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${await tokenDe(usuario)}` },
+    body: JSON.stringify({ condominium_id: condominiumId, debtor_id: debtorId, total_amount: "900.00", installment_count: 3, first_due_date: firstDueDate, fee_percentage: "10.00" }),
+  });
+  return esperarSucesso<{ id: string }>(resposta, "Criar acordo");
+}
+
+export async function payFirstInstallment(agreementId: string, paymentDate: string): Promise<void> {
+  const headers = { Authorization: `Bearer ${await ensureAdmin()}` };
+  const parcelas = await esperarSucesso<{ id: string }[]>(await chamarApi(`/agreements/${agreementId}/installments`, { headers }), "Listar parcelas");
+  const resposta = await chamarApi(`/installments/${parcelas[0].id}/payment`, { method: "POST", headers, body: JSON.stringify({ payment_date: paymentDate }) });
+  await esperarSucesso(resposta, "Dar baixa");
+}
+
 export async function createAgreement(condominiumId: string, debtorId: string, firstDueDate = "2030-01-31"): Promise<{ id: string }> {
   const resposta = await chamarApi("/agreements", {
     method: "POST",

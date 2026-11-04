@@ -2,8 +2,11 @@
 
 const MAX_DIGITOS = 12;
 
-/** "5500.00" (formato da API) -> 550000n */
-export const centsFromApi = (valor: string): bigint => BigInt(valor.replace(".", ""));
+/** "5500.00" (formato da API) -> 550000n. Aceita menos casas: nem toda rota envia duas. */
+export function centsFromApi(valor: string): bigint {
+  const [reais, centavos = ""] = valor.split(".");
+  return BigInt(reais) * 100n + BigInt(centavos.padEnd(2, "0").slice(0, 2));
+}
 
 /** 550000n -> "5500.00" (formato da API) */
 export function centsToApi(centavos: bigint): string {

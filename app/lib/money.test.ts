@@ -21,6 +21,14 @@ describe("dinheiro", () => {
     expect(formatBRL(valor)).toBe(esperado);
   });
 
+  it.each([
+    ["5500", 550000n],
+    ["5500.5", 550050n],
+    ["0", 0n],
+  ])("lê da API o valor %s, com menos de duas casas", (api, centavos) => {
+    expect(centsFromApi(api)).toBe(centavos);
+  });
+
   it("não usa espaço especial, para o texto ser fácil de copiar e de testar", () => {
     expect(formatBRL(100n)).not.toContain(" ");
   });
