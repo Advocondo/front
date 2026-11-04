@@ -1,12 +1,15 @@
 import { apiFetch } from "@/app/lib/api";
-import type { Acordo, Advogado, NovoAcordo, Parcela } from "./types";
+import type { Acordo, Advogado, AtribuicaoDeAdvogado, NovoAcordo, Parcela } from "./types";
 
 export const LIMITE_LISTAGEM = 200;
 
-export function listAcordos(busca: string, status: string, signal?: AbortSignal): Promise<Acordo[]> {
+export type FiltrosAcordo = { busca: string; status: string; responsavelId: string };
+
+export function listAcordos({ busca, status, responsavelId }: FiltrosAcordo, signal?: AbortSignal): Promise<Acordo[]> {
   const params = new URLSearchParams({ limit: String(LIMITE_LISTAGEM) });
   if (busca.trim()) params.set("search", busca.trim());
   if (status) params.set("status", status);
+  if (responsavelId) params.set("responsible_lawyer_id", responsavelId);
   return apiFetch<Acordo[]>(`/agreements?${params}`, { signal });
 }
 
@@ -21,6 +24,11 @@ export function createAcordo(acordo: NovoAcordo): Promise<Acordo> {
 /** O back cadastra o acordo sem responsável; a atribuição é uma chamada à parte (US18). */
 export function assignLawyer(acordoId: string, advogadoId: string): Promise<Acordo> {
   return apiFetch<Acordo>(`/agreements/${acordoId}/responsible-lawyer`, { method: "PUT", body: JSON.stringify({ lawyer_id: advogadoId }) });
+}
+
+/** Da mais antiga para a mais recente. */
+export function listHistoricoDeResponsaveis(acordoId: string, signal?: AbortSignal): Promise<AtribuicaoDeAdvogado[]> {
+  return apiFetch<AtribuicaoDeAdvogado[]>(`/agreements/${acordoId}/lawyer-history`, { signal });
 }
 
 export function listAdvogados(signal?: AbortSignal): Promise<Advogado[]> {
