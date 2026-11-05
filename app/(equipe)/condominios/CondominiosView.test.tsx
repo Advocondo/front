@@ -63,10 +63,15 @@ describe("Listagem de condomínios", () => {
   });
 
   it("após cadastrar, recarrega a lista e confirma com um aviso", async () => {
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(new Response("[]", { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify(villa), { status: 201 }))
-      .mockResolvedValue(new Response(JSON.stringify([villa]), { status: 200 }));
+    let cadastrou = false;
+    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+      if (url.includes("/notifications")) return Promise.resolve(new Response(JSON.stringify({ unread_count: 0, notifications: [] }), { status: 200 }));
+      if (init?.method === "POST") {
+        cadastrou = true;
+        return Promise.resolve(new Response(JSON.stringify(villa), { status: 201 }));
+      }
+      return Promise.resolve(new Response(JSON.stringify(cadastrou ? [villa] : []), { status: 200 }));
+    });
     vi.stubGlobal("fetch", fetchMock);
     render(<CondominiosView />);
     await userEvent.click((await screen.findAllByRole("button", { name: /Novo condomínio/ }))[0]);

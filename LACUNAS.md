@@ -13,6 +13,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Turnstile nunca testado com chave real | A chamada à Cloudflare é simulada nos testes | Enviar o formulário uma vez depois de configurar as chaves |
 | E-mail real nunca testado | Em ambiente local, os e-mails (convite, contato) só vão para o log | Conferir um convite e um contato com o SMTP de produção |
 | `NEXT_PUBLIC_API_URL` e CORS em produção não conferidos | Sem a variável, o site chama `localhost:8000` na máquina do visitante, e as telas mostram erro | Definir a variável na Vercel e conferir `CORS_ALLOW_ORIGINS` no Coolify |
+| Comando diário das notificações não conferido | Sem a *Scheduled Task* no Coolify, nenhuma notificação de atraso é criada, e o sino fica sempre vazio | Conferir a tarefa `python -m advocondo.notificacoes.overdue`, frequência `5 3 * * *`, conforme `back/docs/notificacoes.md` |
 | Destinatário do formulário de contato | O conteúdo inicial usa o e-mail real do cliente | Trocar na seção de contato durante demonstrações |
 
 ## Faltam rotas ou dados no back
@@ -35,13 +36,13 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | OAB no cabeçalho do perfil | Está no protótipo, mas a sessão guardada não traz esse dado | Sem issue |
 | Motivo da alteração do acordo | O protótipo pede o motivo ao editar, mas a rota não recebe esse campo | Sem issue |
 | Quem cancelou e quem reativou o acordo | O back guarda quando e por quê, mas ainda não registra quem | Sem issue |
+| Outros tipos de notificação | O protótipo também avisa de baixa estornada e de contrato próximo da renovação. O back só cria o aviso de parcela em atraso | Sem issue |
 | Observações do devedor | Estão no protótipo, mas não existem no back | Sem issue |
 
 ## Telas e fluxos que ainda não existem
 
 | Lacuna | O que acontece hoje | Issue |
 | --- | --- | --- |
-| Destino da notificação de atraso | O sino ainda não existe. Quando existir, a notificação deve levar a `/faturas/{id}`, a tela do detalhe | [#29](https://github.com/Advocondo/front/issues/29) |
 | Relatório de condomínio sem acordos | O botão fica no card do condomínio, e o card só existe quando há acordo. Sem acordo, não há o que baixar pela tela, embora a rota responda | Sem issue |
 | Painel da Equipe Operacional | Depois do login, a pessoa cai em Condomínios. O protótipo mobile tem uma visão própria, com totais do mês, meta, vencimentos da semana e últimas baixas | Sem issue |
 | Histórico de ações do usuário | O back registra, mas não há tela | [#11](https://github.com/Advocondo/front/issues/11) |
@@ -81,6 +82,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Meu perfil | Sessões antigas aparecem como "Aparelho não identificado" até o próximo login | O back só guarda o aparelho desde a [#127](https://github.com/Advocondo/back/pull/127) |
 | Editar acordo | Unidade e advogado não estão no diálogo: a unidade pertence ao devedor, e o responsável tem o próprio botão. O dia de vencimento é editado em cada parcela | É como o back separa esses dados |
 | Cancelar acordo | O motivo é obrigatório na tela, como no protótipo, mas opcional na API | Um acordo cancelado pela API pode aparecer como "Sem motivo registrado" |
+| Notificações | O sino abre uma página, como no protótipo mobile, e não uma lista suspensa. O número só atualiza ao abrir uma tela, sem aviso em tempo real | O back não envia atualizações, e as notificações são criadas uma vez por dia |
 | Faturas do mês | Sem calendário e sem exportar | O calendário é herança de Prazos; exportar é a [#34](https://github.com/Advocondo/front/issues/34) |
 | Metas e comissões | Indicadores do Administrador: faturamento, acordos ativos e inadimplência, em vez de recuperado e acordos fechados; a meta é definida no mês da tela, sem seletor de mês no diálogo | O back não devolve recuperado nem acordos fechados; o seletor do diálogo seria redundante com o da tela |
 

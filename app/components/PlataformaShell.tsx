@@ -4,6 +4,7 @@ import { IconButton, SidebarNav, TopBar } from "edson-alexandre-design-system";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
+import { SinoDeNotificacoes } from "@/app/components/SinoDeNotificacoes";
 import { logOut } from "@/app/lib/auth";
 import { useSession } from "@/app/lib/session";
 
@@ -33,11 +34,13 @@ type Props = {
   title: string;
   subtitle?: string;
   actions?: ReactNode;
+  /** Só a tela de notificações passa: ela já sabe o número, e o sino acompanha. */
+  naoLidas?: number;
   children: ReactNode;
 };
 
 /** Casca da plataforma interna: barra lateral fixa, barra superior e área de conteúdo. */
-export function PlataformaShell({ activeId, title, subtitle, actions, children }: Props) {
+export function PlataformaShell({ activeId, title, subtitle, actions, naoLidas, children }: Props) {
   const router = useRouter();
   const session = useSession();
   return (
@@ -60,7 +63,16 @@ export function PlataformaShell({ activeId, title, subtitle, actions, children }
         />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar title={title} subtitle={subtitle} actions={actions} />
+        <TopBar
+          title={title}
+          subtitle={subtitle}
+          actions={
+            <span className="inline-flex items-center gap-3">
+              {actions}
+              <SinoDeNotificacoes contagem={naoLidas} />
+            </span>
+          }
+        />
         <main className="flex-1 p-6">{children}</main>
       </div>
     </div>
