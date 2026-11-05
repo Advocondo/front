@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from "@/app/lib/api";
+import { ApiError, apiFetch, apiFetchBlob } from "@/app/lib/api";
 import { onlyDigits } from "@/app/lib/masks";
 import type { Devedor, DevedorForm } from "./types";
 
@@ -42,4 +42,29 @@ export async function createDevedor(form: DevedorForm, confirmarDuplicidade: boo
 /** O condomínio não muda depois do cadastro. */
 export function updateDevedor(id: string, form: DevedorForm): Promise<Devedor> {
   return apiFetch<Devedor>(`/debtors/${id}`, { method: "PATCH", body: JSON.stringify(dadosDoDevedor(form)) });
+}
+
+/** Uma linha da planilha, com o número dela no Excel (US14). */
+export type LinhaDaPlanilha = {
+  number: number;
+  status: "valid" | "invalid" | "similar";
+  values: Record<string, string | null>;
+  errors: string[];
+  similar_debtors: Devedor[];
+  repeats_row: number | null;
+};
+
+export type ResultadoDaPlanilha = { confirmed: boolean; imported: number; rows: LinhaDaPlanilha[] };
+
+/** `confirmar` falso só valida. Verdadeiro grava as linhas válidas, validando tudo de novo. */
+export function enviarPlanilha(condominioId: string, arquivo: File, confirmar: boolean, signal?: AbortSignal): Promise<ResultadoDaPlanilha> {
+  const corpo = new FormData();
+  corpo.append("condominium_id", condominioId);
+  corpo.append("file", arquivo);
+  corpo.append("confirm", String(confirmar));
+  return apiFetch<ResultadoDaPlanilha>("/debtors/import", { method: "POST", body: corpo, signal });
+}
+
+export function baixarModeloDePlanilha(): Promise<Blob> {
+  return apiFetchBlob("/debtors/import/template");
 }
