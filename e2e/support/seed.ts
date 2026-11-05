@@ -1,5 +1,6 @@
 import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { writeFileSync } from "node:fs";
 import { promisify } from "node:util";
 import { env } from "./env";
 
@@ -172,6 +173,23 @@ export async function cancelAgreement(id: string): Promise<void> {
 /** O comando diário que cria as notificações de parcela em atraso (docs/notificacoes.md do back). */
 export async function runOverdueNotifications(): Promise<void> {
   await executar("docker", ["compose", "exec", "-T", "api", "uv", "run", "python", "-m", "advocondo.notificacoes.overdue"], { cwd: env.backDir });
+}
+
+/** Monta um .xlsx de verdade com a mesma biblioteca do back, para o teste enviar um arquivo real. */
+export async function createSpreadsheet(caminho: string, linhas: string[][]): Promise<void> {
+  const script = [
+    "import base64, io, json, sys",
+    "from openpyxl import Workbook",
+    "planilha = Workbook()",
+    "aba = planilha.active",
+    "aba.append(['Nome', 'Unidade', 'Telefone', 'E-mail'])",
+    "[aba.append(linha) for linha in json.loads(sys.argv[1])]",
+    "saida = io.BytesIO()",
+    "planilha.save(saida)",
+    "print(base64.b64encode(saida.getvalue()).decode())",
+  ].join("\n");
+  const { stdout } = await executar("docker", ["compose", "exec", "-T", "api", "uv", "run", "python", "-c", script, JSON.stringify(linhas)], { cwd: env.backDir });
+  writeFileSync(caminho, Buffer.from(stdout.trim().split("\n").at(-1) ?? "", "base64"));
 }
 
 export async function deactivateUser(id: string): Promise<void> {

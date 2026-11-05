@@ -10,9 +10,10 @@ import { listCondominios } from "@/app/(equipe)/condominios/api";
 import type { Condominio } from "@/app/(equipe)/condominios/types";
 import { listDevedores } from "./api";
 import { DevedorDialog } from "./DevedorDialog";
+import { ImportarDialog } from "./ImportarDialog";
 import type { Devedor } from "./types";
 
-type Dialogo = { tipo: "novo" } | { tipo: "editar"; devedor: Devedor } | null;
+type Dialogo = { tipo: "novo" } | { tipo: "editar"; devedor: Devedor } | { tipo: "importar" } | null;
 
 const DEBOUNCE_MS = 300;
 
@@ -90,6 +91,9 @@ export function DevedoresView() {
             />
           </div>
           <div className="flex-1" />
+          <Button variant="secondary" icon="upload" disabled={!condominios || semCondominio} onClick={() => setDialogo({ tipo: "importar" })}>
+            Importar planilha
+          </Button>
           <Button icon="plus" disabled={!condominios || semCondominio} onClick={() => setDialogo({ tipo: "novo" })}>
             Novo devedor
           </Button>
@@ -136,7 +140,20 @@ export function DevedoresView() {
         )}
       </div>
 
-      {dialogo && condominios && (
+      {dialogo?.tipo === "importar" && condominios && (
+        <ImportarDialog
+          condominios={condominios}
+          condominioInicial={condominioId}
+          onClose={() => setDialogo(null)}
+          onImported={(texto) => {
+            setDialogo(null);
+            setAviso(texto);
+            setRecarregar((n) => n + 1);
+          }}
+        />
+      )}
+
+      {dialogo && dialogo.tipo !== "importar" && condominios && (
         <DevedorDialog
           devedor={dialogo.tipo === "editar" ? dialogo.devedor : undefined}
           condominios={condominios}

@@ -55,7 +55,6 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Anexar um link como documento | O back aceita um link no lugar de um arquivo, e a tela mostra os que existirem, mas só envia arquivos | Sem issue |
 | PDFs no Painel do Cliente | O Cliente abre o PDF pelo link, mas o painel não lista os PDFs do acordo. O back já permite | Sem issue |
 | Voltar ao link do PDF depois do login | Sem sessão, o link leva ao login, e depois do login a pessoa cai na tela inicial, não no PDF | Sem issue |
-| Importar inadimplentes em lote | O back aceita a planilha, mas não há tela | [#14](https://github.com/Advocondo/front/issues/14) |
 | Página de política de privacidade e de cookies | No rodapé, são só texto | Sem issue |
 
 ## Regras de negócio a decidir
@@ -89,6 +88,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Notificações | O sino abre uma página, como no protótipo mobile, e não uma lista suspensa. O número só atualiza ao abrir uma tela, sem aviso em tempo real | O back não envia atualizações, e as notificações são criadas uma vez por dia |
 | Condomínios | A renovação é registrada na lista, porque não há tela de detalhe do condomínio. A janela do aviso é de 60 dias, fixa no back | O detalhe do condomínio ainda não existe |
 | Detalhes do acordo | Parcelas, documentos e históricos ficam em blocos na mesma página, não em abas. O PDF usa o nome e o tamanho do back, sem o código do acordo nem o número de páginas | As abas ficam para quando a tela for revista. O código do acordo não existe no back |
+| Importar inadimplentes | Fica em Devedores, não em Acordos, e aceita só `.xlsx`, não `.csv`. A prévia reenvia o arquivo para confirmar, sem guardar nada entre os passos | Devedores tem tela própria neste sistema, e o back só lê `.xlsx` |
 | Faturas do mês | Sem calendário e sem exportar | O calendário é herança de Prazos; exportar é a [#34](https://github.com/Advocondo/front/issues/34) |
 | Metas e comissões | Indicadores do Administrador: faturamento, acordos ativos e inadimplência, em vez de recuperado e acordos fechados; a meta é definida no mês da tela, sem seletor de mês no diálogo | O back não devolve recuperado nem acordos fechados; o seletor do diálogo seria redundante com o da tela |
 
