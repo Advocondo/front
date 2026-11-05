@@ -14,7 +14,7 @@ const respostaApi: CondominioApi = {
 
 const salvo: Condominio = {
   id: ID, nome: "Mirante", cnpj: "14447918000198", cep: null, logradouro: null, bairro: null, cidade: "Brasília", uf: "DF",
-  sindico_nome: "Rita", sindico_email: null, sindico_telefone: null, contrato_inicio: null, contrato_renovacao: null,
+  sindico_nome: "Rita", sindico_email: null, sindico_telefone: null, contrato_inicio: null, contrato_renovacao: null, proximo_da_renovacao: false,
 };
 
 function mockFetch(status: number, body: unknown) {

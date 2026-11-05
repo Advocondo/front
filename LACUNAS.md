@@ -37,8 +37,9 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Motivo da alteração do acordo | O protótipo pede o motivo ao editar, mas a rota não recebe esse campo | Sem issue |
 | Quem cancelou e quem reativou o acordo | O back guarda quando e por quê, mas ainda não registra quem | Sem issue |
 | Outros tipos de notificação | O protótipo também avisa de baixa estornada e de contrato próximo da renovação. O back só cria o aviso de parcela em atraso | Sem issue |
-| Trilha de auditoria global | O protótipo tem uma tela única, com indicadores, filtros por autor e período, e exportação. O back só responde por acordo e por usuário, então o histórico fica em cada acordo e em cada usuário | Sem issue |
+| Trilha de auditoria global | O protótipo tem uma tela única, com indicadores, filtros por autor e período, e exportação. O back só responde por acordo e por usuário, então o histórico fica em cada acordo e em cada usuário | [#72](https://github.com/Advocondo/front/issues/72) |
 | Cancelamento e reativação no histórico financeiro | A rota traz baixas, estornos e edições, mas não os cancelamentos. A data e o motivo aparecem no aviso do acordo, sem o autor | Sem issue |
+| Histórico das renovações | Registrar uma renovação sobrescreve as datas do contrato, e a anterior se perde. A observação do protótipo não tem campo no back | Sem issue |
 | Observações do devedor | Estão no protótipo, mas não existem no back | Sem issue |
 
 ## Telas e fluxos que ainda não existem
@@ -51,7 +52,6 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Nota fiscal da parcela | O protótipo tem o campo no diálogo de baixa | [#28](https://github.com/Advocondo/front/issues/28) |
 | Documentos e PDF do acordo | Não há tela para anexar documentos nem gerar o PDF | [#21](https://github.com/Advocondo/front/issues/21), [#24](https://github.com/Advocondo/front/issues/24) |
 | Importar inadimplentes em lote | O back aceita a planilha, mas não há tela | [#14](https://github.com/Advocondo/front/issues/14) |
-| Sinalizar renovação de contrato | A API devolve `near_renewal`, mas a lista não mostra | [#23](https://github.com/Advocondo/front/issues/23) |
 | Página de política de privacidade e de cookies | No rodapé, são só texto | Sem issue |
 
 ## Regras de negócio a decidir
@@ -75,7 +75,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Redefinir senha | A tela não mostra o e-mail da conta | A rota de confirmação recebe só o token e não devolve o e-mail |
 | Landing | Sem WhatsApp, redes sociais, avaliações e fotos, os blocos ficam escondidos | O conteúdo inicial não os traz, e as avaliações do protótipo são parafraseadas |
 | Gestão de usuários | Os condomínios do Cliente ficam em um diálogo próprio, não em uma tela única de edição com histórico | Editar nome e e-mail não existe no back, e o histórico é a [#11](https://github.com/Advocondo/front/issues/11) |
-| Painel | Seletor de mês por setas, como em Faturas e Metas, e não uma lista. Sem o aviso de renovação de contrato. "Comissões pagas" soma os honorários das parcelas pagas no mês, e o mesmo valor aparece como "Faturamento do mês" em Metas | Consistência entre as telas. O aviso é a [#23](https://github.com/Advocondo/front/issues/23). O nome depende da decisão sobre o percentual de comissão |
+| Painel | Seletor de mês por setas, como em Faturas e Metas, e não uma lista. "Comissões pagas" soma os honorários das parcelas pagas no mês, e o mesmo valor aparece como "Faturamento do mês" em Metas | Consistência entre as telas. O nome depende da decisão sobre o percentual de comissão |
 | Detalhe da fatura e parcelas do Cliente | A [#47](https://github.com/Advocondo/front/issues/47) não tem história de usuário nem protótipo, e os critérios são propostos. A construção foi aprovada pelo responsável em 04/11/2026 | Falta validar com o time |
 | Painel do Cliente e histórico do morador | Não há protótipo: as telas foram montadas com o design system | O perfil Cliente ainda não foi prototipado |
 | Meu perfil | A senha pede 8 caracteres, como no back, e o protótipo pede 10. Sem foto nem iniciais, e o botão de mostrar a senha não existe | A regra é a mesma da redefinição; os outros dois são acabamento |
@@ -83,6 +83,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Editar acordo | Unidade e advogado não estão no diálogo: a unidade pertence ao devedor, e o responsável tem o próprio botão. O dia de vencimento é editado em cada parcela | É como o back separa esses dados |
 | Cancelar acordo | O motivo é obrigatório na tela, como no protótipo, mas opcional na API | Um acordo cancelado pela API pode aparecer como "Sem motivo registrado" |
 | Notificações | O sino abre uma página, como no protótipo mobile, e não uma lista suspensa. O número só atualiza ao abrir uma tela, sem aviso em tempo real | O back não envia atualizações, e as notificações são criadas uma vez por dia |
+| Condomínios | A renovação é registrada na lista, porque não há tela de detalhe do condomínio. A janela do aviso é de 60 dias, fixa no back | O detalhe do condomínio ainda não existe |
 | Faturas do mês | Sem calendário e sem exportar | O calendário é herança de Prazos; exportar é a [#34](https://github.com/Advocondo/front/issues/34) |
 | Metas e comissões | Indicadores do Administrador: faturamento, acordos ativos e inadimplência, em vez de recuperado e acordos fechados; a meta é definida no mês da tela, sem seletor de mês no diálogo | O back não devolve recuperado nem acordos fechados; o seletor do diálogo seria redundante com o da tela |
 

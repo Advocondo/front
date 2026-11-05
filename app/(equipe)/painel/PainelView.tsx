@@ -3,6 +3,9 @@
 import { Alert, Button, Card, EmptyState, MetricCard } from "edson-alexandre-design-system";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { listCondominios } from "@/app/(equipe)/condominios/api";
+import { formatDate } from "@/app/(equipe)/condominios/format";
+import type { Condominio } from "@/app/(equipe)/condominios/types";
 import { getIndicadores, listMetasDaEquipe, type IndicadoresDoMes, type MetaDoColaborador } from "@/app/(equipe)/metas/api";
 import { BarraDeAtingimento, formatarPercentual } from "@/app/(equipe)/metas/atingimento";
 import { mesAtual, SeletorDeMes } from "@/app/components/SeletorDeMes";
@@ -12,6 +15,19 @@ import { formatDateTime } from "@/app/lib/dates";
 import { formatBRL } from "@/app/lib/money";
 
 type Dados = { chave: string; indicadores: IndicadoresDoMes; equipe: MetaDoColaborador[]; atualizadoEm: string };
+
+const NOMES_NO_AVISO = 3;
+
+function AvisoDeRenovacao({ contratos }: { contratos: Condominio[] }) {
+  if (contratos.length === 0) return null;
+  const nomes = contratos.slice(0, NOMES_NO_AVISO).map((c) => `${c.nome} (${formatDate(c.contrato_renovacao)})`).join(", ");
+  const resto = contratos.length - NOMES_NO_AVISO;
+  return (
+    <Alert tone="warn" title={contratos.length === 1 ? "1 contrato perto da renovação" : `${contratos.length} contratos perto da renovação`} action={<Link href="/condominios" className="text-sm font-medium">Ver condomínios</Link>}>
+      {resto > 0 ? `${nomes} e mais ${resto}` : nomes}
+    </Alert>
+  );
+}
 
 function rodapeDaInadimplencia({ overdue_installments: atrasadas, installments_due: total }: IndicadoresDoMes): string {
   if (total === 0) return "Nenhuma parcela vence neste mês";
@@ -24,6 +40,7 @@ export function PainelView() {
   const [dados, setDados] = useState<Dados | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [recarregar, setRecarregar] = useState(0);
+  const [perto, setPerto] = useState<Condominio[]>([]);
   const chave = `${ano}-${mes}`;
 
   useEffect(() => {
@@ -39,6 +56,15 @@ export function PainelView() {
       });
     return () => controller.abort();
   }, [ano, mes, chave, recarregar]);
+
+  // É a situação de hoje, não a do mês escolhido. Uma falha aqui só deixa o Painel sem o aviso.
+  useEffect(() => {
+    const controller = new AbortController();
+    listCondominios("", controller.signal)
+      .then((lista) => setPerto(lista.filter((c) => c.proximo_da_renovacao)))
+      .catch(() => {});
+    return () => controller.abort();
+  }, [recarregar]);
 
   const atuais = dados?.chave === chave ? dados : null;
 
@@ -61,6 +87,7 @@ export function PainelView() {
             {erro}
           </Alert>
         )}
+        <AvisoDeRenovacao contratos={perto} />
         {!atuais && !erro && <p role="status">Carregando indicadores…</p>}
 
         {atuais && !erro && (

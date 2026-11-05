@@ -30,6 +30,8 @@ export type Condominio = {
   sindico_telefone: string | null;
   contrato_inicio: string | null;
   contrato_renovacao: string | null;
+  /** Calculado pelo back: faltam 60 dias ou menos, ou a data já passou (US23-CA01). */
+  proximo_da_renovacao: boolean;
 };
 
 /** Valores de formulário: sempre texto; vazio significa "não informado". */

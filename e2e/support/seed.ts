@@ -92,11 +92,11 @@ export async function createUser(role: "operator" | "client", extras: Record<str
 
 export type TestCondominium = { id: string; name: string };
 
-export async function createCondominium(name: string): Promise<TestCondominium> {
+export async function createCondominium(name: string, extras: Record<string, unknown> = {}): Promise<TestCondominium> {
   const resposta = await chamarApi("/condominiums", {
     method: "POST",
     headers: { Authorization: `Bearer ${await ensureAdmin()}` },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ name, ...extras }),
   });
   return esperarSucesso<TestCondominium>(resposta, "Criar condomínio");
 }
