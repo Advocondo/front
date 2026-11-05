@@ -41,6 +41,15 @@ export function saveSession(session: Session, manterConectado: boolean) {
   avisar();
 }
 
+/** Muda só os dados do usuário, no mesmo armazenamento: "Manter conectado" continua como estava. */
+export function atualizarUsuarioDaSessao(dados: Partial<Session["user"]>) {
+  const armazenamento = sessionStorage.getItem(CHAVE) ? sessionStorage : localStorage;
+  const atual = getSession();
+  if (!atual) return;
+  armazenamento.setItem(CHAVE, JSON.stringify({ ...atual, user: { ...atual.user, ...dados } }));
+  avisar();
+}
+
 export function clearSession() {
   localStorage.removeItem(CHAVE);
   sessionStorage.removeItem(CHAVE);

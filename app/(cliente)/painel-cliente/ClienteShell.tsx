@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, TopBar } from "edson-alexandre-design-system";
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { logOut } from "@/app/lib/auth";
 
@@ -12,9 +13,14 @@ export function ClienteShell({ title, subtitle, children }: { title: string; sub
         title={title}
         subtitle={subtitle}
         actions={
-          <Button size="sm" variant="secondary" icon="log-out" onClick={() => void logOut()}>
-            Sair
-          </Button>
+          <span className="inline-flex items-center gap-3">
+            <Link href="/perfil" className="text-sm font-medium">
+              Meu perfil
+            </Link>
+            <Button size="sm" variant="secondary" icon="log-out" onClick={() => void logOut()}>
+              Sair
+            </Button>
+          </span>
         }
       />
       <main className="grid flex-1 content-start gap-5 p-4 sm:p-6">{children}</main>
