@@ -5,13 +5,14 @@ import { useEffect, useMemo, useState } from "react";
 import { PlataformaShell } from "@/app/components/PlataformaShell";
 import { ApiError } from "@/app/lib/api";
 import { useSession } from "@/app/lib/session";
-import { listUsuarios, mudarStatus, reenviarConvite, ROTULO_DO_PERFIL, type ResultadoDoConvite, type StatusUsuario, type Usuario } from "./api";
+import { listUsuarios, mudarStatus, reenviarConvite, ROTULO_DA_SITUACAO, ROTULO_DO_PERFIL, type ResultadoDoConvite, type StatusUsuario, type Usuario } from "./api";
 import { ConviteDialog } from "./ConviteDialog";
+import { HistoricoDialog } from "./HistoricoDialog";
 import { InativarDialog } from "./InativarDialog";
 import { PerfilDialog } from "./PerfilDialog";
 import { VinculosDialog } from "./VinculosDialog";
 
-type Dialogo = { tipo: "convite" } | { tipo: "perfil"; usuario: Usuario } | { tipo: "inativar"; usuario: Usuario } | { tipo: "vinculos"; usuario: Usuario } | null;
+type Dialogo = { tipo: "convite" } | { tipo: "perfil"; usuario: Usuario } | { tipo: "inativar"; usuario: Usuario } | { tipo: "vinculos"; usuario: Usuario } | { tipo: "historico"; usuario: Usuario } | null;
 
 const DEBOUNCE_MS = 300;
 const FILTROS: { status: StatusUsuario | ""; label: string }[] = [
@@ -21,9 +22,9 @@ const FILTROS: { status: StatusUsuario | ""; label: string }[] = [
   { status: "inactive", label: "Inativos" },
 ];
 const SITUACAO: Record<StatusUsuario, { label: string; tone: "ok" | "warn" | "neutral" }> = {
-  active: { label: "Ativo", tone: "ok" },
-  pending: { label: "Pendente", tone: "warn" },
-  inactive: { label: "Inativo", tone: "neutral" },
+  active: { label: ROTULO_DA_SITUACAO.active, tone: "ok" },
+  pending: { label: ROTULO_DA_SITUACAO.pending, tone: "warn" },
+  inactive: { label: ROTULO_DA_SITUACAO.inactive, tone: "neutral" },
 };
 
 export function UsuariosView() {
@@ -166,9 +167,17 @@ export function UsuariosView() {
                 render: (u: Usuario) =>
                   // O back não deixa o Administrador mudar o próprio perfil nem se inativar.
                   u.id === session?.user.id ? (
-                    <span className="text-sm">você</span>
+                    <span className="inline-flex items-center justify-end gap-2">
+                      <Button size="sm" variant="ghost" aria-label={`Ver histórico de ${u.name}`} onClick={() => setDialogo({ tipo: "historico", usuario: u })}>
+                        Histórico
+                      </Button>
+                      <span className="text-sm">você</span>
+                    </span>
                   ) : (
                     <span className="inline-flex items-center justify-end gap-1">
+                      <Button size="sm" variant="ghost" aria-label={`Ver histórico de ${u.name}`} onClick={() => setDialogo({ tipo: "historico", usuario: u })}>
+                        Histórico
+                      </Button>
                       <Button size="sm" variant="ghost" aria-label={`Definir nível de acesso de ${u.name}`} onClick={() => setDialogo({ tipo: "perfil", usuario: u })}>
                         Perfil
                       </Button>
@@ -203,6 +212,7 @@ export function UsuariosView() {
       {dialogo?.tipo === "convite" && <ConviteDialog onClose={() => setDialogo(null)} onSaved={(u) => concluirConvite(u, `Convite enviado para ${u.email}.`)} />}
       {dialogo?.tipo === "perfil" && <PerfilDialog usuario={dialogo.usuario} onClose={() => setDialogo(null)} onSaved={(u) => concluir(`${u.name} agora é ${ROTULO_DO_PERFIL[u.role]}.`)} />}
       {dialogo?.tipo === "vinculos" && <VinculosDialog usuario={dialogo.usuario} onClose={() => setDialogo(null)} onSaved={() => concluir(`Condomínios de ${dialogo.usuario.name} atualizados.`)} />}
+      {dialogo?.tipo === "historico" && <HistoricoDialog usuario={dialogo.usuario} onClose={() => setDialogo(null)} />}
       {dialogo?.tipo === "inativar" && <InativarDialog usuario={dialogo.usuario} onClose={() => setDialogo(null)} onSaved={(u) => concluir(`Acesso de ${u.name} inativado.`)} />}
 
       {aviso && (

@@ -1,5 +1,5 @@
 import { apiFetch } from "@/app/lib/api";
-import type { Acordo, Advogado, AtribuicaoDeAdvogado, NovoAcordo, Parcela } from "./types";
+import type { Acordo, Advogado, AtribuicaoDeAdvogado, MovimentacaoFinanceira, NovoAcordo, Parcela } from "./types";
 
 export const LIMITE_LISTAGEM = 200;
 
@@ -64,4 +64,9 @@ export function cancelarAcordo(id: string, motivo: string, confirmarParcelasSemP
 
 export function reativarAcordo(id: string): Promise<Acordo> {
   return apiFetch<Acordo>(`/agreements/${id}/reactivate`, { method: "POST" });
+}
+
+/** Só o Administrador: o back responde 403 para os outros perfis (US31-CA02). */
+export function listHistoricoFinanceiro(acordoId: string, signal?: AbortSignal): Promise<MovimentacaoFinanceira[]> {
+  return apiFetch<MovimentacaoFinanceira[]>(`/agreements/${acordoId}/financial-history`, { signal });
 }

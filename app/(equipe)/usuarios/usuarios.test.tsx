@@ -79,7 +79,8 @@ describe("Listagem de usuários", () => {
     render(<UsuariosView />);
     const linha = (await screen.findByText("Ana Admin")).closest("tr") as HTMLElement;
     expect(within(linha).getByText("você")).toBeInTheDocument();
-    expect(within(linha).queryByRole("button")).not.toBeInTheDocument();
+    // Só o histórico, que é consulta.
+    expect(within(linha).getAllByRole("button").map((b) => b.getAttribute("aria-label"))).toEqual(["Ver histórico de Ana Admin"]);
   });
 });
 

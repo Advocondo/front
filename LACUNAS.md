@@ -37,6 +37,8 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Motivo da alteração do acordo | O protótipo pede o motivo ao editar, mas a rota não recebe esse campo | Sem issue |
 | Quem cancelou e quem reativou o acordo | O back guarda quando e por quê, mas ainda não registra quem | Sem issue |
 | Outros tipos de notificação | O protótipo também avisa de baixa estornada e de contrato próximo da renovação. O back só cria o aviso de parcela em atraso | Sem issue |
+| Trilha de auditoria global | O protótipo tem uma tela única, com indicadores, filtros por autor e período, e exportação. O back só responde por acordo e por usuário, então o histórico fica em cada acordo e em cada usuário | Sem issue |
+| Cancelamento e reativação no histórico financeiro | A rota traz baixas, estornos e edições, mas não os cancelamentos. A data e o motivo aparecem no aviso do acordo, sem o autor | Sem issue |
 | Observações do devedor | Estão no protótipo, mas não existem no back | Sem issue |
 
 ## Telas e fluxos que ainda não existem
@@ -45,11 +47,9 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | --- | --- | --- |
 | Relatório de condomínio sem acordos | O botão fica no card do condomínio, e o card só existe quando há acordo. Sem acordo, não há o que baixar pela tela, embora a rota responda | Sem issue |
 | Painel da Equipe Operacional | Depois do login, a pessoa cai em Condomínios. O protótipo mobile tem uma visão própria, com totais do mês, meta, vencimentos da semana e últimas baixas | Sem issue |
-| Histórico de ações do usuário | O back registra, mas não há tela | [#11](https://github.com/Advocondo/front/issues/11) |
 | Edição da landing pelo Administrador | Textos, avaliações e fotos só mudam pela API | [#4](https://github.com/Advocondo/front/issues/4) |
 | Nota fiscal da parcela | O protótipo tem o campo no diálogo de baixa | [#28](https://github.com/Advocondo/front/issues/28) |
 | Documentos e PDF do acordo | Não há tela para anexar documentos nem gerar o PDF | [#21](https://github.com/Advocondo/front/issues/21), [#24](https://github.com/Advocondo/front/issues/24) |
-| Ver quem editou o acordo | O back registra quem alterou e quando (US19-CA02), mas ainda não há tela para consultar | [#30](https://github.com/Advocondo/front/issues/30) |
 | Importar inadimplentes em lote | O back aceita a planilha, mas não há tela | [#14](https://github.com/Advocondo/front/issues/14) |
 | Sinalizar renovação de contrato | A API devolve `near_renewal`, mas a lista não mostra | [#23](https://github.com/Advocondo/front/issues/23) |
 | Página de política de privacidade e de cookies | No rodapé, são só texto | Sem issue |

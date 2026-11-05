@@ -33,6 +33,24 @@ export const ROTULO_DO_PERFIL: Record<Role, string> = {
   client: "Cliente",
 };
 
+export const ROTULO_DA_SITUACAO: Record<StatusUsuario, string> = {
+  active: "Ativo",
+  pending: "Pendente",
+  inactive: "Inativo",
+};
+
+/** Uma ação do histórico do usuário (US11). */
+export type RegistroDoUsuario = {
+  id: string;
+  created_at: string;
+  action: "invited" | "status_changed" | "role_changed" | "condominiums_changed";
+  old_value: string | null;
+  new_value: string | null;
+  added_condominiums: { id: string; name: string }[];
+  removed_condominiums: { id: string; name: string }[];
+  actor: { id: string; name: string } | null;
+};
+
 export function listUsuarios(busca: string, signal?: AbortSignal): Promise<Usuario[]> {
   const params = new URLSearchParams({ limit: String(LIMITE_LISTAGEM) });
   if (busca.trim()) params.set("search", busca.trim());
@@ -66,4 +84,9 @@ export function listVinculos(id: string, signal?: AbortSignal): Promise<Vinculo[
 /** Substitui a lista inteira: quem não vier nela deixa de estar vinculado. */
 export function salvarVinculos(id: string, condominiumIds: string[]): Promise<Vinculo[]> {
   return apiFetch<Vinculo[]>(`/users/${id}/condominiums`, { method: "PUT", body: JSON.stringify({ condominium_ids: condominiumIds }) });
+}
+
+/** Da ação mais recente para a mais antiga. */
+export async function listHistoricoDoUsuario(id: string, signal?: AbortSignal): Promise<RegistroDoUsuario[]> {
+  return (await apiFetch<{ logs: RegistroDoUsuario[] }>(`/users/${id}/history`, { signal })).logs;
 }
