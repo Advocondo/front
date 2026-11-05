@@ -45,7 +45,8 @@ async function enviar(path: string, init: RequestInit): Promise<Response> {
     response = await fetch(`${apiBaseUrl()}${path}`, {
       ...init,
       headers: {
-        "Content-Type": "application/json",
+        // Em um envio de arquivo, quem define o Content-Type, com o boundary, é o navegador.
+        ...(init.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...init.headers,
       },

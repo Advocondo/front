@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { formatDate } from "@/app/(equipe)/condominios/format";
 import { ApiError } from "@/app/lib/api";
+import { salvarArquivo } from "@/app/lib/arquivos";
 import { useSession } from "@/app/lib/session";
 import { baixarRelatorioDoCondominio, listAcordosDoCliente, type AcordoDoCliente } from "./api";
 import { ClienteShell } from "./ClienteShell";
@@ -28,15 +29,6 @@ function porCondominio(acordos: AcordoDoCliente[]): AcordoDoCliente[][] {
 function nomeDoArquivo(condominio: string): string {
   const semAcentos = condominio.normalize("NFD").replace(/\p{M}/gu, "");
   return `relatorio-${semAcentos.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.pdf`;
-}
-
-function salvarArquivo(arquivo: Blob, nome: string) {
-  const url = URL.createObjectURL(arquivo);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = nome;
-  link.click();
-  URL.revokeObjectURL(url);
 }
 
 /** US37: o andamento dos acordos dos condomínios vinculados, sem nenhum valor. */

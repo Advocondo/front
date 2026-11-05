@@ -16,9 +16,11 @@ import { getAcordo, listAdvogados, listHistoricoDeResponsaveis, listParcelas, re
 import { StatusAcordo } from "../AcordosView";
 import type { Acordo, Advogado, AtribuicaoDeAdvogado, Parcela } from "../types";
 import { CancelarAcordoDialog } from "./CancelarAcordoDialog";
+import { DocumentosDoAcordo } from "./DocumentosDoAcordo";
 import { EditarAcordoDialog } from "./EditarAcordoDialog";
 import { HistoricoFinanceiro } from "./HistoricoFinanceiro";
 import { ParcelaDialog } from "./ParcelaDialog";
+import { PdfsDoAcordo } from "./PdfsDoAcordo";
 import { ResponsavelDialog } from "./ResponsavelDialog";
 
 /** Parcela paga, com pagamento parcial ou de acordo cancelado não pode ser editada no back. */
@@ -193,6 +195,9 @@ export function AcordoDetalheView({ id }: { id: string }) {
                 },
               ]}
             />
+
+            <DocumentosDoAcordo acordoId={id} onAviso={setAviso} />
+            <PdfsDoAcordo acordoId={id} onAviso={setAviso} />
 
             <Card title="Histórico de responsáveis">
               {historico.length === 0 ? (

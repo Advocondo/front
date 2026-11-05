@@ -40,6 +40,7 @@ function mockApi({ rota, acordos = [acordo], devedores = [devedor], plano = [p1,
       if (url.includes("/debtors")) return { status: 200, body: devedores };
       if (url.includes("/installments")) return { status: 200, body: plano };
       if (url.includes("/lawyer-history")) return { status: 200, body: [] };
+      if (url.includes("/documents") || url.includes("/pdfs")) return { status: 200, body: [] };
       if (url.includes("/agreements/")) return { status: 200, body: dadosAcordo };
       return { status: 200, body: acordos };
     };
