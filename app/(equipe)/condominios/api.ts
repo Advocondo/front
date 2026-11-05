@@ -23,7 +23,7 @@ const CAMPOS = Object.entries(CAMPOS_API) as [keyof CondominioForm, keyof Condom
 
 function fromApi(api: CondominioApi): Condominio {
   const campos = Object.fromEntries(CAMPOS.map(([campo, nomeApi]) => [campo, api[nomeApi]]));
-  return { id: api.id, ...campos } as Condominio;
+  return { id: api.id, proximo_da_renovacao: api.near_renewal, ...campos } as Condominio;
 }
 
 function toApi(payload: CondominioPayload): string {
@@ -54,6 +54,11 @@ export async function listCondominios(busca: string, signal?: AbortSignal): Prom
 
 export function createCondominio(payload: CondominioPayload): Promise<Condominio> {
   return comErrosDaTela(apiFetch<CondominioApi>("/condominiums", { method: "POST", body: toApi(payload) }));
+}
+
+/** A renovação começa em `inicio`, e `proximaRenovacao` passa a ser a referência do próximo aviso (US23-CA02). */
+export function registrarRenovacao(id: string, inicio: string, proximaRenovacao: string): Promise<Condominio> {
+  return comErrosDaTela(apiFetch<CondominioApi>(`/condominiums/${id}`, { method: "PATCH", body: JSON.stringify({ contract_start_date: inicio, contract_renewal_date: proximaRenovacao }) }));
 }
 
 export function updateCondominio(id: string, payload: CondominioPayload): Promise<Condominio> {

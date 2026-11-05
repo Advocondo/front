@@ -1,3 +1,4 @@
+import { hojeEmBrasilia } from "@/app/lib/dates";
 import { maskTelefone, onlyDigits } from "@/app/lib/masks";
 import type { Condominio, CondominioForm, CondominioPayload } from "./types";
 
@@ -24,6 +25,15 @@ export function formatDate(iso: string | null): string {
   if (!iso) return "—";
   const [year, month, day] = iso.split("-");
   return `${day}/${month}/${year}`;
+}
+
+/** Dias de hoje, em Brasília, até a data. Negativo quando já passou. */
+export function diasAte(iso: string, hoje: string = hojeEmBrasilia()): number {
+  const emDias = (data: string) => {
+    const [ano, mes, dia] = data.split("-").map(Number);
+    return Date.UTC(ano, mes - 1, dia) / 86_400_000;
+  };
+  return emDias(iso) - emDias(hoje);
 }
 
 export const emptyForm: CondominioForm = {

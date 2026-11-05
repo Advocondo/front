@@ -1,17 +1,26 @@
 "use client";
 
-import { Alert, Button, DataTable, EmptyState, Icon, Input, Toast, ToastStack } from "edson-alexandre-design-system";
+import { Alert, Button, DataTable, EmptyState, Icon, Input, StatusPill, Toast, ToastStack } from "edson-alexandre-design-system";
 import { useEffect, useState } from "react";
 import { PlataformaShell } from "@/app/components/PlataformaShell";
 import { ApiError } from "@/app/lib/api";
 import { listCondominios } from "./api";
 import { CondominioDialog } from "./CondominioDialog";
-import { formatDate } from "./format";
+import { diasAte, formatDate } from "./format";
+import { RenovacaoDialog } from "./RenovacaoDialog";
 import type { Condominio } from "./types";
 
-type Dialogo = { tipo: "novo" } | { tipo: "editar"; condominio: Condominio } | null;
+type Dialogo = { tipo: "novo" } | { tipo: "editar"; condominio: Condominio } | { tipo: "renovar"; condominio: Condominio } | null;
 
 const DEBOUNCE_MS = 300;
+
+/** O aviso continua depois da data: o prazo de renegociação ainda exige uma ação. */
+function PrazoDeRenovacao({ data }: { data: string }) {
+  const dias = diasAte(data);
+  if (dias < 0) return <StatusPill label={`Venceu há ${-dias} ${dias === -1 ? "dia" : "dias"}`} tone="risk" />;
+  if (dias === 0) return <StatusPill label="Renova hoje" tone="risk" />;
+  return <StatusPill label={dias === 1 ? "Renova amanhã" : `Renova em ${dias} dias`} tone="warn" />;
+}
 
 export function CondominiosView() {
   const [busca, setBusca] = useState("");
@@ -90,15 +99,27 @@ export function CondominiosView() {
                 },
                 { key: "localidade", label: "Localidade", render: (c: Condominio) => [c.cidade, c.uf].filter(Boolean).join("/") || "—" },
                 { key: "sindico_nome", label: "Síndico", render: (c: Condominio) => c.sindico_nome ?? "—" },
-                { key: "contrato_renovacao", label: "Renovação do contrato", mono: true, align: "right", render: (c: Condominio) => formatDate(c.contrato_renovacao) },
+                { key: "contrato_renovacao", label: "Renovação do contrato", mono: true, align: "right", render: (c: Condominio) => (
+                    <span className="inline-flex flex-wrap items-center justify-end gap-2">
+                      {c.proximo_da_renovacao && c.contrato_renovacao && <PrazoDeRenovacao data={c.contrato_renovacao} />}
+                      {formatDate(c.contrato_renovacao)}
+                    </span>
+                  ) },
                 {
                   key: "acoes",
                   label: "",
                   align: "right",
                   render: (c: Condominio) => (
-                    <Button size="sm" variant="ghost" icon="pencil" aria-label={`Editar ${c.nome}`} onClick={() => setDialogo({ tipo: "editar", condominio: c })}>
-                      Editar
-                    </Button>
+                    <span className="inline-flex items-center justify-end gap-1">
+                      {c.proximo_da_renovacao && (
+                        <Button size="sm" variant="secondary" aria-label={`Registrar renovação de ${c.nome}`} onClick={() => setDialogo({ tipo: "renovar", condominio: c })}>
+                          Registrar renovação
+                        </Button>
+                      )}
+                      <Button size="sm" variant="ghost" icon="pencil" aria-label={`Editar ${c.nome}`} onClick={() => setDialogo({ tipo: "editar", condominio: c })}>
+                        Editar
+                      </Button>
+                    </span>
                   ),
                 },
               ]}
@@ -107,7 +128,19 @@ export function CondominiosView() {
         )}
       </div>
 
-      {dialogo && (
+      {dialogo?.tipo === "renovar" && (
+        <RenovacaoDialog
+          condominio={dialogo.condominio}
+          onClose={() => setDialogo(null)}
+          onSaved={() => {
+            setDialogo(null);
+            setAviso(`Renovação de ${dialogo.condominio.nome} registrada com sucesso.`);
+            setRecarregar((n) => n + 1);
+          }}
+        />
+      )}
+
+      {dialogo && dialogo.tipo !== "renovar" && (
         <CondominioDialog
           condominio={dialogo.tipo === "editar" ? dialogo.condominio : undefined}
           onClose={() => setDialogo(null)}
