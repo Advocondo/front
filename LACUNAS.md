@@ -33,6 +33,8 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Honorários recebidos e acordos novos no mês | Estão no Painel do protótipo. A rota do Painel só devolve as comissões pagas e o total de acordos ativos de hoje | Sem issue |
 | Local e última atividade da sessão | O protótipo mostra a cidade e "há 2 horas". A tela mostra o aparelho e a hora do login: o local exigiria geolocalizar o IP, uma decisão de privacidade, e a atividade exigiria gravar a cada requisição | Sem issue |
 | OAB no cabeçalho do perfil | Está no protótipo, mas a sessão guardada não traz esse dado | Sem issue |
+| Motivo da alteração do acordo | O protótipo pede o motivo ao editar, mas a rota não recebe esse campo | Sem issue |
+| Quem cancelou e quem reativou o acordo | O back guarda quando e por quê, mas ainda não registra quem | Sem issue |
 | Observações do devedor | Estão no protótipo, mas não existem no back | Sem issue |
 
 ## Telas e fluxos que ainda não existem
@@ -45,7 +47,8 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Histórico de ações do usuário | O back registra, mas não há tela | [#11](https://github.com/Advocondo/front/issues/11) |
 | Edição da landing pelo Administrador | Textos, avaliações e fotos só mudam pela API | [#4](https://github.com/Advocondo/front/issues/4) |
 | Nota fiscal da parcela | O protótipo tem o campo no diálogo de baixa | [#28](https://github.com/Advocondo/front/issues/28) |
-| Editar e cancelar acordo, documentos e PDF | Só há cadastro e consulta | [#19](https://github.com/Advocondo/front/issues/19), [#20](https://github.com/Advocondo/front/issues/20), [#21](https://github.com/Advocondo/front/issues/21), [#24](https://github.com/Advocondo/front/issues/24) |
+| Documentos e PDF do acordo | Não há tela para anexar documentos nem gerar o PDF | [#21](https://github.com/Advocondo/front/issues/21), [#24](https://github.com/Advocondo/front/issues/24) |
+| Ver quem editou o acordo | O back registra quem alterou e quando (US19-CA02), mas ainda não há tela para consultar | [#30](https://github.com/Advocondo/front/issues/30) |
 | Importar inadimplentes em lote | O back aceita a planilha, mas não há tela | [#14](https://github.com/Advocondo/front/issues/14) |
 | Sinalizar renovação de contrato | A API devolve `near_renewal`, mas a lista não mostra | [#23](https://github.com/Advocondo/front/issues/23) |
 | Página de política de privacidade e de cookies | No rodapé, são só texto | Sem issue |
@@ -76,6 +79,8 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Painel do Cliente e histórico do morador | Não há protótipo: as telas foram montadas com o design system | O perfil Cliente ainda não foi prototipado |
 | Meu perfil | A senha pede 8 caracteres, como no back, e o protótipo pede 10. Sem foto nem iniciais, e o botão de mostrar a senha não existe | A regra é a mesma da redefinição; os outros dois são acabamento |
 | Meu perfil | Sessões antigas aparecem como "Aparelho não identificado" até o próximo login | O back só guarda o aparelho desde a [#127](https://github.com/Advocondo/back/pull/127) |
+| Editar acordo | Unidade e advogado não estão no diálogo: a unidade pertence ao devedor, e o responsável tem o próprio botão. O dia de vencimento é editado em cada parcela | É como o back separa esses dados |
+| Cancelar acordo | O motivo é obrigatório na tela, como no protótipo, mas opcional na API | Um acordo cancelado pela API pode aparecer como "Sem motivo registrado" |
 | Faturas do mês | Sem calendário e sem exportar | O calendário é herança de Prazos; exportar é a [#34](https://github.com/Advocondo/front/issues/34) |
 | Metas e comissões | Indicadores do Administrador: faturamento, acordos ativos e inadimplência, em vez de recuperado e acordos fechados; a meta é definida no mês da tela, sem seletor de mês no diálogo | O back não devolve recuperado nem acordos fechados; o seletor do diálogo seria redundante com o da tela |
 

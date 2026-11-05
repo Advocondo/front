@@ -1,6 +1,6 @@
 "use client";
 
-import { Alert, Button, Card, DataTable, IconButton, MetricCard, Timeline, Toast, ToastStack } from "edson-alexandre-design-system";
+import { Alert, Button, Card, DataTable, IconButton, MetricCard, StatusPill, Timeline, Toast, ToastStack } from "edson-alexandre-design-system";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { PlataformaShell } from "@/app/components/PlataformaShell";
@@ -11,9 +11,11 @@ import { formatDate } from "@/app/(equipe)/condominios/format";
 import { BaixaDialog } from "@/app/(equipe)/acompanhamento/BaixaDialog";
 import { PagamentosDialog } from "@/app/(equipe)/acompanhamento/PagamentosDialog";
 import { SituacaoParcela, temPagamentoParcial } from "@/app/(equipe)/acompanhamento/situacao";
-import { getAcordo, listAdvogados, listHistoricoDeResponsaveis, listParcelas } from "../api";
+import { getAcordo, listAdvogados, listHistoricoDeResponsaveis, listParcelas, reativarAcordo } from "../api";
 import { StatusAcordo } from "../AcordosView";
 import type { Acordo, Advogado, AtribuicaoDeAdvogado, Parcela } from "../types";
+import { CancelarAcordoDialog } from "./CancelarAcordoDialog";
+import { EditarAcordoDialog } from "./EditarAcordoDialog";
 import { ParcelaDialog } from "./ParcelaDialog";
 import { ResponsavelDialog } from "./ResponsavelDialog";
 
@@ -33,6 +35,10 @@ export function AcordoDetalheView({ id }: { id: string }) {
   const [baixa, setBaixa] = useState<Parcela | null>(null);
   const [pagamentos, setPagamentos] = useState<Parcela | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [editandoAcordo, setEditandoAcordo] = useState(false);
+  const [cancelando, setCancelando] = useState(false);
+  const [reativando, setReativando] = useState(false);
+  const [erroAoReativar, setErroAoReativar] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -60,6 +66,20 @@ export function AcordoDetalheView({ id }: { id: string }) {
   const pagas = parcelas.filter((p) => p.status === "paid").length;
   const porcentagemPaga = parcelas.length > 0 ? Math.round((pagas / parcelas.length) * 100) : 0;
 
+  async function reativar() {
+    setReativando(true);
+    setErroAoReativar(null);
+    try {
+      await reativarAcordo(id);
+      setAviso("Acordo reativado com sucesso.");
+      setRecarregar((n) => n + 1);
+    } catch (e) {
+      setErroAoReativar(e instanceof ApiError ? e.message : "Não foi possível reativar o acordo. Tente novamente.");
+    } finally {
+      setReativando(false);
+    }
+  }
+
   return (
     <PlataformaShell
       activeId="acordos"
@@ -82,6 +102,24 @@ export function AcordoDetalheView({ id }: { id: string }) {
 
         {acordo && (
           <>
+            {erroAoReativar && (
+              <Alert tone="risk" role="alert" title="Não foi possível reativar">
+                {erroAoReativar}
+              </Alert>
+            )}
+            {acordo.status === "cancelled" && (
+              <Alert
+                tone="warn"
+                title={acordo.cancelled_at ? `Acordo cancelado em ${formatDateTime(acordo.cancelled_at)}` : "Acordo cancelado"}
+                action={
+                  <Button size="sm" variant="secondary" loading={reativando} onClick={() => void reativar()}>
+                    Reativar acordo
+                  </Button>
+                }
+              >
+                {acordo.cancellation_reason ?? "Sem motivo registrado."}
+              </Alert>
+            )}
             <Card>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -89,12 +127,20 @@ export function AcordoDetalheView({ id }: { id: string }) {
                   <p className="text-sm">{`${acordo.condominium.name} · ${acordo.debtor.unit}`}</p>
                   <p className="mt-1 text-sm">Responsável: {acordo.responsible_lawyer?.name ?? "não atribuído"}</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  {/* O back não aceita mudar o responsável de acordo cancelado. */}
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* O back não aceita editar, trocar o responsável nem cancelar de novo um acordo cancelado. */}
                   {acordo.status === "active" && (
-                    <Button size="sm" variant="secondary" icon="user-check" onClick={() => setTrocandoResponsavel(true)}>
-                      {acordo.responsible_lawyer ? "Trocar responsável" : "Atribuir responsável"}
-                    </Button>
+                    <>
+                      <Button size="sm" variant="secondary" icon="user-check" onClick={() => setTrocandoResponsavel(true)}>
+                        {acordo.responsible_lawyer ? "Trocar responsável" : "Atribuir responsável"}
+                      </Button>
+                      <Button size="sm" variant="secondary" icon="pencil" onClick={() => setEditandoAcordo(true)}>
+                        Editar acordo
+                      </Button>
+                      <Button size="sm" variant="danger" onClick={() => setCancelando(true)}>
+                        Cancelar acordo
+                      </Button>
+                    </>
                   )}
                   <StatusAcordo status={acordo.status} />
                 </div>
@@ -123,7 +169,8 @@ export function AcordoDetalheView({ id }: { id: string }) {
                   label: "Situação",
                   render: (p: Parcela) => (
                     <span className="inline-flex flex-wrap items-center gap-2">
-                      <SituacaoParcela parcela={p} />
+                      {/* A parcela sem pagamento de acordo cancelado sai da cobrança (US20), mesmo se a data já passou. */}
+                      {acordo.status === "cancelled" && p.status !== "paid" ? <StatusPill label="Fora da cobrança" tone="neutral" /> : <SituacaoParcela parcela={p} />}
                       {p.payment_date && <span className="text-sm">{`pago em ${formatDate(p.payment_date)}`}</span>}
                       {temPagamentoParcial(p) && <span className="text-sm">{`saldo ${formatBRL(p.remaining_amount)}`}</span>}
                     </span>
@@ -197,6 +244,32 @@ export function AcordoDetalheView({ id }: { id: string }) {
             setAcordo(atualizado);
             setTrocandoResponsavel(false);
             setAviso("Responsável atualizado com sucesso.");
+            setRecarregar((n) => n + 1);
+          }}
+        />
+      )}
+
+      {editandoAcordo && acordo && (
+        <EditarAcordoDialog
+          acordo={acordo}
+          parcelasPagas={pagas}
+          onClose={() => setEditandoAcordo(false)}
+          onSaved={() => {
+            setEditandoAcordo(false);
+            setAviso("Acordo atualizado com sucesso.");
+            setRecarregar((n) => n + 1);
+          }}
+        />
+      )}
+
+      {cancelando && acordo && (
+        <CancelarAcordoDialog
+          acordo={acordo}
+          parcelas={parcelas}
+          onClose={() => setCancelando(false)}
+          onSaved={() => {
+            setCancelando(false);
+            setAviso("Acordo cancelado com sucesso.");
             setRecarregar((n) => n + 1);
           }}
         />

@@ -44,3 +44,24 @@ export function listParcelas(acordoId: string, signal?: AbortSignal): Promise<Pa
 export function updateParcela(id: string, mudancas: { due_date?: string; amount?: string }): Promise<Parcela[]> {
   return apiFetch<Parcela[]>(`/installments/${id}`, { method: "PATCH", body: JSON.stringify(mudancas) });
 }
+
+export type MudancasNoAcordo = {
+  debtor_id?: string;
+  total_amount?: string;
+  fee_percentage?: string;
+  fee_amount?: string;
+  confirm_paid_installments: boolean;
+};
+
+/** Só os campos enviados mudam. Um valor novo recalcula as parcelas em aberto (US19). */
+export function atualizarAcordo(id: string, mudancas: MudancasNoAcordo): Promise<Acordo> {
+  return apiFetch<Acordo>(`/agreements/${id}`, { method: "PATCH", body: JSON.stringify(mudancas) });
+}
+
+export function cancelarAcordo(id: string, motivo: string, confirmarParcelasSemPagamento: boolean): Promise<Acordo> {
+  return apiFetch<Acordo>(`/agreements/${id}/cancel`, { method: "POST", body: JSON.stringify({ reason: motivo, confirm_open_installments: confirmarParcelasSemPagamento }) });
+}
+
+export function reativarAcordo(id: string): Promise<Acordo> {
+  return apiFetch<Acordo>(`/agreements/${id}/reactivate`, { method: "POST" });
+}
