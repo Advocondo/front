@@ -128,7 +128,8 @@ describe("US36: visão do Administrador", () => {
     expect(await screen.findByText("Bia Equipe")).toBeInTheDocument();
     expect(screen.getByText("R$ 1.000,00 de R$ 4.000,00")).toBeInTheDocument();
     expect(screen.getByText("25%")).toBeInTheDocument();
-    expect(screen.getByText("R$ 45,12")).toBeInTheDocument();
+    // Na linha da pessoa e no total da equipe, que aqui tem só ela.
+    expect(screen.getAllByText("R$ 45,12")).toHaveLength(2);
     expect(screen.getByText("Sem meta neste mês")).toBeInTheDocument();
     expect(screen.getByText("R$ 564,00")).toBeInTheDocument();
     expect(screen.getByText("12,5%")).toBeInTheDocument();

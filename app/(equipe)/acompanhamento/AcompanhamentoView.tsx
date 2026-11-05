@@ -1,20 +1,24 @@
 "use client";
 
-import { Alert, Button, DataTable, EmptyState, MetricCard, Select, Tabs, Toast, ToastStack } from "edson-alexandre-design-system";
+import { Alert, Badge, Button, DataTable, EmptyState, MetricCard, Select, Tabs, Tag, Toast, ToastStack } from "edson-alexandre-design-system";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { PlataformaShell } from "@/app/components/PlataformaShell";
 import { mesAtual, SeletorDeMes } from "@/app/components/SeletorDeMes";
 import { ApiError } from "@/app/lib/api";
+import { salvarArquivo } from "@/app/lib/arquivos";
 import { centsFromApi, formatBRL } from "@/app/lib/money";
+import { useSession } from "@/app/lib/session";
 import { listAdvogados } from "@/app/(equipe)/acordos/api";
 import type { Advogado } from "@/app/(equipe)/acordos/types";
 import { listCondominios } from "@/app/(equipe)/condominios/api";
 import { formatDate } from "@/app/(equipe)/condominios/format";
 import type { Condominio } from "@/app/(equipe)/condominios/types";
-import { listParcelasDoMes, type ParcelaDoMes } from "./api";
-import { BaixaDialog } from "./BaixaDialog";
+import { exportarPlanilha, listParcelasDoMes, type ParcelaDoMes } from "./api";
+import { BaixaDialog, textoDaBaixa } from "./BaixaDialog";
+import { NotaFiscalDialog } from "./NotaFiscalDialog";
 import { PagamentosDialog } from "./PagamentosDialog";
+import { PendenciasDeNotaDialog } from "./PendenciasDeNotaDialog";
 import { SituacaoParcela, temPagamentoParcial } from "./situacao";
 
 type Aba = "todas" | "open" | "overdue" | "paid";
@@ -25,6 +29,7 @@ const soma = (valores: bigint[]): bigint => valores.reduce((total, valor) => tot
 const descricaoDe = (p: ParcelaDoMes): string => `${p.debtor.name} · ${p.condominium.name} · ${p.debtor.unit}`;
 
 export function AcompanhamentoView() {
+  const session = useSession();
   const [{ ano, mes }, setPeriodo] = useState(mesAtual);
   const [condominioId, setCondominioId] = useState("");
   const [responsavelId, setResponsavelId] = useState("");
@@ -37,6 +42,11 @@ export function AcompanhamentoView() {
   const [baixa, setBaixa] = useState<ParcelaDoMes | null>(null);
   const [pagamentos, setPagamentos] = useState<ParcelaDoMes | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [nota, setNota] = useState<ParcelaDoMes | null>(null);
+  const [pendencias, setPendencias] = useState(false);
+  const [soSemNota, setSoSemNota] = useState(false);
+  const [exportando, setExportando] = useState(false);
+  const [erroDaExportacao, setErroDaExportacao] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -88,18 +98,40 @@ export function AcompanhamentoView() {
     };
   }, [parcelas]);
 
-  const visiveis = aba === "todas" ? parcelas : parcelas?.filter((p) => p.status === aba);
+  const pagasSemNota = parcelas?.filter((p) => p.status === "paid" && !p.invoice_number) ?? [];
+  const visiveis = aba === "paid" && soSemNota ? pagasSemNota : aba === "todas" ? parcelas : parcelas?.filter((p) => p.status === aba);
+
+  async function exportar() {
+    setExportando(true);
+    setErroDaExportacao(null);
+    try {
+      const planilha = await exportarPlanilha({ ano, mes, condominioId, responsavelId, status: aba === "todas" ? "" : aba });
+      salvarArquivo(planilha, `acompanhamento_${ano}_${String(mes).padStart(2, "0")}.xlsx`);
+    } catch (e) {
+      setErroDaExportacao(e instanceof ApiError ? e.message : "Não foi possível exportar a planilha. Tente novamente.");
+    } finally {
+      setExportando(false);
+    }
+  }
 
 
   const concluir = (texto: string) => {
     setBaixa(null);
     setPagamentos(null);
+    setNota(null);
     setAviso(texto);
     setRecarregar((n) => n + 1);
   };
 
   return (
-    <PlataformaShell activeId="acompanhamento" title="Faturas do mês" subtitle={`Competência ${String(mes).padStart(2, "0")}/${ano}`}>
+    <PlataformaShell activeId="acompanhamento" title="Faturas do mês" subtitle={`Competência ${String(mes).padStart(2, "0")}/${ano}`}
+      // A rota é só do Administrador (US35).
+      actions={session?.user.role === "admin" && (
+        <Button size="sm" variant="secondary" icon="download" loading={exportando} onClick={() => void exportar()}>
+          Exportar planilha
+        </Button>
+      )}
+    >
       <div className="grid gap-5">
         <SeletorDeMes ano={ano} mes={mes} onChange={setPeriodo} />
 
@@ -112,7 +144,10 @@ export function AcompanhamentoView() {
 
         <Tabs
           activeId={aba}
-          onSelect={(id) => setAba(id as Aba)}
+          onSelect={(id) => {
+            setAba(id as Aba);
+            setSoSemNota(false);
+          }}
           items={[
             { id: "todas", label: "Todas", count: totais.contagem.todas },
             { id: "open", label: "Em aberto", count: totais.contagem.open },
@@ -121,14 +156,29 @@ export function AcompanhamentoView() {
           ]}
         />
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div style={{ width: 260 }}>
             <Select id="filtro-condominio" aria-label="Filtrar por condomínio" placeholder="Todos os condomínios" options={condominios.map((c) => ({ value: c.id, label: c.nome }))} value={condominioId} onChange={(e) => setCondominioId(e.target.value)} />
           </div>
           <div style={{ width: 260 }}>
             <Select id="filtro-responsavel" aria-label="Filtrar por responsável" placeholder="Todos os responsáveis" options={advogados.map((a) => ({ value: a.id, label: a.name }))} value={responsavelId} onChange={(e) => setResponsavelId(e.target.value)} />
           </div>
+          {aba === "paid" && (
+            <button type="button" aria-pressed={soSemNota} aria-label={`Pagas sem nota fiscal · ${pagasSemNota.length}`} onClick={() => setSoSemNota((atual) => !atual)}>
+              <Tag selected={soSemNota}>{`Pagas sem nota fiscal · ${pagasSemNota.length}`}</Tag>
+            </button>
+          )}
+          <div className="flex-1" />
+          <Button size="sm" variant="ghost" icon="file-text" onClick={() => setPendencias(true)}>
+            Todas as pendências de nota
+          </Button>
         </div>
+
+        {erroDaExportacao && (
+          <Alert tone="risk" role="alert" title="Não foi possível exportar" onClose={() => setErroDaExportacao(null)}>
+            {erroDaExportacao}
+          </Alert>
+        )}
 
         {erro && (
           <Alert tone="risk" title="Não foi possível carregar as faturas" action={<Button size="sm" variant="secondary" onClick={() => setRecarregar((n) => n + 1)}>Tentar novamente</Button>}>
@@ -156,6 +206,8 @@ export function AcompanhamentoView() {
                     <SituacaoParcela parcela={p} />
                     {p.payment_date && <span className="text-sm">{`pago em ${formatDate(p.payment_date)}`}</span>}
                     {temPagamentoParcial(p) && <span className="text-sm">{`saldo ${formatBRL(p.remaining_amount)}`}</span>}
+                    {p.invoice_number && <span className="text-sm">{`NF ${p.invoice_number}`}</span>}
+                    {p.status === "paid" && !p.invoice_number && <Badge tone="warn">Sem nota fiscal</Badge>}
                   </span>
                 ),
               },
@@ -166,6 +218,11 @@ export function AcompanhamentoView() {
                 render: (p: ParcelaDoMes) => (
                   <span className="inline-flex items-center justify-end gap-1">
                     {(p.status === "paid" || temPagamentoParcial(p)) && <Button size="sm" variant="ghost" aria-label={`Pagamentos da parcela ${p.number} de ${p.debtor.name}`} onClick={() => setPagamentos(p)}>Pagamentos</Button>}
+                    {p.status === "paid" && (
+                      <Button size="sm" variant="ghost" aria-label={`${p.invoice_number ? "Alterar" : "Registrar"} a nota da parcela ${p.number} de ${p.debtor.name}`} onClick={() => setNota(p)}>
+                        {p.invoice_number ? "Alterar nota" : "Registrar nota"}
+                      </Button>
+                    )}
                     {p.status !== "paid" && <Button size="sm" variant="secondary" icon="banknote" aria-label={`Dar baixa na parcela ${p.number} de ${p.debtor.name}`} onClick={() => setBaixa(p)}>Dar baixa</Button>}
                   </span>
                 ),
@@ -175,7 +232,17 @@ export function AcompanhamentoView() {
         )}
       </div>
 
-      {baixa && <BaixaDialog parcela={baixa} descricao={descricaoDe(baixa)} onClose={() => setBaixa(null)} onSaved={(atualizada) => concluir(atualizada.status === "paid" ? "Baixa registrada com sucesso." : "Pagamento parcial registrado com sucesso.")} />}
+      {baixa && <BaixaDialog parcela={baixa} descricao={descricaoDe(baixa)} onClose={() => setBaixa(null)} onSaved={(atualizada, notaFalhou) => concluir(textoDaBaixa(atualizada, notaFalhou))} />}
+      {nota && <NotaFiscalDialog parcela={nota} descricao={descricaoDe(nota)} onClose={() => setNota(null)} onSaved={() => concluir("Nota fiscal registrada com sucesso.")} />}
+      {pendencias && (
+        <PendenciasDeNotaDialog
+          onClose={() => setPendencias(false)}
+          onChanged={(texto) => {
+            setAviso(texto);
+            setRecarregar((n) => n + 1);
+          }}
+        />
+      )}
       {pagamentos && <PagamentosDialog parcela={pagamentos} descricao={descricaoDe(pagamentos)} onClose={() => setPagamentos(null)} onChanged={(_, texto) => concluir(texto)} />}
 
       {aviso && (

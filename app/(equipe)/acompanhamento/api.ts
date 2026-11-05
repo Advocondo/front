@@ -1,4 +1,4 @@
-import { apiFetch } from "@/app/lib/api";
+import { apiFetch, apiFetchBlob } from "@/app/lib/api";
 import type { Parcela } from "@/app/(equipe)/acordos/types";
 
 const TAMANHO_DA_PAGINA = 200;
@@ -51,4 +51,28 @@ export function corrigirBaixa(parcelaId: string, data: string): Promise<Parcela>
 /** Só o Administrador (US26-CA02). Apaga todos os pagamentos da parcela, parciais ou não. */
 export function estornarPagamentos(parcelaId: string): Promise<Parcela> {
   return apiFetch<Parcela>(`/installments/${parcelaId}/payment`, { method: "DELETE" });
+}
+
+export const MAX_DIGITOS_DA_NOTA = 15;
+export const LIMITE_DE_PENDENCIAS = 200;
+
+/** Registrar de novo troca a nota (US29-CA01). O número é texto, por causa dos zeros à esquerda. */
+export function registrarNotaFiscal(parcelaId: string, numero: string, data: string): Promise<Parcela> {
+  return apiFetch<Parcela>(`/installments/${parcelaId}/invoice`, { method: "PUT", body: JSON.stringify({ number: numero, issue_date: data }) });
+}
+
+/** De todos os meses (US29-CA02). */
+export function listPagasSemNota(signal?: AbortSignal): Promise<ParcelaDoMes[]> {
+  return apiFetch<ParcelaDoMes[]>(`/installments/paid-without-invoice?limit=${LIMITE_DE_PENDENCIAS}`, { signal });
+}
+
+export type FiltrosDaExportacao = FiltrosDoMes & { status: "" | "open" | "overdue" | "paid" };
+
+/** Só o Administrador. Leva os mesmos filtros da tela (US35-CA01). */
+export function exportarPlanilha({ ano, mes, condominioId, responsavelId, status }: FiltrosDaExportacao): Promise<Blob> {
+  const params = new URLSearchParams({ year: String(ano), month: String(mes) });
+  if (condominioId) params.set("condominium_id", condominioId);
+  if (responsavelId) params.set("responsible_lawyer_id", responsavelId);
+  if (status) params.set("status", status);
+  return apiFetchBlob(`/admin-panel/reports/export?${params}`);
 }

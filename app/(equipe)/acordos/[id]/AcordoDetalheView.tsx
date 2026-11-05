@@ -9,7 +9,7 @@ import { formatDateTime } from "@/app/lib/dates";
 import { centsFromApi, formatBRL } from "@/app/lib/money";
 import { useSession } from "@/app/lib/session";
 import { formatDate } from "@/app/(equipe)/condominios/format";
-import { BaixaDialog } from "@/app/(equipe)/acompanhamento/BaixaDialog";
+import { BaixaDialog, textoDaBaixa } from "@/app/(equipe)/acompanhamento/BaixaDialog";
 import { PagamentosDialog } from "@/app/(equipe)/acompanhamento/PagamentosDialog";
 import { SituacaoParcela, temPagamentoParcial } from "@/app/(equipe)/acompanhamento/situacao";
 import { getAcordo, listAdvogados, listHistoricoDeResponsaveis, listParcelas, reativarAcordo } from "../api";
@@ -224,9 +224,9 @@ export function AcordoDetalheView({ id }: { id: string }) {
           parcela={baixa}
           descricao={acordo.debtor.name}
           onClose={() => setBaixa(null)}
-          onSaved={(atualizada) => {
+          onSaved={(atualizada, notaFalhou) => {
             setBaixa(null);
-            setAviso(atualizada.status === "paid" ? "Baixa registrada com sucesso." : "Pagamento parcial registrado com sucesso.");
+            setAviso(textoDaBaixa(atualizada, notaFalhou));
             setRecarregar((n) => n + 1);
           }}
         />
