@@ -42,6 +42,8 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Trilha de auditoria global | O protótipo tem uma tela única, com indicadores, filtros por autor e período, e exportação. O back só responde por acordo e por usuário, então o histórico fica em cada acordo e em cada usuário | [#72](https://github.com/Advocondo/front/issues/72) |
 | Cancelamento e reativação no histórico financeiro | A rota traz baixas, estornos e edições, mas não os cancelamentos. A data e o motivo aparecem no aviso do acordo, sem o autor | Sem issue |
 | Histórico das renovações | Registrar uma renovação sobrescreve as datas do contrato, e a anterior se perde. A observação do protótipo não tem campo no back | Sem issue |
+| Comissão de Administrador responsável | Quando o responsável por um acordo é um Administrador, os honorários entram no faturamento, mas a comissão não aparece para ninguém, porque a rota lista só a Equipe Operacional | Sem issue |
+| Situação em inglês na planilha exportada | A coluna Status de `acompanhamento_AAAA_MM.xlsx` traz `open`, `overdue` e `paid`, enquanto o resto da planilha está em português. O PDF do acordo já traduz. Os testes do back conferem o valor em inglês | Sem issue |
 | Observações do devedor | Estão no protótipo, mas não existem no back | Sem issue |
 
 ## Telas e fluxos que ainda não existem
@@ -51,7 +53,6 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Relatório de condomínio sem acordos | O botão fica no card do condomínio, e o card só existe quando há acordo. Sem acordo, não há o que baixar pela tela, embora a rota responda | Sem issue |
 | Painel da Equipe Operacional | Depois do login, a pessoa cai em Condomínios. O protótipo mobile tem uma visão própria, com totais do mês, meta, vencimentos da semana e últimas baixas | Sem issue |
 | Edição da landing pelo Administrador | Textos, avaliações e fotos só mudam pela API | [#4](https://github.com/Advocondo/front/issues/4) |
-| Nota fiscal da parcela | O protótipo tem o campo no diálogo de baixa | [#28](https://github.com/Advocondo/front/issues/28) |
 | Anexar um link como documento | O back aceita um link no lugar de um arquivo, e a tela mostra os que existirem, mas só envia arquivos | Sem issue |
 | PDFs no Painel do Cliente | O Cliente abre o PDF pelo link, mas o painel não lista os PDFs do acordo. O back já permite | Sem issue |
 | Voltar ao link do PDF depois do login | Sem sessão, o link leva ao login, e depois do login a pessoa cai na tela inicial, não no PDF | Sem issue |
@@ -89,7 +90,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Condomínios | A renovação é registrada na lista, porque não há tela de detalhe do condomínio. A janela do aviso é de 60 dias, fixa no back | O detalhe do condomínio ainda não existe |
 | Detalhes do acordo | Parcelas, documentos e históricos ficam em blocos na mesma página, não em abas. O PDF usa o nome e o tamanho do back, sem o código do acordo nem o número de páginas | As abas ficam para quando a tela for revista. O código do acordo não existe no back |
 | Importar inadimplentes | Fica em Devedores, não em Acordos, e aceita só `.xlsx`, não `.csv`. A prévia reenvia o arquivo para confirmar, sem guardar nada entre os passos | Devedores tem tela própria neste sistema, e o back só lê `.xlsx` |
-| Faturas do mês | Sem calendário e sem exportar | O calendário é herança de Prazos; exportar é a [#34](https://github.com/Advocondo/front/issues/34) |
+| Faturas do mês | Sem calendário. A exportação leva o mês, o condomínio, o responsável e a aba, mas não o recorte "sem nota", que a rota não filtra. A nota informada na baixa fica com a data de hoje; para outra data, registra-se depois | O calendário é herança de Prazos. O protótipo só pede o número, e o back exige a data |
 | Metas e comissões | Indicadores do Administrador: faturamento, acordos ativos e inadimplência, em vez de recuperado e acordos fechados; a meta é definida no mês da tela, sem seletor de mês no diálogo | O back não devolve recuperado nem acordos fechados; o seletor do diálogo seria redundante com o da tela |
 
 ## Limitações técnicas

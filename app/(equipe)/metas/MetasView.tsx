@@ -141,11 +141,15 @@ function VisaoDoEscritorio({ ano, mes, ehMesAtual }: Periodo) {
   if (carregado !== chave || !indicadores) return <p role="status">Carregando metas…</p>;
 
   const comissaoDe = (id: string) => resumo?.team_commissions.find((c) => c.user_id === id)?.commission;
+  const totalDeComissoes = resumo?.team_commissions.reduce((total, c) => total + centsFromApi(c.commission), 0n);
+  // A lista de metas traz só quem está ativo. Sem isto, o total acima não fecharia com o que aparece na tela.
+  const foraDasMetas = resumo?.team_commissions.filter((c) => centsFromApi(c.commission) > 0n && !equipe.some((e) => e.user_id === c.user_id)) ?? [];
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-3">
-        <MetricCard label="Faturamento do mês" value={formatBRL(indicadores.paid_commissions)} />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard label="Faturamento do mês" value={formatBRL(indicadores.paid_commissions)} footnote="Honorários recebidos no mês" />
+        <MetricCard label="Comissões da equipe" value={totalDeComissoes === undefined ? "—" : formatBRL(totalDeComissoes)} footnote={totalDeComissoes === undefined ? "Só no mês atual" : "Soma das comissões do mês"} />
         <MetricCard label="Acordos ativos" value={String(indicadores.active_agreements)} />
         <MetricCard label="Inadimplência do mês" value={`${indicadores.monthly_default_rate.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`} />
       </div>
@@ -189,6 +193,19 @@ function VisaoDoEscritorio({ ano, mes, ehMesAtual }: Periodo) {
           </ul>
         )}
       </Card>
+
+      {foraDasMetas.length > 0 && (
+        <Card title="Outras comissões do mês">
+          <ul className="grid gap-2 text-sm">
+            {foraDasMetas.map((c) => (
+              <li key={c.user_id} className="flex justify-between gap-4">
+                <span>{c.user_name}</span>
+                <strong>{formatBRL(c.commission)}</strong>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       {!ehMesAtual && <p className="text-sm">As comissões por colaborador só estão disponíveis para o mês atual.</p>}
 

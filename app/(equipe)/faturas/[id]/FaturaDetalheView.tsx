@@ -1,9 +1,10 @@
 "use client";
 
-import { Alert, Button, Card, EmptyState, MetricCard } from "edson-alexandre-design-system";
+import { Alert, Button, Card, EmptyState, MetricCard, Toast, ToastStack } from "edson-alexandre-design-system";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { getParcela, listPagamentos, type Pagamento, type ParcelaDoMes } from "@/app/(equipe)/acompanhamento/api";
+import { NotaFiscalDialog } from "@/app/(equipe)/acompanhamento/NotaFiscalDialog";
 import { SituacaoParcela } from "@/app/(equipe)/acompanhamento/situacao";
 import { getAcordo } from "@/app/(equipe)/acordos/api";
 import { formatDate } from "@/app/(equipe)/condominios/format";
@@ -33,6 +34,8 @@ export function FaturaDetalheView({ id }: { id: string }) {
   const [naoEncontrada, setNaoEncontrada] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [recarregar, setRecarregar] = useState(0);
+  const [editandoNota, setEditandoNota] = useState(false);
+  const [aviso, setAviso] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -99,7 +102,17 @@ export function FaturaDetalheView({ id }: { id: string }) {
                 <Dado rotulo="Vencimento">{formatDate(parcela.due_date)}</Dado>
                 <Dado rotulo="Data de pagamento">{formatDate(parcela.payment_date)}</Dado>
                 <Dado rotulo="Saldo">{formatBRL(parcela.remaining_amount)}</Dado>
-                <Dado rotulo="Nota fiscal">{notaFiscal(parcela)}</Dado>
+                <Dado rotulo="Nota fiscal">
+                  <span className="inline-flex items-center gap-2">
+                    {notaFiscal(parcela)}
+                    {/* O back só aceita nota em parcela quitada. */}
+                    {parcela.status === "paid" && (
+                      <Button size="sm" variant="ghost" onClick={() => setEditandoNota(true)}>
+                        {parcela.invoice_number ? "Alterar nota fiscal" : "Registrar nota fiscal"}
+                      </Button>
+                    )}
+                  </span>
+                </Dado>
                 <Dado rotulo="Devedor">{`${parcela.debtor.name} · ${parcela.debtor.unit}`}</Dado>
                 <Dado rotulo="Condomínio">{parcela.condominium.name}</Dado>
                 <Dado rotulo="Acordo">
@@ -125,6 +138,25 @@ export function FaturaDetalheView({ id }: { id: string }) {
           </>
         )}
       </div>
+
+      {editandoNota && parcela && (
+        <NotaFiscalDialog
+          parcela={parcela}
+          descricao={`${parcela.debtor.name} · ${parcela.condominium.name} · ${parcela.debtor.unit}`}
+          onClose={() => setEditandoNota(false)}
+          onSaved={() => {
+            setEditandoNota(false);
+            setAviso("Nota fiscal registrada com sucesso.");
+            setRecarregar((n) => n + 1);
+          }}
+        />
+      )}
+
+      {aviso && (
+        <ToastStack>
+          <Toast tone="ok" title={aviso} onClose={() => setAviso(null)} />
+        </ToastStack>
+      )}
     </PlataformaShell>
   );
 }
