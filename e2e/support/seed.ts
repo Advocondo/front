@@ -169,6 +169,11 @@ export async function cancelAgreement(id: string): Promise<void> {
   await esperarSucesso(resposta, "Cancelar acordo");
 }
 
+/** O comando diário que cria as notificações de parcela em atraso (docs/notificacoes.md do back). */
+export async function runOverdueNotifications(): Promise<void> {
+  await executar("docker", ["compose", "exec", "-T", "api", "uv", "run", "python", "-m", "advocondo.notificacoes.overdue"], { cwd: env.backDir });
+}
+
 export async function deactivateUser(id: string): Promise<void> {
   const resposta = await chamarApi(`/users/${id}/status`, {
     method: "PATCH",
