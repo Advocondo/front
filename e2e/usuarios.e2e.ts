@@ -198,6 +198,9 @@ describe("Gestão de usuários", () => {
     await abrirTela(env.adminEmail);
     const linha = await waitForElement(driver, By.xpath(`//tr[.//*[normalize-space()="${env.adminEmail}"]]`));
     expect(await linha.getText()).toContain("você");
-    expect(await linha.findElements(By.css("button"))).toHaveLength(0);
+    // Só o histórico, que é consulta: nenhuma ação muda a própria conta.
+    const botoes = await linha.findElements(By.css("button"));
+    expect(botoes).toHaveLength(1);
+    expect(await botoes[0].getAttribute("aria-label")).toMatch(/^Ver histórico de/);
   });
 });

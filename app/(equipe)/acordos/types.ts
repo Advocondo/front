@@ -38,6 +38,17 @@ export type Parcela = {
   status: "open" | "paid" | "overdue";
 };
 
+/** Resposta de GET /agreements/{id}/financial-history (US31). */
+export type MovimentacaoFinanceira = {
+  changed_at: string;
+  changed_by: { id: string; name: string };
+  change: "payment_recorded" | "payment_corrected" | "payment_reversed" | "due_date_edited" | "amount_edited" | "agreement_edited";
+  installment_number: number | null;
+  field: "debtor" | "total_amount" | "fee_amount" | null;
+  old_value: string | null;
+  new_value: string | null;
+};
+
 export type NovoAcordo = {
   condominium_id: string;
   debtor_id: string;

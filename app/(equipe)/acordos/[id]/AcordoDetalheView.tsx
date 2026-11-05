@@ -7,6 +7,7 @@ import { PlataformaShell } from "@/app/components/PlataformaShell";
 import { ApiError } from "@/app/lib/api";
 import { formatDateTime } from "@/app/lib/dates";
 import { centsFromApi, formatBRL } from "@/app/lib/money";
+import { useSession } from "@/app/lib/session";
 import { formatDate } from "@/app/(equipe)/condominios/format";
 import { BaixaDialog } from "@/app/(equipe)/acompanhamento/BaixaDialog";
 import { PagamentosDialog } from "@/app/(equipe)/acompanhamento/PagamentosDialog";
@@ -16,6 +17,7 @@ import { StatusAcordo } from "../AcordosView";
 import type { Acordo, Advogado, AtribuicaoDeAdvogado, Parcela } from "../types";
 import { CancelarAcordoDialog } from "./CancelarAcordoDialog";
 import { EditarAcordoDialog } from "./EditarAcordoDialog";
+import { HistoricoFinanceiro } from "./HistoricoFinanceiro";
 import { ParcelaDialog } from "./ParcelaDialog";
 import { ResponsavelDialog } from "./ResponsavelDialog";
 
@@ -24,6 +26,7 @@ const podeEditar = (acordo: Acordo, parcela: Parcela): boolean =>
   acordo.status === "active" && parcela.status !== "paid" && parcela.remaining_amount === parcela.amount;
 
 export function AcordoDetalheView({ id }: { id: string }) {
+  const session = useSession();
   const [acordo, setAcordo] = useState<Acordo | null>(null);
   const [parcelas, setParcelas] = useState<Parcela[]>([]);
   const [erro, setErro] = useState<string | null>(null);
@@ -205,6 +208,8 @@ export function AcordoDetalheView({ id }: { id: string }) {
                 />
               )}
             </Card>
+
+            {session?.user.role === "admin" && <HistoricoFinanceiro acordoId={id} versao={recarregar} />}
           </>
         )}
       </div>
