@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveApiUrl, resolveBaseUrl, resolveBrowser } from "./env";
+import { exigirDeProducao, resolveApiUrl, resolveBaseUrl, resolveBrowser } from "./env";
 
 describe("resolveApiUrl", () => {
   it("usa a API local por padrão", () => {
@@ -26,6 +26,22 @@ describe("resolveBaseUrl", () => {
       expect(() => resolveBaseUrl(url)).toThrow("endereço local");
     },
   );
+});
+
+describe("alvo de produção", () => {
+  it("só aceita um endereço externo quando a suíte de produção pede", () => {
+    expect(resolveBaseUrl("https://advocondo.com.br/", true)).toBe("https://advocondo.com.br");
+    expect(resolveApiUrl("https://api.advocondo.com.br", true)).toBe("https://api.advocondo.com.br");
+  });
+
+  it("a recusa da suíte comum indica o comando certo", () => {
+    expect(() => resolveBaseUrl("https://advocondo.com.br")).toThrow("npm run test:e2e:prod");
+  });
+
+  it("exige as variáveis, em vez de cair nos padrões locais", () => {
+    expect(() => exigirDeProducao({ E2E_BASE_URL: "https://x", E2E_API_URL: undefined, E2E_ADMIN_EMAIL: "", E2E_ADMIN_PASSWORD: "y" })).toThrow("E2E_API_URL, E2E_ADMIN_EMAIL");
+    expect(() => exigirDeProducao({ E2E_BASE_URL: "https://x" })).not.toThrow();
+  });
 });
 
 describe("resolveBrowser", () => {

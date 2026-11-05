@@ -1,12 +1,42 @@
-import { Browser, Builder, By, Key, until, type Locator, type WebDriver, type WebElement } from "selenium-webdriver";
+import { Browser, Builder, By, Key, until, WebDriver, WebElement, type Locator } from "selenium-webdriver";
 import chrome from "selenium-webdriver/chrome";
 import firefox from "selenium-webdriver/firefox";
 import { env } from "./env";
 
 const ESPERA_MS = 10_000;
 
+let pausaInstalada = false;
+
+/**
+ * Aplica `E2E_DELAY_MS` antes de abrir uma página, clicar e digitar, as ações que se veem na tela.
+ * É feito uma vez, no próprio Selenium, para valer em todo teste sem cada um precisar lembrar.
+ * As esperas de elementos não mudam, e um clique feito por script não pausa.
+ */
+function instalarPausa(): void {
+  if (pausaInstalada || env.delayMs === 0) return;
+  pausaInstalada = true;
+  const pausar = () => new Promise((resolve) => setTimeout(resolve, env.delayMs));
+
+  const clicar = WebElement.prototype.click;
+  WebElement.prototype.click = async function (this: WebElement) {
+    await pausar();
+    return clicar.call(this);
+  };
+  const digitar = WebElement.prototype.sendKeys;
+  WebElement.prototype.sendKeys = async function (this: WebElement, ...teclas: Parameters<WebElement["sendKeys"]>) {
+    await pausar();
+    return digitar.apply(this, teclas);
+  };
+  const abrir = WebDriver.prototype.get;
+  WebDriver.prototype.get = async function (this: WebDriver, url: string) {
+    await pausar();
+    return abrir.call(this, url);
+  };
+}
+
 /** O Selenium Manager baixa o driver compatível com o navegador instalado. */
 export function createDriver(): Promise<WebDriver> {
+  instalarPausa();
   const builder = new Builder();
   if (env.browser === "firefox") {
     const options = new firefox.Options();
