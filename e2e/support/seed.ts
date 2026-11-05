@@ -2,7 +2,10 @@ import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { promisify } from "node:util";
-import { env } from "./env";
+import { emProducao, env } from "./env";
+
+// Este arquivo cria usuários, condomínios e acordos: nunca pode entrar na suíte de produção.
+if (emProducao) throw new Error("e2e/support/seed.ts grava dados e não pode ser usado em produção.");
 
 const executar = promisify(execFile);
 
