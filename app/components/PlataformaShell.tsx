@@ -1,6 +1,7 @@
 "use client";
 
 import { IconButton, SidebarNav, TopBar } from "edson-alexandre-design-system";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { logOut } from "@/app/lib/auth";
@@ -49,7 +50,10 @@ export function PlataformaShell({ activeId, title, subtitle, actions, children }
           header={<strong className="px-4 py-5 text-lg text-white">Advocondo</strong>}
           footer={
             <div className="flex items-center justify-between gap-2 p-4 text-sm text-white">
-              <span className="min-w-0 truncate">{session?.user.name}</span>
+              {/* A cor global dos links é escura e sumiria no fundo navy. */}
+              <Link href="/perfil" className="min-w-0 truncate" style={{ color: "inherit" }}>
+                {session?.user.name}
+              </Link>
               <IconButton icon="log-out" label="Sair" variant="inverse" onClick={() => void logOut()} />
             </div>
           }

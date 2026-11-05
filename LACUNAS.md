@@ -31,6 +31,8 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | "Acordos fechados" no mês | Está no protótipo, mas o back não devolve esse número | Sem issue |
 | Inadimplência em reais e por condomínio | O Painel mostra o percentual e a contagem de parcelas. O protótipo mostra o valor em reais e a lista "Maior inadimplência", que o back não devolve | Sem issue |
 | Honorários recebidos e acordos novos no mês | Estão no Painel do protótipo. A rota do Painel só devolve as comissões pagas e o total de acordos ativos de hoje | Sem issue |
+| Local e última atividade da sessão | O protótipo mostra a cidade e "há 2 horas". A tela mostra o aparelho e a hora do login: o local exigiria geolocalizar o IP, uma decisão de privacidade, e a atividade exigiria gravar a cada requisição | Sem issue |
+| OAB no cabeçalho do perfil | Está no protótipo, mas a sessão guardada não traz esse dado | Sem issue |
 | Observações do devedor | Estão no protótipo, mas não existem no back | Sem issue |
 
 ## Telas e fluxos que ainda não existem
@@ -40,7 +42,6 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Destino da notificação de atraso | O sino ainda não existe. Quando existir, a notificação deve levar a `/faturas/{id}`, a tela do detalhe | [#29](https://github.com/Advocondo/front/issues/29) |
 | Relatório de condomínio sem acordos | O botão fica no card do condomínio, e o card só existe quando há acordo. Sem acordo, não há o que baixar pela tela, embora a rota responda | Sem issue |
 | Painel da Equipe Operacional | Depois do login, a pessoa cai em Condomínios. O protótipo mobile tem uma visão própria, com totais do mês, meta, vencimentos da semana e últimas baixas | Sem issue |
-| Editar perfil e encerrar sessões | O usuário não troca os próprios dados nem a própria senha pela tela | [#5](https://github.com/Advocondo/front/issues/5), [#6](https://github.com/Advocondo/front/issues/6) |
 | Histórico de ações do usuário | O back registra, mas não há tela | [#11](https://github.com/Advocondo/front/issues/11) |
 | Edição da landing pelo Administrador | Textos, avaliações e fotos só mudam pela API | [#4](https://github.com/Advocondo/front/issues/4) |
 | Nota fiscal da parcela | O protótipo tem o campo no diálogo de baixa | [#28](https://github.com/Advocondo/front/issues/28) |
@@ -73,6 +74,8 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Painel | Seletor de mês por setas, como em Faturas e Metas, e não uma lista. Sem o aviso de renovação de contrato. "Comissões pagas" soma os honorários das parcelas pagas no mês, e o mesmo valor aparece como "Faturamento do mês" em Metas | Consistência entre as telas. O aviso é a [#23](https://github.com/Advocondo/front/issues/23). O nome depende da decisão sobre o percentual de comissão |
 | Detalhe da fatura e parcelas do Cliente | A [#47](https://github.com/Advocondo/front/issues/47) não tem história de usuário nem protótipo, e os critérios são propostos. A construção foi aprovada pelo responsável em 04/11/2026 | Falta validar com o time |
 | Painel do Cliente e histórico do morador | Não há protótipo: as telas foram montadas com o design system | O perfil Cliente ainda não foi prototipado |
+| Meu perfil | A senha pede 8 caracteres, como no back, e o protótipo pede 10. Sem foto nem iniciais, e o botão de mostrar a senha não existe | A regra é a mesma da redefinição; os outros dois são acabamento |
+| Meu perfil | Sessões antigas aparecem como "Aparelho não identificado" até o próximo login | O back só guarda o aparelho desde a [#127](https://github.com/Advocondo/back/pull/127) |
 | Faturas do mês | Sem calendário e sem exportar | O calendário é herança de Prazos; exportar é a [#34](https://github.com/Advocondo/front/issues/34) |
 | Metas e comissões | Indicadores do Administrador: faturamento, acordos ativos e inadimplência, em vez de recuperado e acordos fechados; a meta é definida no mês da tela, sem seletor de mês no diálogo | O back não devolve recuperado nem acordos fechados; o seletor do diálogo seria redundante com o da tela |
 
@@ -84,6 +87,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Prévia do parcelamento repete regras do back | `acordos/plan.ts` copia `parcelas/plan.py` e `acordos/fees.py`: se o back mudar a regra, a prévia precisa mudar junto |
 | Scanner de segredos olha todas as branches | Um falso positivo em qualquer branch derruba o CI de todos os PRs até ela ser apagada |
 | Aviso do `Button` do `ui-kit` | Em desenvolvimento, o React avisa sobre `border` e `borderColor` misturados. Não afeta o uso |
+| Telas do escritório não se adaptam ao celular | A barra lateral tem largura fixa de 248px e não recolhe, então em 390px o conteúdo fica cortado. Os protótipos mobile têm navegação inferior, que não foi construída. As telas do Cliente não têm esse problema, porque não têm barra lateral |
 | Guard de rotas roda no navegador | O back usa o cabeçalho `Authorization`, não cookie, então a checagem de sessão só acontece depois de a página carregar. Quem protege os dados é o back |
 
 ## Documentação desatualizada

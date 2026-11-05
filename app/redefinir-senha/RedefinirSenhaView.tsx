@@ -6,11 +6,10 @@ import { useState, type FormEvent } from "react";
 import { AuthShell } from "@/app/components/AuthShell";
 import { Field } from "@/app/components/FormField";
 import { ApiError, apiFetch } from "@/app/lib/api";
+import { MAX_SENHA, MIN_SENHA } from "@/app/lib/senha";
 import { clearSession } from "@/app/lib/session";
 import styles from "@/app/login/login.module.css";
 
-const MIN_SENHA = 8;
-const MAX_SENHA = 128;
 
 function Criterio({ atendido, children }: { atendido: boolean; children: string }) {
   return (
