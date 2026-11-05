@@ -34,7 +34,7 @@ function mockApi(rota: (url: string) => Resposta | undefined = () => undefined) 
       if (url.includes("/financial-history")) return { status: 200, body: [edicao, baixa] };
       if (url.includes("/history")) return { status: 200, body: { logs: [inativacao] } };
       if (url.includes("/notifications")) return { status: 200, body: { unread_count: 0, notifications: [] } };
-      if (url.includes("/users/lawyers") || url.includes("/installments") || url.includes("/lawyer-history")) return { status: 200, body: [] };
+      if (url.includes("/users/lawyers") || url.includes("/installments") || url.includes("/lawyer-history") || url.includes("/documents") || url.includes("/pdfs")) return { status: 200, body: [] };
       if (url.includes("/users")) return { status: 200, body: [eu, bia] };
       return { status: 200, body: acordo };
     })();

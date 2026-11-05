@@ -1,5 +1,5 @@
-import { apiFetch } from "@/app/lib/api";
-import type { Acordo, Advogado, AtribuicaoDeAdvogado, MovimentacaoFinanceira, NovoAcordo, Parcela } from "./types";
+import { apiFetch, apiFetchBlob } from "@/app/lib/api";
+import type { Acordo, Advogado, AtribuicaoDeAdvogado, DocumentoDoAcordo, MovimentacaoFinanceira, NovoAcordo, Parcela, PdfDoAcordo } from "./types";
 
 export const LIMITE_LISTAGEM = 200;
 
@@ -69,4 +69,31 @@ export function reativarAcordo(id: string): Promise<Acordo> {
 /** Só o Administrador: o back responde 403 para os outros perfis (US31-CA02). */
 export function listHistoricoFinanceiro(acordoId: string, signal?: AbortSignal): Promise<MovimentacaoFinanceira[]> {
   return apiFetch<MovimentacaoFinanceira[]>(`/agreements/${acordoId}/financial-history`, { signal });
+}
+
+export function listDocumentos(acordoId: string, signal?: AbortSignal): Promise<DocumentoDoAcordo[]> {
+  return apiFetch<DocumentoDoAcordo[]>(`/agreements/${acordoId}/documents`, { signal });
+}
+
+export function anexarDocumento(acordoId: string, arquivo: File): Promise<DocumentoDoAcordo> {
+  const corpo = new FormData();
+  corpo.append("file", arquivo);
+  return apiFetch<DocumentoDoAcordo>(`/agreements/${acordoId}/documents`, { method: "POST", body: corpo });
+}
+
+export function baixarDocumento(acordoId: string, documentoId: string): Promise<Blob> {
+  return apiFetchBlob(`/agreements/${acordoId}/documents/${documentoId}`);
+}
+
+/** Do mais recente para o mais antigo. Para um Cliente sem acesso, o back responde 404 (US24-CA03). */
+export function listPdfs(acordoId: string, signal?: AbortSignal): Promise<PdfDoAcordo[]> {
+  return apiFetch<PdfDoAcordo[]>(`/agreements/${acordoId}/pdfs`, { signal });
+}
+
+export function gerarPdf(acordoId: string): Promise<PdfDoAcordo> {
+  return apiFetch<PdfDoAcordo>(`/agreements/${acordoId}/pdfs`, { method: "POST" });
+}
+
+export function baixarPdf(pdf: PdfDoAcordo): Promise<Blob> {
+  return apiFetchBlob(pdf.download_url);
 }

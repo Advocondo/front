@@ -14,6 +14,8 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | E-mail real nunca testado | Em ambiente local, os e-mails (convite, contato) só vão para o log | Conferir um convite e um contato com o SMTP de produção |
 | `NEXT_PUBLIC_API_URL` e CORS em produção não conferidos | Sem a variável, o site chama `localhost:8000` na máquina do visitante, e as telas mostram erro | Definir a variável na Vercel e conferir `CORS_ALLOW_ORIGINS` no Coolify |
 | Comando diário das notificações não conferido | Sem a *Scheduled Task* no Coolify, nenhuma notificação de atraso é criada, e o sino fica sempre vazio | Conferir a tarefa `python -m advocondo.notificacoes.overdue`, frequência `5 3 * * *`, conforme `back/docs/notificacoes.md` |
+| Onde os arquivos ficam em produção | Sem as variáveis `S3_`, documentos e PDFs ficam no PostgreSQL, com até 10 MB por documento. Funciona, mas o banco cresce | Decidir se usa um bucket, conforme `back/docs/documentos.md`. Ligar depois não quebra os arquivos antigos |
+| Limite de envio no proxy de produção não conferido | O back aceita até 10 MB, mas um proxy na frente pode ter um limite menor | Enviar um arquivo perto de 10 MB depois do deploy |
 | Destinatário do formulário de contato | O conteúdo inicial usa o e-mail real do cliente | Trocar na seção de contato durante demonstrações |
 
 ## Faltam rotas ou dados no back
@@ -50,7 +52,9 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Painel da Equipe Operacional | Depois do login, a pessoa cai em Condomínios. O protótipo mobile tem uma visão própria, com totais do mês, meta, vencimentos da semana e últimas baixas | Sem issue |
 | Edição da landing pelo Administrador | Textos, avaliações e fotos só mudam pela API | [#4](https://github.com/Advocondo/front/issues/4) |
 | Nota fiscal da parcela | O protótipo tem o campo no diálogo de baixa | [#28](https://github.com/Advocondo/front/issues/28) |
-| Documentos e PDF do acordo | Não há tela para anexar documentos nem gerar o PDF | [#21](https://github.com/Advocondo/front/issues/21), [#24](https://github.com/Advocondo/front/issues/24) |
+| Anexar um link como documento | O back aceita um link no lugar de um arquivo, e a tela mostra os que existirem, mas só envia arquivos | Sem issue |
+| PDFs no Painel do Cliente | O Cliente abre o PDF pelo link, mas o painel não lista os PDFs do acordo. O back já permite | Sem issue |
+| Voltar ao link do PDF depois do login | Sem sessão, o link leva ao login, e depois do login a pessoa cai na tela inicial, não no PDF | Sem issue |
 | Importar inadimplentes em lote | O back aceita a planilha, mas não há tela | [#14](https://github.com/Advocondo/front/issues/14) |
 | Página de política de privacidade e de cookies | No rodapé, são só texto | Sem issue |
 
@@ -84,6 +88,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Cancelar acordo | O motivo é obrigatório na tela, como no protótipo, mas opcional na API | Um acordo cancelado pela API pode aparecer como "Sem motivo registrado" |
 | Notificações | O sino abre uma página, como no protótipo mobile, e não uma lista suspensa. O número só atualiza ao abrir uma tela, sem aviso em tempo real | O back não envia atualizações, e as notificações são criadas uma vez por dia |
 | Condomínios | A renovação é registrada na lista, porque não há tela de detalhe do condomínio. A janela do aviso é de 60 dias, fixa no back | O detalhe do condomínio ainda não existe |
+| Detalhes do acordo | Parcelas, documentos e históricos ficam em blocos na mesma página, não em abas. O PDF usa o nome e o tamanho do back, sem o código do acordo nem o número de páginas | As abas ficam para quando a tela for revista. O código do acordo não existe no back |
 | Faturas do mês | Sem calendário e sem exportar | O calendário é herança de Prazos; exportar é a [#34](https://github.com/Advocondo/front/issues/34) |
 | Metas e comissões | Indicadores do Administrador: faturamento, acordos ativos e inadimplência, em vez de recuperado e acordos fechados; a meta é definida no mês da tela, sem seletor de mês no diálogo | O back não devolve recuperado nem acordos fechados; o seletor do diálogo seria redundante com o da tela |
 

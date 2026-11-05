@@ -33,6 +33,7 @@ function mockApi({ plano = [aberta, aberta2], dados = acordo, rota }: { plano?: 
       if (url.includes("/debtors")) return { status: 200, body: devedores };
       if (url.includes("/installments")) return { status: 200, body: plano };
       if (url.includes("/lawyer-history")) return { status: 200, body: [] };
+      if (url.includes("/documents") || url.includes("/pdfs")) return { status: 200, body: [] };
       return { status: 200, body: dados };
     };
     const r = rota?.(url, init) ?? padrao();

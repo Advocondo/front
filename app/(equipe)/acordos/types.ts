@@ -49,6 +49,30 @@ export type MovimentacaoFinanceira = {
   new_value: string | null;
 };
 
+/** Resposta de /agreements/{id}/documents (US21). */
+export type DocumentoDoAcordo = {
+  id: string;
+  kind: "file" | "link";
+  filename: string;
+  content_type: string | null;
+  size: number | null;
+  url: string | null;
+  uploaded_at: string;
+  uploaded_by: { id: string; name: string };
+};
+
+/** Resposta de /agreements/{id}/pdfs (US24). */
+export type PdfDoAcordo = {
+  id: string;
+  agreement_id: string;
+  file_name: string;
+  content_type: string;
+  size_bytes: number;
+  generated_by: { id: string; name: string };
+  generated_at: string;
+  download_url: string;
+};
+
 export type NovoAcordo = {
   condominium_id: string;
   debtor_id: string;
