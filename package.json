@@ -13,6 +13,7 @@
     "test:e2e:prod": "vitest run --config vitest.e2e.producao.config.mts"
   },
   "dependencies": {
+    "@sentry/nextjs": "^11.11.0",
     "edson-alexandre-design-system": "github:Advocondo/ui-kit#main",
     "next": "16.4.5",
     "react": "19.2.8",
