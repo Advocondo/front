@@ -1,4 +1,4 @@
-import { Browser, Builder, By, Key, until, WebDriver, WebElement, type Locator } from "selenium-webdriver";
+import { Browser, Builder, By, error, Key, until, WebDriver, WebElement, type Locator } from "selenium-webdriver";
 import chrome from "selenium-webdriver/chrome";
 import firefox from "selenium-webdriver/firefox";
 import { env } from "./env";
@@ -7,20 +7,33 @@ const ESPERA_MS = 10_000;
 
 let pausaInstalada = false;
 
+const dormir = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /**
  * Aplica `E2E_DELAY_MS` antes de abrir uma página, clicar e digitar, as ações que se veem na tela.
  * É feito uma vez, no próprio Selenium, para valer em todo teste sem cada um precisar lembrar.
  * As esperas de elementos não mudam, e um clique feito por script não pausa.
+ *
+ * O clique também espera o aviso de sucesso sair da frente: ele fica uns segundos no canto da
+ * tela e cobre o que estiver embaixo (ver LACUNAS.md). Quem usa espera ou fecha o aviso.
  */
 function instalarPausa(): void {
-  if (pausaInstalada || env.delayMs === 0) return;
+  if (pausaInstalada) return;
   pausaInstalada = true;
-  const pausar = () => new Promise((resolve) => setTimeout(resolve, env.delayMs));
+  const pausar = () => dormir(env.delayMs);
 
   const clicar = WebElement.prototype.click;
   WebElement.prototype.click = async function (this: WebElement) {
     await pausar();
-    return clicar.call(this);
+    const limite = Date.now() + ESPERA_MS;
+    for (;;) {
+      try {
+        return await clicar.call(this);
+      } catch (e) {
+        if (!(e instanceof error.ElementClickInterceptedError) || Date.now() > limite) throw e;
+        await dormir(200);
+      }
+    }
   };
   const digitar = WebElement.prototype.sendKeys;
   WebElement.prototype.sendKeys = async function (this: WebElement, ...teclas: Parameters<WebElement["sendKeys"]>) {
@@ -63,17 +76,58 @@ export function waitForButton(driver: WebDriver, texto: string): Promise<WebElem
   return waitForElement(driver, By.xpath(`//button[normalize-space()="${texto}"]`));
 }
 
+/**
+ * O elemento mais interno que contém o texto inteiro, mesmo quando a tela o monta em partes, como
+ * `Responsável: {nome}`. Ignora `script` e `style`: o Next guarda o texto da página em scripts, e
+ * isso faria o teste achar um texto que a pessoa não vê.
+ */
+function comTexto(texto: string): Locator {
+  const contem = `contains(normalize-space(.), "${texto}")`;
+  return By.xpath(`//*[not(self::script or self::style) and ${contem} and not(*[${contem}])]`);
+}
+
 /** Espera este texto aparecer em algum elemento da página. */
 export function waitForText(driver: WebDriver, texto: string): Promise<WebElement> {
-  return waitForElement(driver, By.xpath(`//*[contains(normalize-space(text()), "${texto}")]`));
+  return waitForElement(driver, comTexto(texto));
 }
 
 /** Espera este texto sair da página, como a linha que a busca filtrou ou um diálogo fechado. */
 export async function waitForTextGone(driver: WebDriver, texto: string): Promise<void> {
   await driver.wait(async () => {
-    const achados = await driver.findElements(By.xpath(`//*[contains(normalize-space(text()), "${texto}")]`));
+    const achados = await driver.findElements(comTexto(texto));
     return achados.length === 0;
   }, ESPERA_MS);
+}
+
+/**
+ * Espera a busca da tela terminar: toda linha da tabela contém o termo. Ver o termo na tela não basta,
+ * porque a linha procurada já estava na lista completa, e o clique seguinte pegaria a primeira linha.
+ */
+export async function waitForFilteredRows(driver: WebDriver, termo: string): Promise<void> {
+  await driver.wait(async () => {
+    const linhas = await driver.findElements(By.css("main table tbody tr"));
+    if (linhas.length === 0) return false;
+    try {
+      const textos = await Promise.all(linhas.map((linha) => linha.getText()));
+      return textos.every((texto) => texto.includes(termo));
+    } catch (e) {
+      if (e instanceof error.StaleElementReferenceError) return false;
+      throw e;
+    }
+  }, ESPERA_MS);
+}
+
+/** Clica procurando o elemento de novo a cada tentativa, para o caso de a tela redesenhá-lo no caminho. */
+export async function clickFresh(driver: WebDriver, locator: Locator): Promise<void> {
+  const limite = Date.now() + ESPERA_MS;
+  for (;;) {
+    try {
+      await (await waitForElement(driver, locator)).click();
+      return;
+    } catch (e) {
+      if (!(e instanceof error.StaleElementReferenceError) || Date.now() > limite) throw e;
+    }
+  }
 }
 
 /** Troca o conteúdo de um campo como o usuário faria, para o React receber os eventos. */

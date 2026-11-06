@@ -1,6 +1,6 @@
 import { By, type WebDriver } from "selenium-webdriver";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { createDriver, visit, waitForButton, waitForElement, waitForHydration, waitForPath, waitForText } from "./support/driver";
+import { createDriver, waitForFilteredRows, visit, waitForButton, waitForElement, waitForHydration, waitForPath, waitForText } from "./support/driver";
 import { env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
 import { createUser, readEmailToken, type TestUser } from "./support/seed";
@@ -28,7 +28,7 @@ describe("Gestão de usuários", () => {
   async function abrirTela(busca: string): Promise<void> {
     await visit(driver, "/usuarios");
     await (await waitForElement(driver, By.css('input[aria-label="Buscar por nome ou e-mail"]'))).sendKeys(busca);
-    await waitForText(driver, busca);
+    await waitForFilteredRows(driver, busca);
   }
 
   /** Convida pela tela e devolve os dados. */

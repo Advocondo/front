@@ -16,6 +16,7 @@ export default defineConfig({
     exclude: ["e2e/producao/**", "node_modules/**"],
     // Fixo aqui: esta suíte grava dados, e um E2E_TARGET ligado no terminal não pode apontá-la para produção.
     env: { E2E_TARGET: "local" },
+    globalSetup: ["e2e/support/global-setup.ts"],
     fileParallelism: false,
     testTimeout: tempoLimite,
     hookTimeout: tempoLimite,
