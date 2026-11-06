@@ -16,6 +16,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Comando diário das notificações não conferido | Sem a *Scheduled Task* no Coolify, nenhuma notificação de atraso é criada, e o sino fica sempre vazio | Conferir a tarefa `python -m advocondo.notificacoes.overdue`, frequência `5 3 * * *`, conforme `back/docs/notificacoes.md` |
 | Onde os arquivos ficam em produção | Sem as variáveis `S3_`, documentos e PDFs ficam no PostgreSQL, com até 10 MB por documento. Funciona, mas o banco cresce | Decidir se usa um bucket, conforme `back/docs/documentos.md`. Ligar depois não quebra os arquivos antigos |
 | Limite de envio no proxy de produção não conferido | O back aceita até 10 MB, mas um proxy na frente pode ter um limite menor | Enviar um arquivo perto de 10 MB depois do deploy |
+| Monitoramento de erros do front desligado ([#43](https://github.com/Advocondo/front/issues/43)) | O código está pronto, mas sem DSN nada é enviado, e os erros do navegador só aparecem se alguém reclamar | Criar um projeto Next.js no Sentry, definir `NEXT_PUBLIC_SENTRY_DSN` na Vercel e configurar no painel um alerta de pico de erros, como no back. Para pilhas legíveis, definir também `SENTRY_ORG`, `SENTRY_PROJECT` e `SENTRY_AUTH_TOKEN` |
 | Destinatário do formulário de contato | O conteúdo inicial usa o e-mail real do cliente | Trocar na seção de contato durante demonstrações |
 
 ## Faltam rotas ou dados no back

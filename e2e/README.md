@@ -60,6 +60,8 @@ Os usuários de teste são criados pelo fluxo real de convite. Sem SMTP, o back 
 | `E2E_SETUP_TOKEN` | vazio | Valor de `SETUP_TOKEN` do back. Necessário só para criar o primeiro Administrador |
 | `E2E_ADMIN_EMAIL`, `E2E_ADMIN_PASSWORD` | valores de teste em `support/env.ts` | Administrador usado nos testes. Em `npm run test:e2e:prod`, são obrigatórios |
 
+Com o `.next` recém-apagado, o servidor de desenvolvimento compila cada rota na primeira visita, e um teste pode estourar a espera de 10 segundos. Se a primeira execução falhar por tempo limite, rode de novo antes de investigar.
+
 ## Velocidade
 
 Antes de abrir uma página, clicar ou digitar, os testes esperam `E2E_DELAY_MS` milissegundos, para dar tempo de acompanhar pela tela:
@@ -95,6 +97,15 @@ O que ele faz em produção: abre uma sessão com o seu login, encerrada no fim,
 - ela lê os links de convite com `docker compose logs`, que só existem no ambiente local.
 
 Ao acrescentar um teste em `e2e/producao/`, mantenha a regra: nada que grave dados ou mande e-mail. `support/seed.ts` recusa ser usado nessa suíte.
+
+## Monitoramento
+
+`e2e/monitoramento.e2e.ts` confere o envio de erros sem usar o Sentry de verdade. Sem configuração, ele prova que nada sai. Para conferir o envio, suba o front apontando para um servidor falso, que o próprio teste abre:
+
+```bash
+NEXT_PUBLIC_SENTRY_DSN=http://chave@localhost:9999/1 npm run dev
+E2E_SENTRY_PORTA=9999 npm run test:e2e -- e2e/monitoramento.e2e.ts
+```
 
 ## Como adicionar um teste
 
