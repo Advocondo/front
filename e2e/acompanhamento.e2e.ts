@@ -1,4 +1,4 @@
-import { By, type WebDriver } from "selenium-webdriver";
+import { By, until, type WebDriver } from "selenium-webdriver";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { clickFresh, createDriver, replaceValue, setDateValue, visit, waitForButton, waitForElement, waitForPath, waitForText, waitForTextGone } from "./support/driver";
 import { env } from "./support/env";
@@ -205,6 +205,10 @@ describe("Faturas do mês", () => {
     const nome = await novaFatura();
     await driver.navigate().refresh();
     await clickFresh(driver, By.xpath(`//a[normalize-space()="${nome}"]`));
+    // Este botão também existe na lista: sem esperar a navegação, o clique pegaria o da tela anterior,
+    // e o diálogo sumiria junto com ela.
+    await driver.wait(until.urlContains("/acordos/"), 10_000);
+    await waitForText(driver, "Detalhes do acordo");
     await clickFresh(driver, By.css(`button[aria-label="Dar baixa na parcela 1 de ${nome}"]`));
     await waitForElement(driver, By.id("baixa-valor"));
     await confirmar();
