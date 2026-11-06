@@ -103,6 +103,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Aviso do `Button` do `ui-kit` | Em desenvolvimento, o React avisa sobre `border` e `borderColor` misturados. Não afeta o uso |
 | Telas do escritório não se adaptam ao celular | A barra lateral tem largura fixa de 248px e não recolhe, então em 390px o conteúdo fica cortado. Os protótipos mobile têm navegação inferior, que não foi construída. As telas do Cliente não têm esse problema, porque não têm barra lateral |
 | Aviso de sucesso cobre o que está embaixo | O aviso fica de 4 a 5 segundos no canto inferior direito, e um botão embaixo dele, como Editar ou Baixar, não recebe o clique até ele sair ou ser fechado. Decisão do responsável: mantido como está |
+| Avisos de segurança em ferramentas de desenvolvimento | `npm audit` aponta 13 avisos, 5 altos, em ESLint, Vite e outras ferramentas que não vão para o site. As dependências de produção estão sem nenhum aviso | Resolver em uma atualização dessas ferramentas. Conferir com `npm audit --omit=dev` |
 | Guard de rotas roda no navegador | O back usa o cabeçalho `Authorization`, não cookie, então a checagem de sessão só acontece depois de a página carregar. Quem protege os dados é o back |
 
 ## Documentação desatualizada
