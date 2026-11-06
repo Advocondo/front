@@ -1,11 +1,10 @@
 import { By, type WebDriver } from "selenium-webdriver";
+import { hojeEmBrasilia } from "../app/lib/dates";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createDriver, visit, waitForButton, waitForElement, waitForPath, waitForText } from "./support/driver";
 import { env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
 import { apiToken, createAgreement, createCondominium, createDebtor, createUser, payFirstInstallment, type TestUser } from "./support/seed";
-
-const hoje = (): string => new Date().toISOString().slice(0, 10);
 
 // US29, US35 e US33: https://advocondo.github.io/docs/historias/ep04-parcelas/#us29
 describe("Nota fiscal, exportação e visão consolidada", () => {
@@ -20,8 +19,8 @@ describe("Nota fiscal, exportação e visão consolidada", () => {
     devedor = `E2E Sem Nota ${carimbo}`;
     const { id: devedorId } = await createDebtor(condominio.id, devedor, "101");
     // A parcela vence no mês atual, para aparecer em Faturas do mês.
-    const { id } = await createAgreement(condominio.id, devedorId, hoje());
-    await payFirstInstallment(id, hoje());
+    const { id } = await createAgreement(condominio.id, devedorId, hojeEmBrasilia());
+    await payFirstInstallment(id, hojeEmBrasilia());
     operador = await createUser("operator");
     await openLogin(driver);
     await submitLogin(driver, env.adminEmail, env.adminPassword);
@@ -83,8 +82,8 @@ describe("Nota fiscal, exportação e visão consolidada", () => {
     await visit(driver, "/acompanhamento");
     await waitForText(driver, "Faturas do mês");
     expect(await driver.findElements(By.xpath('//button[normalize-space()="Exportar planilha"]'))).toHaveLength(0);
-    const agora = new Date();
-    const resposta = await fetch(`${env.apiUrl}/admin-panel/reports/export?year=${agora.getFullYear()}&month=${agora.getMonth() + 1}`, { headers: { Authorization: `Bearer ${await apiToken(operador)}` } });
+    const [ano, mes] = hojeEmBrasilia().split("-").map(Number);
+    const resposta = await fetch(`${env.apiUrl}/admin-panel/reports/export?year=${ano}&month=${mes}`, { headers: { Authorization: `Bearer ${await apiToken(operador)}` } });
     expect(resposta.status).toBe(403);
   });
 });

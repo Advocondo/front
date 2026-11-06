@@ -8,7 +8,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 
 | Lacuna | O que acontece hoje | O que fazer |
 | --- | --- | --- |
-| Testes E2E com Selenium nunca foram executados ([#42](https://github.com/Advocondo/front/issues/42)) | Estão escritos e compilam, mas podem falhar na primeira execução | Rodar a suíte com todas as issues prontas, conforme `e2e/README.md`, e fechar a #42 |
+| Suíte de produção nunca executada no ambiente real | `npm run test:e2e:prod` passou contra um ambiente local, mas não contra a produção. A suíte comum passou inteira em banco vazio em 05/11/2026 | Rodar conforme `e2e/README.md`, com o login de um Administrador |
 | Chaves do Turnstile não configuradas | O site funciona, mas o envio do formulário de contato responde com erro | Criar o site na Cloudflare, definir `NEXT_PUBLIC_TURNSTILE_SITE_KEY` na Vercel e `TURNSTILE_SECRET_KEY` no Coolify |
 | Turnstile nunca testado com chave real | A chamada à Cloudflare é simulada nos testes | Enviar o formulário uma vez depois de configurar as chaves |
 | E-mail real nunca testado | Em ambiente local, os e-mails (convite, contato) só vão para o log | Conferir um convite e um contato com o SMTP de produção |
@@ -102,6 +102,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Scanner de segredos olha todas as branches | Um falso positivo em qualquer branch derruba o CI de todos os PRs até ela ser apagada |
 | Aviso do `Button` do `ui-kit` | Em desenvolvimento, o React avisa sobre `border` e `borderColor` misturados. Não afeta o uso |
 | Telas do escritório não se adaptam ao celular | A barra lateral tem largura fixa de 248px e não recolhe, então em 390px o conteúdo fica cortado. Os protótipos mobile têm navegação inferior, que não foi construída. As telas do Cliente não têm esse problema, porque não têm barra lateral |
+| Aviso de sucesso cobre o que está embaixo | O aviso fica de 4 a 5 segundos no canto inferior direito, e um botão embaixo dele, como Editar ou Baixar, não recebe o clique até ele sair ou ser fechado. Decisão do responsável: mantido como está |
 | Guard de rotas roda no navegador | O back usa o cabeçalho `Authorization`, não cookie, então a checagem de sessão só acontece depois de a página carregar. Quem protege os dados é o back |
 
 ## Documentação desatualizada
@@ -109,7 +110,6 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Onde | O que está errado |
 | --- | --- |
 | [`docs/prototipos/cobertura-historias.md`](https://advocondo.github.io/docs/prototipos/cobertura-historias/) | Diz que US13 não tem tela, mas o protótipo mobile a traz |
-| Issue [#42](https://github.com/Advocondo/front/issues/42) | O corpo ainda pede os testes no CI, decisão revertida em comentário na própria issue |
 
 ## Ambiente local
 

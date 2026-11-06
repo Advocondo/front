@@ -1,6 +1,6 @@
 import { By, type WebDriver } from "selenium-webdriver";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { createDriver, replaceValue, setDateValue, visit, waitForButton, waitForElement, waitForPath, waitForText, waitForTextGone } from "./support/driver";
+import { clickFresh, createDriver, replaceValue, setDateValue, visit, waitForButton, waitForElement, waitForPath, waitForText, waitForTextGone } from "./support/driver";
 import { env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
 import { createAgreement, createCondominium, createDebtor, createUser, type TestCondominium, type TestUser } from "./support/seed";
@@ -204,8 +204,8 @@ describe("Faturas do mês", () => {
   it("o detalhe do acordo também registra a baixa", async () => {
     const nome = await novaFatura();
     await driver.navigate().refresh();
-    await (await waitForElement(driver, By.xpath(`//a[normalize-space()="${nome}"]`))).click();
-    await (await waitForElement(driver, By.css(`button[aria-label="Dar baixa na parcela 1 de ${nome}"]`))).click();
+    await clickFresh(driver, By.xpath(`//a[normalize-space()="${nome}"]`));
+    await clickFresh(driver, By.css(`button[aria-label="Dar baixa na parcela 1 de ${nome}"]`));
     await waitForElement(driver, By.id("baixa-valor"));
     await confirmar();
     await waitForText(driver, "Baixa registrada com sucesso.");

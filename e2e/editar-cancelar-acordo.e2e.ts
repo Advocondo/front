@@ -1,4 +1,5 @@
 import { By, type WebDriver } from "selenium-webdriver";
+import { hojeEmBrasilia } from "../app/lib/dates";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createDriver, replaceValue, visit, waitForButton, waitForElement, waitForPath, waitForText, waitForTextGone } from "./support/driver";
 import { env } from "./support/env";
@@ -56,7 +57,7 @@ describe("Editar e cancelar acordo", () => {
 
   it("US19-CA01: com parcela paga, pede a confirmação extra e não muda o que foi pago", async () => {
     const { id } = await novoAcordo();
-    await payFirstInstallment(id, "2030-01-31");
+    await payFirstInstallment(id, hojeEmBrasilia());
     await abrirEdicao(id);
     await waitForText(driver, "Este acordo tem 1 parcela paga");
     await replaceValue(await driver.findElement(By.id("editar-total")), "150000");
@@ -73,7 +74,7 @@ describe("Editar e cancelar acordo", () => {
 
   it("US20: cancela com motivo, sai dos ativos e continua consultável", async () => {
     const { id, devedor } = await novoAcordo();
-    await payFirstInstallment(id, "2030-01-31");
+    await payFirstInstallment(id, hojeEmBrasilia());
     await visit(driver, `/acordos/${id}`);
     await (await waitForButton(driver, "Cancelar acordo")).click();
     await waitForText(driver, "2 parcelas sem pagamento");

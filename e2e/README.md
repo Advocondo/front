@@ -24,7 +24,7 @@ docker compose run --rm api uv run alembic upgrade head
 
 Se a API não subir com um erro de `ValidationError`, o seu `.env` está mais antigo que o `.env.example`: copie as variáveis que faltam.
 
-O token e o banco vazio são usados só na primeira execução, para criar o Administrador de teste por `POST /setup`. Nas seguintes, os testes entram com esse mesmo usuário. Se o banco já tiver outros usuários, informe um Administrador existente em `E2E_ADMIN_EMAIL` e `E2E_ADMIN_PASSWORD`.
+O token e o banco vazio são usados só na primeira execução, para criar o Administrador de teste por `POST /setup`, antes de qualquer arquivo de teste. Nas seguintes, os testes entram com esse mesmo usuário. Se o banco já tiver outros usuários, informe um Administrador existente em `E2E_ADMIN_EMAIL` e `E2E_ADMIN_PASSWORD`.
 
 **2. Suba o front** em outro terminal:
 
@@ -42,6 +42,8 @@ E2E_HEADLESS=false npm run test:e2e             # vendo o navegador
 ```
 
 Deixe `NEXT_PUBLIC_TURNSTILE_SITE_KEY` e `TURNSTILE_SECRET_KEY` vazias: com `ENVIRONMENT=local`, o back aceita o formulário de contato sem captcha, e o e-mail vai para o log em vez de sair de verdade.
+
+Para rodar contra um back em outro projeto do Compose, sem mexer no `.env`, defina `COMPOSE_PROJECT_NAME` e `COMPOSE_FILE`: os testes herdam as duas variáveis ao ler os logs.
 
 Os usuários de teste são criados pelo fluxo real de convite. Sem SMTP, o back escreve o e-mail no log, e os testes leem o link com `docker compose logs api`. Por isso o back precisa estar no Compose, com `SMTP_HOST` vazio. Cada execução cria usuários novos no banco local.
 
@@ -122,6 +124,7 @@ describe("Minha tela", () => {
 ```
 
 - Procure elementos pelo que o usuário percebe (`aria-label`, texto), não por classes de estilo.
-- Use as esperas de `support/driver.ts`, nunca um tempo fixo.
+- Use as esperas de `support/driver.ts`, nunca um tempo fixo. Depois de uma busca, use `waitForFilteredRows`: o termo já aparecia na lista completa, então ver o termo não prova que ela filtrou.
+- Datas de hoje vêm de `hojeEmBrasilia()`, como no back. Em UTC, a suíte falha toda noite.
 - Cada arquivo abre o próprio navegador. Os arquivos rodam um de cada vez.
 - Uma tela nova entra também na lista `TELAS` de `e2e/producao/producao.e2e.ts`, se abrir sem parâmetros.

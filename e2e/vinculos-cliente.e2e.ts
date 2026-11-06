@@ -1,6 +1,6 @@
 import { By, type WebDriver } from "selenium-webdriver";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { createDriver, visit, waitForButton, waitForElement, waitForPath, waitForText } from "./support/driver";
+import { createDriver, waitForFilteredRows, visit, waitForButton, waitForElement, waitForPath, waitForText } from "./support/driver";
 import { env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
 import { apiToken, createAgreement, createCondominium, createDebtor, createUser, type TestCondominium, type TestUser } from "./support/seed";
@@ -30,7 +30,7 @@ describe("Vincular Cliente a condomínios", () => {
   async function abrirDialogo(): Promise<void> {
     await visit(driver, "/usuarios");
     await (await waitForElement(driver, By.css('input[aria-label="Buscar por nome ou e-mail"]'))).sendKeys(cliente.email);
-    await waitForText(driver, cliente.email);
+    await waitForFilteredRows(driver, cliente.email);
     await (await waitForElement(driver, By.css('button[aria-label^="Vincular condomínios de"]'))).click();
     await waitForText(driver, "Condomínios vinculados");
   }
@@ -96,7 +96,7 @@ describe("Vincular Cliente a condomínios", () => {
     const operador = await createUser("operator");
     await visit(driver, "/usuarios");
     await (await waitForElement(driver, By.css('input[aria-label="Buscar por nome ou e-mail"]'))).sendKeys(operador.email);
-    await waitForText(driver, operador.email);
+    await waitForFilteredRows(driver, operador.email);
     expect(await driver.findElements(By.css('button[aria-label^="Vincular condomínios de"]'))).toHaveLength(0);
   });
 });

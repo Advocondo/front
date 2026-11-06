@@ -59,6 +59,7 @@ describe("Detalhe de fatura e faturas do acordo para o Cliente", () => {
     await entrar(cliente.email, cliente.password, "/painel-cliente");
     await (await waitForElement(driver, By.css(`button[aria-label="Ver parcelas de ${morador.name}"]`))).click();
     await waitForText(driver, "Parcelas em aberto");
+    await waitForElement(driver, By.css('[role="dialog"] table tbody tr'));
 
     const dialogo = await (await waitForElement(driver, By.css('[role="dialog"]'))).getText();
     expect(dialogo).toContain("R$ 300,00");

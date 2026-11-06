@@ -11,7 +11,8 @@ describe("Notificações de parcela em atraso", () => {
   let devedor: TestDebtor;
   let semAcordos: TestUser;
 
-  const notificacao = (nome: string) => By.xpath(`//button[contains(., "Parcela em atraso") and contains(., "${nome}")]`);
+  // As três parcelas do acordo atrasam juntas, sem ordem garantida entre elas: procura a primeira.
+  const notificacao = (nome: string) => By.xpath(`//button[contains(., "Parcela em atraso") and contains(., "${nome}") and contains(., "1/3")]`);
 
   beforeAll(async () => {
     driver = await createDriver();

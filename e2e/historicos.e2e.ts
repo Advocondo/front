@@ -1,6 +1,7 @@
 import { By, type WebDriver } from "selenium-webdriver";
+import { hojeEmBrasilia } from "../app/lib/dates";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createDriver, visit, waitForElement, waitForPath, waitForText } from "./support/driver";
+import { createDriver, waitForFilteredRows, visit, waitForElement, waitForPath, waitForText } from "./support/driver";
 import { env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
 import { createAgreement, createCondominium, createDebtor, createUser, deactivateUser, payFirstInstallment, type TestUser } from "./support/seed";
@@ -23,7 +24,7 @@ describe("Históricos para o Administrador", () => {
     const condominio = await createCondominium(`E2E Histórico ${Date.now()}`);
     const devedor = await createDebtor(condominio.id, `E2E Histórico ${Date.now()}`, "101");
     acordo = (await createAgreement(condominio.id, devedor.id)).id;
-    await payFirstInstallment(acordo, "2030-01-31");
+    await payFirstInstallment(acordo, hojeEmBrasilia());
     operador = await createUser("operator");
     inativado = await createUser("operator");
     await deactivateUser(inativado.id);
@@ -46,7 +47,7 @@ describe("Históricos para o Administrador", () => {
     await entrar(env.adminEmail, env.adminPassword, "/painel");
     await visit(driver, "/usuarios");
     await (await waitForElement(driver, By.css('input[aria-label="Buscar por nome ou e-mail"]'))).sendKeys(inativado.email);
-    await waitForText(driver, inativado.email);
+    await waitForFilteredRows(driver, inativado.email);
     await (await waitForElement(driver, By.css('button[aria-label^="Ver histórico de"]'))).click();
     await waitForText(driver, "Histórico de acesso");
     await waitForText(driver, "Convite enviado");

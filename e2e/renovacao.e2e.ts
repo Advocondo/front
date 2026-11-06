@@ -1,6 +1,6 @@
 import { By, type WebDriver } from "selenium-webdriver";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createDriver, setDateValue, visit, waitForButton, waitForElement, waitForPath, waitForText } from "./support/driver";
+import { createDriver, waitForFilteredRows, setDateValue, visit, waitForButton, waitForElement, waitForPath, waitForText } from "./support/driver";
 import { env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
 import { createCondominium, type TestCondominium } from "./support/seed";
@@ -19,7 +19,7 @@ describe("Renovação de contrato", () => {
   async function buscar(nome: string): Promise<void> {
     await visit(driver, "/condominios");
     await (await waitForElement(driver, By.css('input[aria-label="Buscar condomínio ou síndico"]'))).sendKeys(nome);
-    await waitForText(driver, nome);
+    await waitForFilteredRows(driver, nome);
   }
 
   beforeAll(async () => {
