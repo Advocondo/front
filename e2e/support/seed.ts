@@ -142,8 +142,9 @@ export async function createAgreementAs(usuario: TestUser, condominiumId: string
   return esperarSucesso<{ id: string }>(resposta, "Criar acordo");
 }
 
-export async function payFirstInstallment(agreementId: string, paymentDate: string): Promise<void> {
-  const headers = { Authorization: `Bearer ${await ensureAdmin()}` };
+/** `por`: quem dá a baixa, para a trilha de auditoria. Sem ele, é o Administrador. */
+export async function payFirstInstallment(agreementId: string, paymentDate: string, por?: TestUser): Promise<void> {
+  const headers = { Authorization: `Bearer ${por ? await apiToken(por) : await ensureAdmin()}` };
   const parcelas = await esperarSucesso<{ id: string }[]>(await chamarApi(`/agreements/${agreementId}/installments`, { headers }), "Listar parcelas");
   const resposta = await chamarApi(`/installments/${parcelas[0].id}/payment`, { method: "POST", headers, body: JSON.stringify({ payment_date: paymentDate }) });
   await esperarSucesso(resposta, "Dar baixa");
