@@ -105,6 +105,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Aviso de sucesso cobre o que está embaixo | O aviso fica de 4 a 5 segundos no canto inferior direito, e um botão embaixo dele, como Editar ou Baixar, não recebe o clique até ele sair ou ser fechado. Decisão do responsável: mantido como está |
 | Avisos de segurança em ferramentas de desenvolvimento | `npm audit` aponta 13 avisos, 5 altos, em ESLint, Vite e outras ferramentas que não vão para o site. As dependências de produção estão sem nenhum aviso | Resolver em uma atualização dessas ferramentas. Conferir com `npm audit --omit=dev` |
 | Guard de rotas roda no navegador | O back usa o cabeçalho `Authorization`, não cookie, então a checagem de sessão só acontece depois de a página carregar. Quem protege os dados é o back |
+| Sair do Conteúdo institucional pelo menu não avisa | Com uma seção não salva, recarregar ou fechar a aba pede confirmação, e a tela lista as seções alteradas, mas clicar em outro item do menu troca de tela sem perguntar. O App Router do Next não oferece um aviso para a navegação interna |
 
 ## Documentação desatualizada
 
