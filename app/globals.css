@@ -24,6 +24,8 @@ body {
 @media (max-width: 767px) {
   .plataforma {
     --app-pad: 16px;
+    /* O valor dos indicadores (MetricCard), para caber dois por linha, como no protótipo mobile. */
+    --fs-display-3: 22px;
     --aviso-bottom: calc(64px + var(--space-4, 16px));
   }
 }
@@ -67,5 +69,20 @@ body {
 @media (max-width: 767px) {
   .plataforma main div:has(> table) {
     overflow-x: auto !important;
+  }
+}
+
+/* Abas (Tabs) no celular: cada aba numa linha só; a faixa rola se não couberem. */
+@media (max-width: 767px) {
+  .plataforma [role="tablist"] > [role="tab"] {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+
+/* Ao rolar até um campo ou botão (foco pelo teclado, âncoras), ele não para atrás da navegação inferior. */
+@media (max-width: 767px) {
+  html:has(.plataforma) {
+    scroll-padding-bottom: calc(64px + var(--space-4, 16px));
   }
 }

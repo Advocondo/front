@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { simularCelular } from "@/app/lib/celular.test-utils";
 import { clearSession, saveSession, type Role } from "@/app/lib/session";
 import type { Pagamento, ParcelaDoMes } from "./api";
 import { AcompanhamentoView } from "./AcompanhamentoView";
@@ -304,5 +305,31 @@ describe("US26-CA02: correção e estorno", () => {
     await user.click(await screen.findByRole("button", { name: "Estornar pagamentos" }));
     await user.click(screen.getByRole("button", { name: "Confirmar estorno" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Você não tem permissão");
+  });
+});
+
+describe("#83: faturas do mês no celular", () => {
+  it("mostra um cartão por parcela, com a baixa ao alcance, em vez da tabela", async () => {
+    simularCelular();
+    mockApi();
+    render(<AcompanhamentoView />);
+    const lista = await screen.findByRole("list", { name: "Faturas do mês" });
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+
+    const cartaoDaAna = within(lista).getByText("Ana Aberta").closest("li") as HTMLElement;
+    expect(within(cartaoDaAna).getByText("Ed. Century · 101")).toBeInTheDocument();
+    expect(within(cartaoDaAna).getByText("R$ 1.000,00")).toBeInTheDocument();
+    expect(within(cartaoDaAna).getByRole("link", { name: "Ver a parcela 2 de Ana Aberta" })).toHaveAttribute("href", "/faturas/i-1");
+    expect(cartaoDaAna).toHaveTextContent("vence 20/11/2026");
+
+    await userEvent.click(within(cartaoDaAna).getByRole("button", { name: "Dar baixa na parcela 2 de Ana Aberta" }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("sem parcelas, mostra o estado vazio", async () => {
+    simularCelular();
+    mockApi({ parcelas: [] });
+    render(<AcompanhamentoView />);
+    expect(await screen.findByText("Nenhuma fatura neste mês")).toBeInTheDocument();
   });
 });

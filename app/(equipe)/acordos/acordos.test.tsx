@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CondominioApi } from "@/app/(equipe)/condominios/types";
 import type { Devedor } from "@/app/(equipe)/devedores/types";
+import { simularCelular } from "@/app/lib/celular.test-utils";
 import { clearSession, saveSession } from "@/app/lib/session";
 import { AcordoDetalheView } from "./[id]/AcordoDetalheView";
 import { AcordosView } from "./AcordosView";
@@ -623,5 +624,29 @@ describe("Detalhes do acordo", () => {
       await salvarParcela(user);
       expect(await screen.findByText("Valor recusado.")).toBeInTheDocument();
     });
+  });
+});
+
+describe("#83: acordos no celular", () => {
+  it("mostra um cartão por acordo, que leva ao detalhe, em vez da tabela", async () => {
+    simularCelular();
+    mockApi();
+    render(<AcordosView />);
+    const lista = await screen.findByRole("list", { name: "Acordos" });
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+
+    const cartao = within(lista).getByRole("link", { name: "Ver o acordo de Cláudio Bezerra" });
+    expect(cartao).toHaveAttribute("href", "/acordos/a-1");
+    expect(cartao).toHaveTextContent("Ed. Century · 1101");
+    expect(cartao).toHaveTextContent("R$ 5.500,00");
+    expect(cartao).toHaveTextContent("honorários R$ 1.100,00");
+    expect(cartao).toHaveTextContent("Ativo");
+  });
+
+  it("sem acordos, mostra o estado vazio", async () => {
+    simularCelular();
+    mockApi({ acordos: [] });
+    render(<AcordosView />);
+    expect(await screen.findByText("Nenhum acordo ativo")).toBeInTheDocument();
   });
 });

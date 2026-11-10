@@ -1,10 +1,10 @@
 import { By, type WebDriver } from "selenium-webdriver";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { hojeEmBrasilia } from "../app/lib/dates";
-import { CELULAR, createDriver, waitForElement, waitForPath } from "./support/driver";
+import { CELULAR, createDriver, waitForButton, waitForElement, waitForPath } from "./support/driver";
 import { env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
-import { createAgreement, createCondominium, createDebtor, createUser, payFirstInstallment, type TestUser } from "./support/seed";
+import { createAgreement, createCondominium, createDebtor, createUser, type TestUser } from "./support/seed";
 
 // #83: https://github.com/Advocondo/front/issues/83 (critérios propostos na issue)
 type Medida = { largura: number; excesso: number; tabelasCortadas: number };
@@ -24,6 +24,16 @@ function medir(driver: WebDriver): Promise<Medida> {
     };`);
 }
 
+/**
+ * O Selenium rola o botão só até a borda de baixo, onde a navegação inferior fica por cima. Quem usa
+ * o celular rola a lista com o dedo; aqui, o botão vai para o meio da tela antes do clique.
+ */
+async function clicarNoMeio(driver: WebDriver, locator: By): Promise<void> {
+  const elemento = await waitForElement(driver, locator);
+  await driver.executeScript("arguments[0].scrollIntoView({ block: 'center' })", elemento);
+  await elemento.click();
+}
+
 async function abrirPelaNavegacao(driver: WebDriver, rotulo: string, caminho: string): Promise<void> {
   await (await waitForElement(driver, By.xpath(`//nav[@aria-label="Navegação inferior"]//a[normalize-space()="${rotulo}"]`))).click();
   await waitForPath(driver, caminho);
@@ -38,6 +48,7 @@ async function abrirPeloMais(driver: WebDriver, rotulo: string, caminho: string)
 describe("Telas do escritório no celular", () => {
   let driver: WebDriver;
   let operador: TestUser;
+  let devedora: string;
 
   async function entrar(email: string, senha: string, inicio: string): Promise<void> {
     await openLogin(driver);
@@ -58,9 +69,10 @@ describe("Telas do escritório no celular", () => {
     operador = await createUser("operator", { name: `E2E Celular ${carimbo}` });
     // Dados para as tabelas terem linhas, com nomes longos como os reais.
     const condominio = await createCondominium(`E2E Condomínio Residencial Celular ${carimbo}`);
-    const devedor = await createDebtor(condominio.id, `E2E Devedora Com Nome Comprido ${carimbo}`, "Bloco B 1203");
-    const acordo = await createAgreement(condominio.id, devedor.id);
-    await payFirstInstallment(acordo.id, hojeEmBrasilia());
+    devedora = `E2E Devedora Com Nome Comprido ${carimbo}`;
+    const devedor = await createDebtor(condominio.id, devedora, "Bloco B 1203");
+    // A 1ª parcela vence neste mês, para Faturas do mês ter o cartão dela.
+    await createAgreement(condominio.id, devedor.id, hojeEmBrasilia());
   });
 
   afterAll(async () => {
@@ -93,6 +105,23 @@ describe("Telas do escritório no celular", () => {
 
     await (await waitForElement(driver, By.xpath('//button[.//span[normalize-space()="Sair"]]'))).click();
     await waitForPath(driver, "/login");
+  });
+
+  it("Acordos e Faturas do mês mostram cartões, e a baixa abre no celular", async () => {
+    await entrar(operador.email, operador.password, "/condominios");
+    await abrirPelaNavegacao(driver, "Acordos", "/acordos");
+    await (await waitForElement(driver, By.css('input[aria-label="Buscar por devedor, condomínio ou responsável"]'))).sendKeys(devedora);
+    await clicarNoMeio(driver, By.xpath(`//ul[@aria-label="Acordos"]//a[@aria-label="Ver o acordo de ${devedora}"]`));
+    await driver.wait(async () => (await driver.getCurrentUrl()).includes("/acordos/"), 20_000);
+
+    await abrirPelaNavegacao(driver, "Mês", "/acompanhamento");
+    await conferirTela("/acompanhamento");
+    expect(await driver.findElements(By.css("table"))).toHaveLength(0);
+    await clicarNoMeio(driver, By.css(`ul[aria-label="Faturas do mês"] button[aria-label="Dar baixa na parcela 1 de ${devedora}"]`));
+    const dialogo = await waitForElement(driver, By.css('[role="dialog"]'));
+    const largura = (await dialogo.getRect()).width;
+    expect(largura).toBeLessThanOrEqual(CELULAR.width);
+    await (await waitForButton(driver, "Cancelar")).click();
   });
 
   it("CA03: no desktop, a barra lateral continua e a barra inferior não aparece", async () => {
