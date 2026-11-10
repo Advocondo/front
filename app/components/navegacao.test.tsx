@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MaisView } from "@/app/(equipe)/mais/MaisView";
+import { simularCelular } from "@/app/lib/celular.test-utils";
 import { clearSession, saveSession, type Role } from "@/app/lib/session";
 import { itensDaBarraInferior, itensDoMais } from "./navegacao";
 import { PlataformaShell } from "./PlataformaShell";
@@ -71,5 +72,19 @@ describe("#83: navegação no celular", () => {
     const lista = screen.getByRole("list", { name: "Outras telas" });
     expect(within(lista).queryByRole("link", { name: /Gestão de usuários/ })).not.toBeInTheDocument();
     expect(within(lista).queryByText("Admin")).not.toBeInTheDocument();
+  });
+
+  it("o Voltar é texto no desktop e só a seta no celular, com o mesmo destino", () => {
+    entrarComo("admin");
+    const voltar = { href: "/acordos", label: "Voltar para Acordos" };
+    const { unmount } = render(<PlataformaShell activeId="acordos" title="Detalhes do acordo" voltar={voltar}>conteúdo</PlataformaShell>);
+    expect(screen.getByRole("link", { name: "Voltar para Acordos" })).toHaveTextContent("Voltar para Acordos");
+    unmount();
+
+    simularCelular();
+    render(<PlataformaShell activeId="acordos" title="Detalhes do acordo" voltar={voltar}>conteúdo</PlataformaShell>);
+    const seta = screen.getByRole("link", { name: "Voltar para Acordos" });
+    expect(seta).toHaveAttribute("href", "/acordos");
+    expect(seta).toHaveTextContent("");
   });
 });

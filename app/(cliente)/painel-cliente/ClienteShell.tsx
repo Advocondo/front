@@ -8,7 +8,7 @@ import { logOut } from "@/app/lib/auth";
 /** Casca das telas do Cliente: sem barra lateral, porque ele não usa o menu do escritório. */
 export function ClienteShell({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (
-    <div className="flex min-h-screen w-full flex-col">
+    <div className="area-cliente flex min-h-screen w-full flex-col">
       <TopBar
         title={title}
         subtitle={subtitle}

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { nomeDoMes } from "@/app/components/SeletorDeMes";
 import { ApiError } from "@/app/lib/api";
 import { centsFromApi, formatBRL } from "@/app/lib/money";
+import { useCelular } from "@/app/lib/useCelular";
 import { getHistoricoDoMorador, type CompetenciaDoHistorico, type HistoricoDoMorador } from "../../api";
 import { ClienteShell } from "../../ClienteShell";
 
@@ -25,6 +26,7 @@ const soma = (valores: string[]): bigint => valores.reduce((total, valor) => tot
 
 /** US38: total pago e em aberto por competência, para a prestação de contas. Sem honorários (CA01). */
 export function HistoricoMoradorView({ id }: { id: string }) {
+  const celular = useCelular();
   const [historico, setHistorico] = useState<HistoricoDoMorador | null>(null);
   const [naoEncontrado, setNaoEncontrado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -72,18 +74,33 @@ export function HistoricoMoradorView({ id }: { id: string }) {
             <MetricCard label="Total em aberto" value={formatBRL(soma(historico.months.map((m) => m.open_amount)))} />
           </div>
           <Card title="Por competência">
-            <div className="overflow-x-auto">
-              <DataTable
-                rows={historico.months.map((m) => ({ ...m, id: m.month }))}
-                empty={<EmptyState icon="calendar-check" title="Nenhuma parcela" description="Este morador ainda não tem parcelas registradas." />}
-                columns={[
-                  { key: "month", label: "Competência", strong: true, render: (m: CompetenciaDoHistorico) => nomeDaCompetencia(m.month) },
-                  { key: "status", label: "Situação", render: (m: CompetenciaDoHistorico) => <StatusPill label={SITUACAO[m.status].label} tone={SITUACAO[m.status].tone} /> },
-                  { key: "paid_amount", label: "Pago", align: "right", mono: true, render: (m: CompetenciaDoHistorico) => formatBRL(m.paid_amount) },
-                  { key: "open_amount", label: "Em aberto", align: "right", mono: true, render: (m: CompetenciaDoHistorico) => formatBRL(m.open_amount) },
-                ]}
-              />
-            </div>
+            {celular && historico.months.length > 0 ? (
+              // No celular, uma linha por competência: a tabela cortava os valores.
+              <ul className="divide-y divide-[var(--border-subtle)]" aria-label="Competências">
+                {historico.months.map((m) => (
+                  <li key={m.month} className="grid gap-1 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-semibold">{nomeDaCompetencia(m.month)}</span>
+                      <StatusPill label={SITUACAO[m.status].label} tone={SITUACAO[m.status].tone} />
+                    </div>
+                    <span className="font-mono text-sm">{`Pago ${formatBRL(m.paid_amount)} · em aberto ${formatBRL(m.open_amount)}`}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="overflow-x-auto">
+                <DataTable
+                  rows={historico.months.map((m) => ({ ...m, id: m.month }))}
+                  empty={<EmptyState icon="calendar-check" title="Nenhuma parcela" description="Este morador ainda não tem parcelas registradas." />}
+                  columns={[
+                    { key: "month", label: "Competência", strong: true, render: (m: CompetenciaDoHistorico) => nomeDaCompetencia(m.month) },
+                    { key: "status", label: "Situação", render: (m: CompetenciaDoHistorico) => <StatusPill label={SITUACAO[m.status].label} tone={SITUACAO[m.status].tone} /> },
+                    { key: "paid_amount", label: "Pago", align: "right", mono: true, render: (m: CompetenciaDoHistorico) => formatBRL(m.paid_amount) },
+                    { key: "open_amount", label: "Em aberto", align: "right", mono: true, render: (m: CompetenciaDoHistorico) => formatBRL(m.open_amount) },
+                  ]}
+                />
+              </div>
+            )}
           </Card>
         </>
       )}

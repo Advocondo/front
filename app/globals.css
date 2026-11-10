@@ -64,11 +64,17 @@ body {
 }
 
 /* Tabelas largas: no celular, a tabela rola dentro do próprio quadro, e a página não. O quadro do
-   DataTable corta o que passa da largura (overflow: hidden inline), por isso o !important. As telas
-   ainda vão trocar as tabelas por cartões, uma a uma (#83). */
+   DataTable corta o que passa da largura (overflow: hidden inline), por isso o !important. Vale para
+   as tabelas que ainda não viraram cartões, como as dos diálogos (#83). */
 @media (max-width: 767px) {
-  .plataforma main div:has(> table) {
+  main div:has(> table),
+  [role="dialog"] div:has(> table) {
     overflow-x: auto !important;
+  }
+
+  /* Indicadores das telas do Cliente, como os do escritório: dois por linha sem quebrar o valor. */
+  .area-cliente {
+    --fs-display-3: 22px;
   }
 }
 

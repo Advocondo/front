@@ -8,6 +8,7 @@ import { itensDaBarraInferior, TELAS } from "@/app/components/navegacao";
 import { SinoDeNotificacoes } from "@/app/components/SinoDeNotificacoes";
 import { logOut } from "@/app/lib/auth";
 import { useSession } from "@/app/lib/session";
+import { useCelular } from "@/app/lib/useCelular";
 
 // Cada US nova acrescenta aqui o seu item (Devedores, Acordos...).
 const NAV = [
@@ -37,14 +38,17 @@ type Props = {
   title: string;
   subtitle?: string;
   actions?: ReactNode;
+  /** A tela de onde se veio, como "Voltar para Acordos". No celular vira só a seta, para o título caber. */
+  voltar?: { href: string; label: string };
   /** Só a tela de notificações passa: ela já sabe o número, e o sino acompanha. */
   naoLidas?: number;
   children: ReactNode;
 };
 
 /** Casca da plataforma interna: barra lateral fixa, barra superior e área de conteúdo. */
-export function PlataformaShell({ activeId, title, subtitle, actions, naoLidas, children }: Props) {
+export function PlataformaShell({ activeId, title, subtitle, actions, voltar, naoLidas, children }: Props) {
   const router = useRouter();
+  const celular = useCelular();
   const session = useSession();
   return (
     <div className="plataforma flex min-h-screen">
@@ -72,6 +76,16 @@ export function PlataformaShell({ activeId, title, subtitle, actions, naoLidas, 
           subtitle={subtitle}
           actions={
             <span className="inline-flex items-center gap-3">
+              {voltar &&
+                (celular ? (
+                  <Link href={voltar.href} aria-label={voltar.label} title={voltar.label} className="inline-flex p-2" style={{ color: "inherit" }}>
+                    <Icon name="arrow-left" size={20} />
+                  </Link>
+                ) : (
+                  <Link href={voltar.href} className="text-sm font-medium">
+                    {voltar.label}
+                  </Link>
+                ))}
               {actions}
               <SinoDeNotificacoes contagem={naoLidas} />
             </span>

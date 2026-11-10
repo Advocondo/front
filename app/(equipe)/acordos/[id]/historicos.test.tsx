@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { UsuariosView } from "@/app/(equipe)/usuarios/UsuariosView";
 import { descreverRegistro } from "@/app/(equipe)/usuarios/HistoricoDialog";
 import type { RegistroDoUsuario, Usuario } from "@/app/(equipe)/usuarios/api";
+import { simularCelular } from "@/app/lib/celular.test-utils";
 import { clearSession, saveSession, type Role } from "@/app/lib/session";
 import type { Acordo, MovimentacaoFinanceira } from "../types";
 import { AcordoDetalheView } from "./AcordoDetalheView";
@@ -156,5 +157,31 @@ describe("US11: histórico do usuário", () => {
     [{ action: "condominiums_changed", added_condominiums: [{ id: "c", name: "Villa" }], removed_condominiums: [{ id: "d", name: "Parque" }, { id: "e", name: "Lago" }] }, "Condomínios alterados", "Vinculados: Villa. Removidos: Parque, Lago"],
   ])("descreve %j", (mudanca, title, description) => {
     expect(descreverRegistro({ ...registroBase, ...mudanca } as RegistroDoUsuario)).toMatchObject({ title, description });
+  });
+});
+
+describe("#83: detalhe do acordo no celular", () => {
+  const parcela = {
+    id: "i-1", agreement_id: "a-1", number: 1, due_date: "2026-11-10", amount: "300.00", condominium_amount: "270.00", fee_amount: "30.00",
+    remaining_amount: "300.00", payment_date: null, invoice_number: null, invoice_date: null, status: "open",
+  };
+
+  it("mostra as parcelas em lista, com a baixa, e o histórico financeiro em linha do tempo", async () => {
+    entrarComo("admin");
+    simularCelular();
+    mockApi((url) => (url.includes("/agreements/a-1/installments") ? { status: 200, body: [parcela] } : undefined));
+    render(<AcordoDetalheView id="a-1" />);
+
+    const lista = await screen.findByRole("list", { name: "Parcelas" });
+    const linha = within(lista).getByRole("listitem");
+    expect(within(linha).getByRole("link", { name: "1/1 · 10/11/2026" })).toHaveAttribute("href", "/faturas/i-1");
+    expect(linha).toHaveTextContent("R$ 270,00 + R$ 30,00");
+    expect(linha).toHaveTextContent("R$ 300,00");
+    expect(within(linha).getByRole("button", { name: "Dar baixa na parcela 1 de Cláudio Bezerra" })).toBeInTheDocument();
+
+    expect(await screen.findByText("Baixa da parcela 4")).toBeInTheDocument();
+    expect(screen.getByText("+ R$ 250,00")).toBeInTheDocument();
+    expect(screen.getAllByText("por Sarah Lima").length).toBeGreaterThan(0);
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
   });
 });
