@@ -53,7 +53,6 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | --- | --- | --- |
 | Relatório de condomínio sem acordos | O botão fica no card do condomínio, e o card só existe quando há acordo. Sem acordo, não há o que baixar pela tela, embora a rota responda | Sem issue |
 | Painel da Equipe Operacional | Depois do login, a pessoa cai em Condomínios. O protótipo mobile tem uma visão própria, com totais do mês, meta, vencimentos da semana e últimas baixas | Sem issue |
-| Edição da landing pelo Administrador | Textos, avaliações e fotos só mudam pela API | [#4](https://github.com/Advocondo/front/issues/4) |
 | Anexar um link como documento | O back aceita um link no lugar de um arquivo, e a tela mostra os que existirem, mas só envia arquivos | Sem issue |
 | PDFs no Painel do Cliente | O Cliente abre o PDF pelo link, mas o painel não lista os PDFs do acordo. O back já permite | Sem issue |
 | Voltar ao link do PDF depois do login | Sem sessão, o link leva ao login, e depois do login a pessoa cai na tela inicial, não no PDF | Sem issue |
@@ -106,6 +105,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Aviso de sucesso cobre o que está embaixo | O aviso fica de 4 a 5 segundos no canto inferior direito, e um botão embaixo dele, como Editar ou Baixar, não recebe o clique até ele sair ou ser fechado. Decisão do responsável: mantido como está |
 | Avisos de segurança em ferramentas de desenvolvimento | `npm audit` aponta 13 avisos, 5 altos, em ESLint, Vite e outras ferramentas que não vão para o site. As dependências de produção estão sem nenhum aviso | Resolver em uma atualização dessas ferramentas. Conferir com `npm audit --omit=dev` |
 | Guard de rotas roda no navegador | O back usa o cabeçalho `Authorization`, não cookie, então a checagem de sessão só acontece depois de a página carregar. Quem protege os dados é o back |
+| Sair do Conteúdo institucional pelo menu não avisa | Com uma seção não salva, recarregar ou fechar a aba pede confirmação, e a tela lista as seções alteradas, mas clicar em outro item do menu troca de tela sem perguntar. O App Router do Next não oferece um aviso para a navegação interna |
 
 ## Documentação desatualizada
 

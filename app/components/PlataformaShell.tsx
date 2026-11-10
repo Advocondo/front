@@ -25,9 +25,10 @@ const NAV_ADMIN_TOPO = [{ id: "painel", label: "Painel", icon: "layout-dashboard
 const NAV_ADMIN = [
   { section: "Controle" },
   { id: "usuarios", label: "Gestão de usuários", icon: "users-round" },
+  { id: "institucional", label: "Conteúdo institucional", icon: "panels-top-left" },
 ];
 
-const ROTAS: Record<string, string> = { painel: "/painel", metas: "/metas", usuarios: "/usuarios", acordos: "/acordos", acompanhamento: "/acompanhamento", condominios: "/condominios", devedores: "/devedores" };
+const ROTAS: Record<string, string> = { painel: "/painel", metas: "/metas", usuarios: "/usuarios", institucional: "/institucional", acordos: "/acordos", acompanhamento: "/acompanhamento", condominios: "/condominios", devedores: "/devedores" };
 
 type Props = {
   activeId: string;
