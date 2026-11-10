@@ -8,6 +8,7 @@ import { ApiError } from "@/app/lib/api";
 import { formatDateTime } from "@/app/lib/dates";
 import { centsFromApi, formatBRL } from "@/app/lib/money";
 import { useSession } from "@/app/lib/session";
+import { useCelular } from "@/app/lib/useCelular";
 import { formatDate } from "@/app/(equipe)/condominios/format";
 import { BaixaDialog, textoDaBaixa } from "@/app/(equipe)/acompanhamento/BaixaDialog";
 import { PagamentosDialog } from "@/app/(equipe)/acompanhamento/PagamentosDialog";
@@ -30,6 +31,7 @@ const podeEditar = (acordo: Acordo, parcela: Parcela): boolean =>
 export function AcordoDetalheView({ id }: { id: string }) {
   const session = useSession();
   const [acordo, setAcordo] = useState<Acordo | null>(null);
+  const celular = useCelular();
   const [parcelas, setParcelas] = useState<Parcela[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [recarregar, setRecarregar] = useState(0);
@@ -85,16 +87,29 @@ export function AcordoDetalheView({ id }: { id: string }) {
     }
   }
 
+  const situacaoDa = (acordo: Acordo, p: Parcela) => (
+    <span className="inline-flex flex-wrap items-center gap-2">
+      {/* A parcela sem pagamento de acordo cancelado sai da cobrança (US20), mesmo se a data já passou. */}
+      {acordo.status === "cancelled" && p.status !== "paid" ? <StatusPill label="Fora da cobrança" tone="neutral" /> : <SituacaoParcela parcela={p} />}
+      {p.payment_date && <span className="text-sm">{`pago em ${formatDate(p.payment_date)}`}</span>}
+      {temPagamentoParcial(p) && <span className="text-sm">{`saldo ${formatBRL(p.remaining_amount)}`}</span>}
+    </span>
+  );
+
+  const acoesDa = (acordo: Acordo, p: Parcela) => (
+    <span className="inline-flex flex-wrap items-center justify-end gap-1">
+      {(p.status === "paid" || temPagamentoParcial(p)) && <Button size="sm" variant="ghost" aria-label={`Pagamentos da parcela ${p.number} de ${acordo.debtor.name}`} onClick={() => setPagamentos(p)}>Pagamentos</Button>}
+      {acordo.status === "active" && p.status !== "paid" && <Button size="sm" variant="secondary" icon="banknote" aria-label={`Dar baixa na parcela ${p.number} de ${acordo.debtor.name}`} onClick={() => setBaixa(p)}>Dar baixa</Button>}
+      {podeEditar(acordo, p) && <IconButton icon="pencil" label={`Editar parcela ${p.number}`} onClick={() => setEditando(p)} />}
+    </span>
+  );
+
   return (
     <PlataformaShell
       activeId="acordos"
       title="Detalhes do acordo"
       subtitle={acordo ? `${acordo.condominium.name} · ${acordo.debtor.unit}` : undefined}
-      actions={
-        <Link href="/acordos" className="text-sm font-medium">
-          Voltar para Acordos
-        </Link>
-      }
+      voltar={{ href: "/acordos", label: "Voltar para Acordos" }}
     >
       <div className="grid gap-5">
         {erro && (
@@ -161,40 +176,50 @@ export function AcordoDetalheView({ id }: { id: string }) {
               <MetricCard label="Repasse ao condomínio" value={formatBRL(centsFromApi(acordo.total_amount) - centsFromApi(acordo.fee_amount))} />
             </div>
 
-            <DataTable
-              rows={parcelas}
-              columns={[
-                { key: "parcela", label: "Parcela", mono: true, render: (p: Parcela) => <Link href={`/faturas/${p.id}`}>{`${p.number}/${parcelas.length}`}</Link> },
-                { key: "vencimento", label: "Vencimento", mono: true, render: (p: Parcela) => formatDate(p.due_date) },
-                { key: "valor", label: "Valor", mono: true, align: "right", strong: true, render: (p: Parcela) => formatBRL(p.amount) },
-                { key: "condominio", label: "Condomínio", mono: true, align: "right", render: (p: Parcela) => formatBRL(p.condominium_amount) },
-                { key: "honorarios", label: "Honorários", mono: true, align: "right", render: (p: Parcela) => formatBRL(p.fee_amount) },
-                {
-                  key: "situacao",
-                  label: "Situação",
-                  render: (p: Parcela) => (
-                    <span className="inline-flex flex-wrap items-center gap-2">
-                      {/* A parcela sem pagamento de acordo cancelado sai da cobrança (US20), mesmo se a data já passou. */}
-                      {acordo.status === "cancelled" && p.status !== "paid" ? <StatusPill label="Fora da cobrança" tone="neutral" /> : <SituacaoParcela parcela={p} />}
-                      {p.payment_date && <span className="text-sm">{`pago em ${formatDate(p.payment_date)}`}</span>}
-                      {temPagamentoParcial(p) && <span className="text-sm">{`saldo ${formatBRL(p.remaining_amount)}`}</span>}
-                    </span>
-                  ),
-                },
-                {
-                  key: "acoes",
-                  label: "",
-                  align: "right",
-                  render: (p: Parcela) => (
-                    <span className="inline-flex items-center justify-end gap-1">
-                      {(p.status === "paid" || temPagamentoParcial(p)) && <Button size="sm" variant="ghost" aria-label={`Pagamentos da parcela ${p.number} de ${acordo.debtor.name}`} onClick={() => setPagamentos(p)}>Pagamentos</Button>}
-                      {acordo.status === "active" && p.status !== "paid" && <Button size="sm" variant="secondary" icon="banknote" aria-label={`Dar baixa na parcela ${p.number} de ${acordo.debtor.name}`} onClick={() => setBaixa(p)}>Dar baixa</Button>}
-                      {podeEditar(acordo, p) && <IconButton icon="pencil" label={`Editar parcela ${p.number}`} onClick={() => setEditando(p)} />}
-                    </span>
-                  ),
-                },
-              ]}
-            />
+            {celular ? (
+              // No celular, uma linha por parcela, como no protótipo mobile.
+              <Card padding="none">
+                <ul className="divide-y divide-[var(--border-subtle)]" aria-label="Parcelas">
+                  {parcelas.map((p) => (
+                    <li key={p.id} className="grid gap-2 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="grid">
+                          <Link href={`/faturas/${p.id}`} className="font-mono font-semibold">{`${p.number}/${parcelas.length} · ${formatDate(p.due_date)}`}</Link>
+                          <span className="font-mono text-sm">{`${formatBRL(p.condominium_amount)} + ${formatBRL(p.fee_amount)}`}</span>
+                        </span>
+                        <span className="font-mono font-semibold whitespace-nowrap">{formatBRL(p.amount)}</span>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        {situacaoDa(acordo, p)}
+                        {acoesDa(acordo, p)}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            ) : (
+              <DataTable
+                rows={parcelas}
+                columns={[
+                  { key: "parcela", label: "Parcela", mono: true, render: (p: Parcela) => <Link href={`/faturas/${p.id}`}>{`${p.number}/${parcelas.length}`}</Link> },
+                  { key: "vencimento", label: "Vencimento", mono: true, render: (p: Parcela) => formatDate(p.due_date) },
+                  { key: "valor", label: "Valor", mono: true, align: "right", strong: true, render: (p: Parcela) => formatBRL(p.amount) },
+                  { key: "condominio", label: "Condomínio", mono: true, align: "right", render: (p: Parcela) => formatBRL(p.condominium_amount) },
+                  { key: "honorarios", label: "Honorários", mono: true, align: "right", render: (p: Parcela) => formatBRL(p.fee_amount) },
+                  {
+                    key: "situacao",
+                    label: "Situação",
+                    render: (p: Parcela) => situacaoDa(acordo, p),
+                  },
+                  {
+                    key: "acoes",
+                    label: "",
+                    align: "right",
+                    render: (p: Parcela) => acoesDa(acordo, p),
+                  },
+                ]}
+              />
+            )}
 
             <DocumentosDoAcordo acordoId={id} onAviso={setAviso} />
             <PdfsDoAcordo acordoId={id} onAviso={setAviso} />

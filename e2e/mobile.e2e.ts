@@ -1,10 +1,10 @@
 import { By, type WebDriver } from "selenium-webdriver";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { hojeEmBrasilia } from "../app/lib/dates";
-import { CELULAR, createDriver, waitForButton, waitForElement, waitForPath } from "./support/driver";
+import { CELULAR, createDriver, visit, waitForButton, waitForElement, waitForPath, waitForText } from "./support/driver";
 import { env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
-import { createAgreement, createCondominium, createDebtor, createUser, type TestUser } from "./support/seed";
+import { createAgreement, createCondominium, createDebtor, createUser, linkCondominiums, payFirstInstallment, type TestUser } from "./support/seed";
 
 // #83: https://github.com/Advocondo/front/issues/83 (critérios propostos na issue)
 type Medida = { largura: number; excesso: number; tabelas: number };
@@ -45,6 +45,8 @@ describe("Telas do escritório no celular", () => {
   let operador: TestUser;
   let devedora: string;
   let condominioNome: string;
+  let condominioId: string;
+  let acordoId: string;
 
   async function entrar(email: string, senha: string, inicio: string): Promise<void> {
     await openLogin(driver);
@@ -66,10 +68,13 @@ describe("Telas do escritório no celular", () => {
     // Dados para as tabelas terem linhas, com nomes longos como os reais.
     condominioNome = `E2E Condomínio Residencial Celular ${carimbo}`;
     const condominio = await createCondominium(condominioNome);
+    condominioId = condominio.id;
     devedora = `E2E Devedora Com Nome Comprido ${carimbo}`;
     const devedor = await createDebtor(condominio.id, devedora, "Bloco B 1203");
     // A 1ª parcela vence neste mês, para Faturas do mês ter o cartão dela.
-    await createAgreement(condominio.id, devedor.id, hojeEmBrasilia());
+    acordoId = (await createAgreement(condominio.id, devedor.id, hojeEmBrasilia())).id;
+    // Uma parcela paga, para o histórico financeiro ter o que mostrar.
+    await payFirstInstallment(acordoId, hojeEmBrasilia());
   });
 
   afterAll(async () => {
@@ -104,7 +109,7 @@ describe("Telas do escritório no celular", () => {
     await waitForPath(driver, "/login");
   });
 
-  it("Acordos e Faturas do mês mostram cartões, e a baixa abre no celular", async () => {
+  it("Acordos e Faturas do mês mostram cartões, e os pagamentos abrem no celular", async () => {
     await entrar(operador.email, operador.password, "/condominios");
     await abrirPelaNavegacao(driver, "Acordos", "/acordos");
     await (await waitForElement(driver, By.css('input[aria-label="Buscar por devedor, condomínio ou responsável"]'))).sendKeys(devedora);
@@ -114,11 +119,10 @@ describe("Telas do escritório no celular", () => {
     await abrirPelaNavegacao(driver, "Mês", "/acompanhamento");
     await conferirTela("/acompanhamento");
     expect(await driver.findElements(By.css("table"))).toHaveLength(0);
-    await clicarNoMeio(driver, By.css(`ul[aria-label="Faturas do mês"] button[aria-label="Dar baixa na parcela 1 de ${devedora}"]`));
+    await clicarNoMeio(driver, By.css(`ul[aria-label="Faturas do mês"] button[aria-label="Pagamentos da parcela 1 de ${devedora}"]`));
     const dialogo = await waitForElement(driver, By.css('[role="dialog"]'));
     const largura = (await dialogo.getRect()).width;
     expect(largura).toBeLessThanOrEqual(CELULAR.width);
-    await (await waitForButton(driver, "Cancelar")).click();
   });
 
   it("Devedores e Condomínios mostram cartões, e o Editar abre no celular", async () => {
@@ -135,6 +139,31 @@ describe("Telas do escritório no celular", () => {
     await clicarNoMeio(driver, By.css(`ul[aria-label="Devedores"] button[aria-label="Editar ${devedora}"]`));
     expect((await (await waitForElement(driver, By.css('[role="dialog"]'))).getRect()).width).toBeLessThanOrEqual(CELULAR.width);
     await (await waitForButton(driver, "Cancelar")).click();
+  });
+
+  it("o detalhe do acordo e o da fatura cabem no celular, sem tabela", async () => {
+    await entrar(env.adminEmail, env.adminPassword, "/painel");
+    await visit(driver, `/acordos/${acordoId}`);
+    await waitForElement(driver, By.css('ul[aria-label="Parcelas"]'));
+    await waitForText(driver, "Baixa da parcela 1");
+    await conferirTela(`/acordos/${acordoId}`);
+
+    await clicarNoMeio(driver, By.xpath('//ul[@aria-label="Parcelas"]//a[starts-with(normalize-space(), "1/3")]'));
+    await driver.wait(async () => (await driver.getCurrentUrl()).includes("/faturas/"), 20_000);
+    await conferirTela("/faturas");
+  });
+
+  it("as telas do Cliente cabem no celular", async () => {
+    const cliente = await createUser("client");
+    await linkCondominiums(cliente.id, [condominioId]);
+    await entrar(cliente.email, cliente.password, "/painel-cliente");
+    await waitForText(driver, devedora);
+    expect(await medir(driver)).toEqual({ largura: CELULAR.width, excesso: 0, tabelas: 0 });
+
+    await clicarNoMeio(driver, By.xpath(`//a[normalize-space()="${devedora}"]`));
+    await driver.wait(async () => (await driver.getCurrentUrl()).includes("/painel-cliente/moradores/"), 20_000);
+    await waitForText(driver, devedora);
+    expect(await medir(driver)).toEqual({ largura: CELULAR.width, excesso: 0, tabelas: 0 });
   });
 
   it("CA03: no desktop, a barra lateral continua e a barra inferior não aparece", async () => {

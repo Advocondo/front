@@ -1,6 +1,7 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { simularCelular } from "@/app/lib/celular.test-utils";
 import { clearSession, getSession, saveSession } from "@/app/lib/session";
 import type { AcordoDoCliente } from "./api";
 import { PainelClienteView } from "./PainelClienteView";
@@ -214,5 +215,22 @@ describe("#47: parcelas do acordo para o Cliente", () => {
     await user.click(within(dialogo).getAllByRole("button", { name: "Fechar" }).at(-1) as HTMLElement);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByText("Ana Moradora")).toBeInTheDocument();
+  });
+});
+
+describe("#83: Painel do Cliente no celular", () => {
+  it("mostra um item por morador, com situação, atraso, vencimento e Parcelas", async () => {
+    simularCelular();
+    com([atrasado, emDia]);
+    render(<PainelClienteView />);
+    const lista = await screen.findByRole("list", { name: "Moradores de Res. Villa Verde" });
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+
+    const ana = within(lista).getByText("Ana Moradora").closest("li") as HTMLElement;
+    expect(ana).toHaveTextContent("Unidade 101");
+    expect(ana).toHaveTextContent("2 parcelas em atraso · próximo vencimento 10/12/2026");
+    expect(within(lista).getByText("Bruno Morador").closest("li")).toHaveTextContent("Nada em atraso");
+    expect(within(ana).getByRole("link", { name: "Ana Moradora" })).toHaveAttribute("href", "/painel-cliente/moradores/d-1");
+    expect(within(ana).getByRole("button", { name: "Ver parcelas de Ana Moradora" })).toBeInTheDocument();
   });
 });

@@ -7,6 +7,7 @@ import { formatDate } from "@/app/(equipe)/condominios/format";
 import { ApiError } from "@/app/lib/api";
 import { salvarArquivo } from "@/app/lib/arquivos";
 import { useSession } from "@/app/lib/session";
+import { useCelular } from "@/app/lib/useCelular";
 import { baixarRelatorioDoCondominio, listAcordosDoCliente, type AcordoDoCliente } from "./api";
 import { ClienteShell } from "./ClienteShell";
 import { ParcelasDialog } from "./ParcelasDialog";
@@ -35,6 +36,7 @@ function nomeDoArquivo(condominio: string): string {
 export function PainelClienteView() {
   const session = useSession();
   const [acordos, setAcordos] = useState<AcordoDoCliente[] | null>(null);
+  const celular = useCelular();
   const [erro, setErro] = useState<string | null>(null);
   const [recarregar, setRecarregar] = useState(0);
   const [parcelasDe, setParcelasDe] = useState<AcordoDoCliente | null>(null);
@@ -107,39 +109,62 @@ export function PainelClienteView() {
                 </Button>
               }
             >
-              <div className="overflow-x-auto">
-                <DataTable
-                  rows={lista}
-                  columns={[
-                    // A unidade fica sob o nome para a situação, o dado principal, caber na largura do celular.
-                    {
-                      key: "debtor_name",
-                      label: "Morador",
-                      render: (a: AcordoDoCliente) => (
-                        <>
-                          <Link href={`/painel-cliente/moradores/${a.debtor_id}`} className="block font-semibold">
-                            {a.debtor_name}
-                          </Link>
-                          <span className="block text-sm">{`Unidade ${a.debtor_unit}`}</span>
-                        </>
-                      ),
-                    },
-                    { key: "status", label: "Situação", render: (a: AcordoDoCliente) => <StatusPill label={SITUACAO[a.status].label} tone={SITUACAO[a.status].tone} /> },
-                    { key: "overdue_installments", label: "Em atraso", render: (a: AcordoDoCliente) => (a.overdue_installments > 0 ? quantos(a.overdue_installments, "parcela", "parcelas") : "—") },
-                    { key: "next_due_date", label: "Próximo vencimento", render: (a: AcordoDoCliente) => formatDate(a.next_due_date) },
-                    {
-                      key: "acoes",
-                      label: "",
-                      align: "right",
-                      render: (a: AcordoDoCliente) => (
+              {celular ? (
+                // No celular, um item por morador: a tabela não cabia e cortava as colunas.
+                <ul className="divide-y divide-[var(--border-subtle)]" aria-label={`Moradores de ${lista[0].condominium_name}`}>
+                  {lista.map((a) => (
+                    <li key={a.id} className="grid gap-2 py-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="grid min-w-0">
+                          <Link href={`/painel-cliente/moradores/${a.debtor_id}`} className="font-semibold">{a.debtor_name}</Link>
+                          <span className="text-sm">{`Unidade ${a.debtor_unit}`}</span>
+                        </span>
+                        <StatusPill label={SITUACAO[a.status].label} tone={SITUACAO[a.status].tone} />
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                        <span>{`${a.overdue_installments > 0 ? `${quantos(a.overdue_installments, "parcela", "parcelas")} em atraso` : "Nada em atraso"} · próximo vencimento ${formatDate(a.next_due_date)}`}</span>
                         <Button size="sm" variant="ghost" aria-label={`Ver parcelas de ${a.debtor_name}`} onClick={() => setParcelasDe(a)}>
                           Parcelas
                         </Button>
-                      ),
-                    },
-                  ]}
-                />
-              </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="overflow-x-auto">
+                  <DataTable
+                    rows={lista}
+                    columns={[
+                      // A unidade fica sob o nome para a situação, o dado principal, caber na largura do celular.
+                      {
+                        key: "debtor_name",
+                        label: "Morador",
+                        render: (a: AcordoDoCliente) => (
+                          <>
+                            <Link href={`/painel-cliente/moradores/${a.debtor_id}`} className="block font-semibold">
+                              {a.debtor_name}
+                            </Link>
+                            <span className="block text-sm">{`Unidade ${a.debtor_unit}`}</span>
+                          </>
+                        ),
+                      },
+                      { key: "status", label: "Situação", render: (a: AcordoDoCliente) => <StatusPill label={SITUACAO[a.status].label} tone={SITUACAO[a.status].tone} /> },
+                      { key: "overdue_installments", label: "Em atraso", render: (a: AcordoDoCliente) => (a.overdue_installments > 0 ? quantos(a.overdue_installments, "parcela", "parcelas") : "—") },
+                      { key: "next_due_date", label: "Próximo vencimento", render: (a: AcordoDoCliente) => formatDate(a.next_due_date) },
+                      {
+                        key: "acoes",
+                        label: "",
+                        align: "right",
+                        render: (a: AcordoDoCliente) => (
+                          <Button size="sm" variant="ghost" aria-label={`Ver parcelas de ${a.debtor_name}`} onClick={() => setParcelasDe(a)}>
+                            Parcelas
+                          </Button>
+                        ),
+                      },
+                    ]}
+                  />
+                </div>
+              )}
             </Card>
           ))}
         </>

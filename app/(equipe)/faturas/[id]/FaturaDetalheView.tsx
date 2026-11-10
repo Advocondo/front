@@ -62,11 +62,7 @@ export function FaturaDetalheView({ id }: { id: string }) {
       activeId="acompanhamento"
       title={parcela ? `Parcela ${parcela.number}` : "Detalhe da fatura"}
       subtitle={parcela ? `${parcela.debtor.name} · ${parcela.condominium.name}` : undefined}
-      actions={
-        <Link href="/acompanhamento" className="text-sm font-medium">
-          Voltar para Faturas do mês
-        </Link>
-      }
+      voltar={{ href: "/acompanhamento", label: "Voltar para Faturas do mês" }}
     >
       <div className="grid gap-5">
         {naoEncontrada && (

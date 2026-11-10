@@ -1,11 +1,12 @@
 "use client";
 
-import { Alert, Button, Card, DataTable } from "edson-alexandre-design-system";
+import { Alert, Button, Card, DataTable, Timeline } from "edson-alexandre-design-system";
 import { useEffect, useState } from "react";
 import { formatDate } from "@/app/(equipe)/condominios/format";
 import { ApiError } from "@/app/lib/api";
 import { formatDateTime } from "@/app/lib/dates";
 import { formatBRL } from "@/app/lib/money";
+import { useCelular } from "@/app/lib/useCelular";
 import { listHistoricoFinanceiro } from "../api";
 import type { MovimentacaoFinanceira } from "../types";
 
@@ -38,6 +39,7 @@ export function descreverMovimentacao(m: MovimentacaoFinanceira): { acao: string
  * aqui. Uma falha fica neste bloco: o resto da tela do acordo continua funcionando.
  */
 export function HistoricoFinanceiro({ acordoId, versao }: { acordoId: string; versao: number }) {
+  const celular = useCelular();
   const [movimentacoes, setMovimentacoes] = useState<MovimentacaoFinanceira[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [recarregar, setRecarregar] = useState(0);
@@ -65,7 +67,14 @@ export function HistoricoFinanceiro({ acordoId, versao }: { acordoId: string; ve
       )}
       {!movimentacoes && !erro && <p role="status">Carregando histórico financeiro…</p>}
       {movimentacoes?.length === 0 && <p className="text-sm">Nenhuma movimentação registrada.</p>}
-      {movimentacoes && movimentacoes.length > 0 && (
+      {movimentacoes && movimentacoes.length > 0 && celular && (
+        // No celular, uma linha do tempo, como o histórico de responsáveis.
+        <Timeline
+          aria-label="Movimentações financeiras"
+          items={movimentacoes.map((m) => ({ title: descreverMovimentacao(m).acao, description: descreverMovimentacao(m).valor, date: formatDateTime(m.changed_at), meta: `por ${m.changed_by.name}`, icon: "banknote" }))}
+        />
+      )}
+      {movimentacoes && movimentacoes.length > 0 && !celular && (
         <div className="overflow-x-auto">
           <DataTable
             rows={movimentacoes.map((m, i) => ({ ...m, id: i }))}

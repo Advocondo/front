@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { simularCelular } from "@/app/lib/celular.test-utils";
 import { clearSession, saveSession } from "@/app/lib/session";
 import type { HistoricoDoMorador } from "../../api";
 import { HistoricoMoradorView } from "./HistoricoMoradorView";
@@ -93,5 +94,18 @@ describe("US38: histórico de pagamentos do morador", () => {
     await user.click(tentar);
     expect(await screen.findByText("Setembro 2026")).toBeInTheDocument();
     expect(screen.queryByText("Não foi possível carregar o histórico")).not.toBeInTheDocument();
+  });
+});
+
+describe("#83: histórico do morador no celular", () => {
+  it("mostra uma linha por competência, com situação e valores", async () => {
+    simularCelular();
+    mockApi(() => ({ status: 200, body: historico }));
+    render(<HistoricoMoradorView id="d-1" />);
+    const lista = await screen.findByRole("list", { name: "Competências" });
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    const outubro = within(lista).getByText("Outubro 2026").closest("li") as HTMLElement;
+    expect(outubro).toHaveTextContent("Pago R$ 100,10 · em aberto R$ 199,90");
+    expect(within(outubro).getByText("Atrasado")).toBeInTheDocument();
   });
 });
