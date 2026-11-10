@@ -1,6 +1,7 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { simularCelular } from "@/app/lib/celular.test-utils";
 import { clearSession, saveSession } from "@/app/lib/session";
 import type { RegistroDeAuditoria } from "./api";
 import { AuditoriaView, descreverAcao } from "./AuditoriaView";
@@ -145,5 +146,23 @@ describe("#72: trilha de auditoria", () => {
   it("descreve uma mudança de situação sem autor", () => {
     const semAutor = { ...vinculo, action: "status_changed", actor: null, old_value: "active", new_value: "inactive", added_condominiums: [] } as RegistroDeAuditoria;
     expect(descreverAcao(semAutor)).toEqual({ acao: "Situação alterada", detalhe: "De Ativo para Inativo" });
+  });
+});
+
+describe("#83: trilha de auditoria no celular", () => {
+  it("mostra um cartão por ação, com autor, data, ação, alvo e detalhe", async () => {
+    simularCelular();
+    mockApi();
+    render(<AuditoriaView />);
+    const lista = await screen.findByRole("list", { name: "Registros de auditoria" });
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+
+    const cartoes = within(lista).getAllByRole("listitem");
+    expect(cartoes).toHaveLength(3);
+    expect(cartoes[2]).toHaveTextContent("Marina Dias");
+    expect(cartoes[2]).toHaveTextContent("02/03/2026 12:00");
+    expect(cartoes[2]).toHaveTextContent("Baixa da parcela 1");
+    expect(cartoes[2]).toHaveTextContent("+ R$ 150,00");
+    expect(within(cartoes[2]).getByRole("link", { name: "José Simão · Bloco A 101" })).toHaveAttribute("href", "/acordos/a-1");
   });
 });

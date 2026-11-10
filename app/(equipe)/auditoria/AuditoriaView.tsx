@@ -1,8 +1,8 @@
 "use client";
 
-import { Alert, Badge, Button, DataTable, EmptyState, Input, Select } from "edson-alexandre-design-system";
+import { Alert, Badge, Button, Card, DataTable, EmptyState, Input, Select } from "edson-alexandre-design-system";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { descreverMovimentacao } from "@/app/(equipe)/acordos/[id]/HistoricoFinanceiro";
 import type { MovimentacaoFinanceira } from "@/app/(equipe)/acordos/types";
 import { descreverRegistro } from "@/app/(equipe)/usuarios/HistoricoDialog";
@@ -11,6 +11,7 @@ import { Field } from "@/app/components/FormField";
 import { PlataformaShell } from "@/app/components/PlataformaShell";
 import { ApiError } from "@/app/lib/api";
 import { formatDateTime } from "@/app/lib/dates";
+import { useCelular } from "@/app/lib/useCelular";
 import { listarTrilha, TAMANHO_DA_PAGINA, type FiltrosDaTrilha, type RegistroDeAuditoria } from "./api";
 
 const SEM_FILTRO: FiltrosDaTrilha = { autor: "", de: "", ate: "", categoria: "" };
@@ -28,6 +29,39 @@ export function descreverAcao(r: RegistroDeAuditoria): { acao: string; detalhe: 
   }
   const { title, description } = descreverRegistro({ ...r, created_at: r.occurred_at } as RegistroDoUsuario);
   return { acao: title, detalhe: description || "—" };
+}
+
+function Acao({ registro }: { registro: RegistroDeAuditoria }) {
+  return (
+    <span className="inline-flex flex-wrap items-center gap-2">
+      <Badge tone={registro.category === "financial" ? "info" : "neutral"}>{registro.category === "financial" ? "Financeiro" : "Usuários"}</Badge>
+      {descreverAcao(registro).acao}
+    </span>
+  );
+}
+
+/** A trilha no celular: um cartão por ação, com quem, quando, o alvo e o valor alterado. */
+function CartoesDaTrilha({ registros, vazio }: { registros: RegistroDeAuditoria[]; vazio: ReactNode }) {
+  if (registros.length === 0) return <>{vazio}</>;
+  return (
+    <ul className="grid gap-3" aria-label="Registros de auditoria">
+      {registros.map((r) => (
+        <li key={r.id}>
+          <Card padding="sm">
+            <div className="grid gap-2">
+              <div className="flex items-baseline justify-between gap-3 text-sm">
+                <span className="font-semibold">{r.actor?.name ?? "—"}</span>
+                <span className="font-mono whitespace-nowrap">{formatDateTime(r.occurred_at)}</span>
+              </div>
+              <Acao registro={r} />
+              <Alvo registro={r} />
+              <span className="text-sm">{descreverAcao(r).detalhe}</span>
+            </div>
+          </Card>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 function Alvo({ registro }: { registro: RegistroDeAuditoria }) {
@@ -52,6 +86,7 @@ export function AuditoriaView() {
   const [erroAoCarregarMais, setErroAoCarregarMais] = useState<string | null>(null);
   const [carregandoMais, setCarregandoMais] = useState(false);
   const [recarregar, setRecarregar] = useState(0);
+  const celular = useCelular();
 
   const periodoInvertido = Boolean(filtros.de && filtros.ate && filtros.de > filtros.ate);
 
@@ -106,31 +141,41 @@ export function AuditoriaView() {
   }
 
   const filtrando = Object.values(filtros).some(Boolean);
+  const vazio = (
+    filtrando ? (
+      <EmptyState icon="search" title="Nenhum registro encontrado" description="Revise os filtros." />
+    ) : (
+      <EmptyState icon="scroll-text" title="Nenhuma ação registrada" description="Baixas, edições de acordo e mudanças em usuários aparecem aqui." />
+    )
+  );
   const haMais = registros !== null && registros.length < total;
 
   return (
     <PlataformaShell activeId="auditoria" title="Trilha de auditoria" subtitle="Quem fez cada ação em acordos, parcelas e usuários">
       <div className="grid gap-5">
         <div className="flex flex-wrap items-end gap-3">
-          <div style={{ width: 240 }}>
+          <div className="w-full sm:w-[240px]">
             <Field id="filtro-autor" label="Autor">
               <Select id="filtro-autor" placeholder="Todos os autores" options={autores.map((u) => ({ value: u.id, label: u.name }))} value={filtros.autor} onChange={(e) => filtrar({ autor: e.target.value })} />
             </Field>
           </div>
-          <div style={{ width: 260 }}>
+          <div className="w-full sm:w-[260px]">
             <Field id="filtro-tipo" label="Tipo">
               <Select id="filtro-tipo" placeholder="Todos os tipos" options={CATEGORIAS} value={filtros.categoria} onChange={(e) => filtrar({ categoria: e.target.value as FiltrosDaTrilha["categoria"] })} />
             </Field>
           </div>
-          <div style={{ width: 170 }}>
+          {/* No celular, as duas datas dividem a linha. */}
+          <div className="grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto">
+          <div className="min-w-0 sm:w-[170px]">
             <Field id="filtro-de" label="De">
               <Input id="filtro-de" type="date" value={filtros.de} onChange={(e) => filtrar({ de: e.target.value })} />
             </Field>
           </div>
-          <div style={{ width: 170 }}>
+          <div className="min-w-0 sm:w-[170px]">
             <Field id="filtro-ate" label="Até">
               <Input id="filtro-ate" type="date" value={filtros.ate} invalid={periodoInvertido} onChange={(e) => filtrar({ ate: e.target.value })} />
             </Field>
+          </div>
           </div>
           {filtrando && (
             <Button variant="ghost" icon="x" onClick={() => filtrar(SEM_FILTRO)}>
@@ -156,32 +201,21 @@ export function AuditoriaView() {
         ) : (
           <>
             <p className="text-sm" role="status">{total === 1 ? "1 registro" : `${total} registros`}</p>
-            <DataTable
-              rows={registros}
-              empty={
-                filtrando ? (
-                  <EmptyState icon="search" title="Nenhum registro encontrado" description="Revise os filtros." />
-                ) : (
-                  <EmptyState icon="scroll-text" title="Nenhuma ação registrada" description="Baixas, edições de acordo e mudanças em usuários aparecem aqui." />
-                )
-              }
-              columns={[
-                { key: "occurred_at", label: "Data e hora", mono: true, render: (r: RegistroDeAuditoria) => formatDateTime(r.occurred_at) },
-                { key: "actor", label: "Autor", render: (r: RegistroDeAuditoria) => r.actor?.name ?? "—" },
-                {
-                  key: "acao",
-                  label: "Ação",
-                  render: (r: RegistroDeAuditoria) => (
-                    <span className="inline-flex flex-wrap items-center gap-2">
-                      <Badge tone={r.category === "financial" ? "info" : "neutral"}>{r.category === "financial" ? "Financeiro" : "Usuários"}</Badge>
-                      {descreverAcao(r).acao}
-                    </span>
-                  ),
-                },
-                { key: "alvo", label: "Acordo ou usuário", render: (r: RegistroDeAuditoria) => <Alvo registro={r} /> },
-                { key: "detalhe", label: "Detalhe", render: (r: RegistroDeAuditoria) => descreverAcao(r).detalhe },
-              ]}
-            />
+            {celular ? (
+              <CartoesDaTrilha registros={registros} vazio={vazio} />
+            ) : (
+              <DataTable
+                rows={registros}
+                empty={vazio}
+                columns={[
+                  { key: "occurred_at", label: "Data e hora", mono: true, render: (r: RegistroDeAuditoria) => formatDateTime(r.occurred_at) },
+                  { key: "actor", label: "Autor", render: (r: RegistroDeAuditoria) => r.actor?.name ?? "—" },
+                  { key: "acao", label: "Ação", render: (r: RegistroDeAuditoria) => <Acao registro={r} /> },
+                  { key: "alvo", label: "Acordo ou usuário", render: (r: RegistroDeAuditoria) => <Alvo registro={r} /> },
+                  { key: "detalhe", label: "Detalhe", render: (r: RegistroDeAuditoria) => descreverAcao(r).detalhe },
+                ]}
+              />
+            )}
             {erroAoCarregarMais && <Alert tone="risk" role="alert" title="Não foi possível carregar mais">{erroAoCarregarMais}</Alert>}
             {haMais && (
               <div className="flex justify-center">

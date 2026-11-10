@@ -16,6 +16,10 @@ const dormir = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
  *
  * O clique também espera o aviso de sucesso sair da frente: ele fica uns segundos no canto da
  * tela e cobre o que estiver embaixo (ver LACUNAS.md). Quem usa espera ou fecha o aviso.
+ *
+ * E espera o controle ficar habilitado. Botões como "Novo acordo" e "Importar planilha" nascem
+ * desabilitados até a lista de condomínios chegar, e um clique num botão desabilitado não faz nada:
+ * o teste seguia esperando um diálogo que nunca abria.
  */
 function instalarPausa(): void {
   if (pausaInstalada) return;
@@ -26,6 +30,7 @@ function instalarPausa(): void {
   WebElement.prototype.click = async function (this: WebElement) {
     await pausar();
     const limite = Date.now() + ESPERA_MS;
+    await this.getDriver().wait(() => this.isEnabled(), ESPERA_MS, "O controle continuou desabilitado.");
     for (;;) {
       try {
         return await clicar.call(this);
