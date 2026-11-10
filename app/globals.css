@@ -92,3 +92,64 @@ body {
     scroll-padding-bottom: calc(64px + var(--space-4, 16px));
   }
 }
+
+/* Diálogos no celular (#83). O Dialog do design system esconde o que passa da altura e não rola:
+   um formulário mais alto que a tela escondia o botão de salvar. Os estilos dele são inline, por
+   isso o !important. Antes, o formulário rolava num quadro de 60% da altura dentro do diálogo.
+   - Todo diálogo cabe na altura da tela, e o conteúdo rola entre o título e os botões.
+   - O diálogo com formulário ocupa a tela toda, como nos protótipos mobile, com a ação principal
+     em largura total e o Cancelar embaixo. As confirmações continuam centralizadas. */
+@media (max-width: 767px) {
+  [role="presentation"]:has(> [role="dialog"]) {
+    padding: var(--space-4, 16px) !important;
+  }
+
+  [role="dialog"] {
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+  }
+
+  [role="dialog"] > header,
+  [role="dialog"] > footer {
+    flex-shrink: 0;
+  }
+
+  [role="dialog"] > div {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  [role="presentation"]:has(> [role="dialog"] form) {
+    padding: 0 !important;
+    place-items: stretch !important;
+  }
+
+  [role="dialog"]:has(form) {
+    max-width: none !important;
+    height: 100dvh;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  [role="dialog"]:has(form) > div {
+    flex: 1;
+  }
+
+  /* Os formulários limitam a própria altura a 60% da tela (max-h-[60vh]) para o diálogo do desktop.
+     Em tela cheia, quem rola é o corpo do diálogo, numa rolagem só. */
+  [role="dialog"] .max-h-\[60vh\] {
+    max-height: none;
+    overflow: visible;
+  }
+
+  [role="dialog"]:has(form) > footer {
+    flex-direction: column-reverse;
+    padding-bottom: calc(var(--space-4, 16px) + env(safe-area-inset-bottom)) !important;
+  }
+
+  [role="dialog"]:has(form) > footer > * {
+    width: 100%;
+    justify-content: center;
+  }
+}

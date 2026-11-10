@@ -166,6 +166,25 @@ describe("Telas do escritório no celular", () => {
     expect(await medir(driver)).toEqual({ largura: CELULAR.width, excesso: 0, tabelas: 0 });
   });
 
+  it("o formulário ocupa a tela toda, com o salvar ao alcance; a confirmação fica centralizada", async () => {
+    await entrar(operador.email, operador.password, "/condominios");
+    await abrirPelaNavegacao(driver, "Acordos", "/acordos");
+    await (await waitForButton(driver, "Novo acordo")).click();
+    const formulario = await (await waitForElement(driver, By.css('[role="dialog"]'))).getRect();
+    expect({ x: formulario.x, y: formulario.y, width: formulario.width, height: formulario.height }).toEqual({ x: 0, y: 0, ...CELULAR });
+    // O botão de salvar aparece sem rolar, no rodapé fixo do formulário.
+    const salvar = await (await waitForButton(driver, "Salvar acordo")).getRect();
+    expect(salvar.y + salvar.height).toBeLessThanOrEqual(CELULAR.height);
+    expect(salvar.width).toBeGreaterThan(CELULAR.width / 2);
+    await (await waitForButton(driver, "Cancelar")).click();
+
+    await abrirPelaNavegacao(driver, "Mês", "/acompanhamento");
+    await clicarNoMeio(driver, By.css(`ul[aria-label="Faturas do mês"] button[aria-label="Pagamentos da parcela 1 de ${devedora}"]`));
+    const confirmacao = await (await waitForElement(driver, By.css('[role="dialog"]'))).getRect();
+    expect(confirmacao.width).toBeLessThan(CELULAR.width);
+    expect(confirmacao.height).toBeLessThan(CELULAR.height);
+  });
+
   it("CA03: no desktop, a barra lateral continua e a barra inferior não aparece", async () => {
     const desktop = await createDriver();
     try {
