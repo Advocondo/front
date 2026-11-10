@@ -1,9 +1,10 @@
 "use client";
 
-import { Alert, Button, DataTable, EmptyState, Icon, Input, StatusPill, Toast, ToastStack } from "edson-alexandre-design-system";
-import { useEffect, useState } from "react";
+import { Alert, Button, Card, DataTable, EmptyState, Icon, Input, StatusPill, Toast, ToastStack } from "edson-alexandre-design-system";
+import { useEffect, useState, type ReactNode } from "react";
 import { PlataformaShell } from "@/app/components/PlataformaShell";
 import { ApiError } from "@/app/lib/api";
+import { useCelular } from "@/app/lib/useCelular";
 import { listCondominios } from "./api";
 import { CondominioDialog } from "./CondominioDialog";
 import { diasAte, formatDate } from "./format";
@@ -29,6 +30,7 @@ export function CondominiosView() {
   const [recarregar, setRecarregar] = useState(0);
   const [dialogo, setDialogo] = useState<Dialogo>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  const celular = useCelular();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -61,6 +63,19 @@ export function CondominiosView() {
     <EmptyState icon="building-2" title="Nenhum condomínio cadastrado" description="Cadastre um condomínio para vincular acordos e usuários Cliente." action={<Button icon="plus" onClick={() => setDialogo({ tipo: "novo" })}>Novo condomínio</Button>} />
   );
 
+  const acoes = (c: Condominio) => (
+    <span className="inline-flex items-center justify-end gap-1">
+      {c.proximo_da_renovacao && (
+        <Button size="sm" variant="secondary" aria-label={`Registrar renovação de ${c.nome}`} onClick={() => setDialogo({ tipo: "renovar", condominio: c })}>
+          Registrar renovação
+        </Button>
+      )}
+      <Button size="sm" variant="ghost" icon="pencil" aria-label={`Editar ${c.nome}`} onClick={() => setDialogo({ tipo: "editar", condominio: c })}>
+        Editar
+      </Button>
+    </span>
+  );
+
   return (
     <PlataformaShell activeId="condominios" title="Condomínios" subtitle="Carteira de clientes assessorados">
       <div className="grid gap-5">
@@ -69,7 +84,7 @@ export function CondominiosView() {
             <Input icon="search" placeholder="Buscar condomínio ou síndico" aria-label="Buscar condomínio ou síndico" value={busca} onChange={(e) => setBusca(e.target.value)} />
           </div>
           <div className="flex-1" />
-          <Button icon="plus" onClick={() => setDialogo({ tipo: "novo" })}>
+          <Button icon="plus" block={celular} onClick={() => setDialogo({ tipo: "novo" })}>
             Novo condomínio
           </Button>
         </div>
@@ -84,48 +99,36 @@ export function CondominiosView() {
           <p role="status">Carregando condomínios…</p>
         ) : (
           condominios && (
-            <DataTable
-              rows={condominios}
-              empty={vazio}
-              columns={[
-                {
-                  key: "nome",
-                  label: "Condomínio",
-                  strong: true,
-                  render: (c: Condominio) => (
-                    <span className="inline-flex items-center gap-2">
-                      <Icon name="building-2" size={16} />
-                      {c.nome}
-                    </span>
-                  ),
-                },
-                { key: "localidade", label: "Localidade", render: (c: Condominio) => [c.cidade, c.uf].filter(Boolean).join("/") || "—" },
-                { key: "sindico_nome", label: "Síndico", render: (c: Condominio) => c.sindico_nome ?? "—" },
-                { key: "contrato_renovacao", label: "Renovação do contrato", mono: true, align: "right", render: (c: Condominio) => (
-                    <span className="inline-flex flex-wrap items-center justify-end gap-2">
-                      {c.proximo_da_renovacao && c.contrato_renovacao && <PrazoDeRenovacao data={c.contrato_renovacao} />}
-                      {formatDate(c.contrato_renovacao)}
-                    </span>
-                  ) },
-                {
-                  key: "acoes",
-                  label: "",
-                  align: "right",
-                  render: (c: Condominio) => (
-                    <span className="inline-flex items-center justify-end gap-1">
-                      {c.proximo_da_renovacao && (
-                        <Button size="sm" variant="secondary" aria-label={`Registrar renovação de ${c.nome}`} onClick={() => setDialogo({ tipo: "renovar", condominio: c })}>
-                          Registrar renovação
-                        </Button>
-                      )}
-                      <Button size="sm" variant="ghost" icon="pencil" aria-label={`Editar ${c.nome}`} onClick={() => setDialogo({ tipo: "editar", condominio: c })}>
-                        Editar
-                      </Button>
-                    </span>
-                  ),
-                },
-              ]}
-            />
+            celular ? (
+              <CartoesDeCondominio condominios={condominios} vazio={vazio} acoes={acoes} />
+            ) : (
+              <DataTable
+                rows={condominios}
+                empty={vazio}
+                columns={[
+                  {
+                    key: "nome",
+                    label: "Condomínio",
+                    strong: true,
+                    render: (c: Condominio) => (
+                      <span className="inline-flex items-center gap-2">
+                        <Icon name="building-2" size={16} />
+                        {c.nome}
+                      </span>
+                    ),
+                  },
+                  { key: "localidade", label: "Localidade", render: (c: Condominio) => [c.cidade, c.uf].filter(Boolean).join("/") || "—" },
+                  { key: "sindico_nome", label: "Síndico", render: (c: Condominio) => c.sindico_nome ?? "—" },
+                  { key: "contrato_renovacao", label: "Renovação do contrato", mono: true, align: "right", render: (c: Condominio) => (
+                      <span className="inline-flex flex-wrap items-center justify-end gap-2">
+                        {c.proximo_da_renovacao && c.contrato_renovacao && <PrazoDeRenovacao data={c.contrato_renovacao} />}
+                        {formatDate(c.contrato_renovacao)}
+                      </span>
+                    ) },
+                  { key: "acoes", label: "", align: "right", render: acoes },
+                ]}
+              />
+            )
           )
         )}
       </div>
@@ -160,5 +163,33 @@ export function CondominiosView() {
         </ToastStack>
       )}
     </PlataformaShell>
+  );
+}
+
+/** Condomínios no celular: um cartão por condomínio, como no protótipo mobile. */
+function CartoesDeCondominio({ condominios, vazio, acoes }: { condominios: Condominio[]; vazio: ReactNode; acoes: (c: Condominio) => ReactNode }) {
+  if (condominios.length === 0) return <>{vazio}</>;
+  return (
+    <ul className="grid gap-3" aria-label="Condomínios">
+      {condominios.map((c) => (
+        <li key={c.id}>
+          <Card padding="sm">
+            <div className="grid gap-2">
+              <div className="flex items-start justify-between gap-3">
+                <span className="grid min-w-0">
+                  <span className="font-semibold">{c.nome}</span>
+                  {(c.cidade || c.uf || c.sindico_nome) && <span className="text-sm">{[[c.cidade, c.uf].filter(Boolean).join("/"), c.sindico_nome].filter(Boolean).join(" · ")}</span>}
+                </span>
+                {c.proximo_da_renovacao && c.contrato_renovacao && <PrazoDeRenovacao data={c.contrato_renovacao} />}
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-mono text-sm">{c.contrato_renovacao ? `Renovação ${formatDate(c.contrato_renovacao)}` : "Sem data de renovação"}</span>
+                {acoes(c)}
+              </div>
+            </div>
+          </Card>
+        </li>
+      ))}
+    </ul>
   );
 }
