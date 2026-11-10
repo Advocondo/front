@@ -7,21 +7,16 @@ import { openLogin, submitLogin } from "./support/login";
 import { createAgreement, createCondominium, createDebtor, createUser, type TestUser } from "./support/seed";
 
 // #83: https://github.com/Advocondo/front/issues/83 (critérios propostos na issue)
-type Medida = { largura: number; excesso: number; tabelasCortadas: number };
+type Medida = { largura: number; excesso: number; tabelas: number };
 
 /**
  * `excesso`: quanto a página passa da largura da tela (zero é sem rolagem horizontal).
- * `tabelasCortadas`: tabelas mais largas que o quadro e sem rolagem própria, com colunas fora de alcance.
+ * `tabelas`: no celular, as listas viram cartões; nenhuma tela do escritório mostra tabela.
  */
 function medir(driver: WebDriver): Promise<Medida> {
   return driver.executeScript<Medida>(`
     const largura = document.documentElement.clientWidth;
-    const quadros = [...document.querySelectorAll("main div")].filter((d) => d.querySelector(":scope > table"));
-    return {
-      largura,
-      excesso: document.documentElement.scrollWidth - largura,
-      tabelasCortadas: quadros.filter((q) => q.scrollWidth > q.clientWidth + 1 && getComputedStyle(q).overflowX !== "auto").length,
-    };`);
+    return { largura, excesso: document.documentElement.scrollWidth - largura, tabelas: document.querySelectorAll("main table").length };`);
 }
 
 /**
@@ -61,7 +56,7 @@ describe("Telas do escritório no celular", () => {
     // A tela já carregou quando a barra inferior aparece e o "Carregando" some.
     await waitForElement(driver, By.css('nav[aria-label="Navegação inferior"]'));
     await driver.wait(async () => (await driver.findElements(By.xpath('//*[@role="status" and starts-with(normalize-space(), "Carregando")]'))).length === 0, 20_000);
-    expect({ caminho, ...(await medir(driver)) }).toEqual({ caminho, largura: CELULAR.width, excesso: 0, tabelasCortadas: 0 });
+    expect({ caminho, ...(await medir(driver)) }).toEqual({ caminho, largura: CELULAR.width, excesso: 0, tabelas: 0 });
   }
 
   beforeAll(async () => {

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ConviteView } from "@/app/convite/ConviteView";
 import { RequireAuth } from "@/app/components/RequireAuth";
 import { PlataformaShell } from "@/app/components/PlataformaShell";
+import { simularCelular } from "@/app/lib/celular.test-utils";
 import { clearSession, saveSession, type Role } from "@/app/lib/session";
 import type { Usuario } from "./api";
 import { UsuariosView } from "./UsuariosView";
@@ -503,5 +504,25 @@ describe("Vincular condomínios ao Cliente (US10)", () => {
     expect(screen.queryByText("Os vínculos serão desfeitos")).not.toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText(/Nível de acesso/), "operator");
     expect(screen.getByText("Os vínculos serão desfeitos")).toBeInTheDocument();
+  });
+});
+
+describe("#83: gestão de usuários no celular", () => {
+  it("mostra um cartão por pessoa, com perfil, situação e as ações", async () => {
+    simularCelular();
+    mockApi();
+    const user = userEvent.setup();
+    render(<UsuariosView />);
+    const lista = await screen.findByRole("list", { name: "Usuários" });
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+
+    const cartao = within(lista).getByText("Bia Equipe").closest("li") as HTMLElement;
+    expect(cartao).toHaveTextContent("bia@example.com");
+    expect(cartao).toHaveTextContent("Advogado · OAB DF123456");
+    expect(within(cartao).getByText("Ativo")).toBeInTheDocument();
+    expect(within(within(lista).getByText("Ana Admin").closest("li") as HTMLElement).getByText("você")).toBeInTheDocument();
+
+    await user.click(within(cartao).getByRole("button", { name: "Ver histórico de Bia Equipe" }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
 });
