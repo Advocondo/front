@@ -226,7 +226,7 @@ function VisaoDoEscritorio({ ano, mes, ehMesAtual }: Periodo) {
       )}
 
       {aviso && (
-        <ToastStack>
+        <ToastStack style={{ bottom: "var(--aviso-bottom, var(--space-6))" }}>
           <Toast tone="ok" title={aviso} onClose={() => setAviso(null)} />
         </ToastStack>
       )}

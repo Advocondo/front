@@ -139,3 +139,4 @@ describe("Minha tela", () => {
 - Datas de hoje vêm de `hojeEmBrasilia()`, como no back. Em UTC, a suíte falha toda noite.
 - Cada arquivo abre o próprio navegador. Os arquivos rodam um de cada vez.
 - Uma tela nova entra também na lista `TELAS` de `e2e/producao/producao.e2e.ts`, se abrir sem parâmetros.
+- Para testar no celular, use `createDriver({ celular: true })`: o Chrome emula uma tela de 390×844, como os protótipos mobile. Mudar o tamanho da janela não basta, porque o Chrome sem janela não fica mais estreito que 500px. Uma tela nova do escritório entra na lista de `e2e/mobile.e2e.ts`, que confere que ela abre sem rolagem horizontal.

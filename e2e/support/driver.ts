@@ -47,18 +47,27 @@ function instalarPausa(): void {
   };
 }
 
-/** O Selenium Manager baixa o driver compatível com o navegador instalado. */
-export function createDriver(): Promise<WebDriver> {
+/** Largura e altura de um celular comum, as dos protótipos mobile. */
+export const CELULAR = { width: 390, height: 844 };
+
+/**
+ * O Selenium Manager baixa o driver compatível com o navegador instalado. `celular` emula a tela de
+ * um celular: o Chrome sem janela não fica mais estreito que 500px, então mudar o tamanho não basta.
+ */
+export function createDriver({ celular = false }: { celular?: boolean } = {}): Promise<WebDriver> {
   instalarPausa();
   const builder = new Builder();
   if (env.browser === "firefox") {
     const options = new firefox.Options();
     if (env.headless) options.addArguments("-headless");
+    options.windowSize(celular ? CELULAR : { width: 1440, height: 900 });
     return builder.forBrowser(Browser.FIREFOX).setFirefoxOptions(options).build();
   }
   const options = new chrome.Options();
   if (env.headless) options.addArguments("--headless=new");
-  options.addArguments("--window-size=1440,900");
+  // O chromedriver espera { deviceMetrics }, que os tipos do selenium-webdriver não descrevem.
+  if (celular) options.setMobileEmulation({ deviceMetrics: { ...CELULAR, pixelRatio: 2 } } as unknown as Parameters<chrome.Options["setMobileEmulation"]>[0]);
+  else options.addArguments("--window-size=1440,900");
   return builder.forBrowser(Browser.CHROME).setChromeOptions(options).build();
 }
 

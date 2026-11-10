@@ -132,7 +132,8 @@ export function AcompanhamentoView() {
         </Button>
       )}
     >
-      <div className="grid gap-5">
+      {/* minmax(0, 1fr): no celular, as abas rolam na própria faixa em vez de alargar a página. */}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
         <SeletorDeMes ano={ano} mes={mes} onChange={setPeriodo} />
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -143,6 +144,7 @@ export function AcompanhamentoView() {
         </div>
 
         <Tabs
+          style={{ overflowX: "auto" }}
           activeId={aba}
           onSelect={(id) => {
             setAba(id as Aba);
@@ -246,7 +248,7 @@ export function AcompanhamentoView() {
       {pagamentos && <PagamentosDialog parcela={pagamentos} descricao={descricaoDe(pagamentos)} onClose={() => setPagamentos(null)} onChanged={(_, texto) => concluir(texto)} />}
 
       {aviso && (
-        <ToastStack>
+        <ToastStack style={{ bottom: "var(--aviso-bottom, var(--space-6))" }}>
           <Toast tone="ok" title={aviso} onClose={() => setAviso(null)} />
         </ToastStack>
       )}

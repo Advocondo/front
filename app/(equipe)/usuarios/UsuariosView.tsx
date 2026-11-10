@@ -216,7 +216,7 @@ export function UsuariosView() {
       {dialogo?.tipo === "inativar" && <InativarDialog usuario={dialogo.usuario} onClose={() => setDialogo(null)} onSaved={(u) => concluir(`Acesso de ${u.name} inativado.`)} />}
 
       {aviso && (
-        <ToastStack>
+        <ToastStack style={{ bottom: "var(--aviso-bottom, var(--space-6))" }}>
           <Toast tone="ok" title={aviso} onClose={() => setAviso(null)} />
         </ToastStack>
       )}

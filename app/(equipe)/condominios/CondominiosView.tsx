@@ -64,8 +64,10 @@ export function CondominiosView() {
   return (
     <PlataformaShell activeId="condominios" title="Condomínios" subtitle="Carteira de clientes assessorados">
       <div className="grid gap-5">
-        <div className="flex items-center gap-3">
-          <Input icon="search" placeholder="Buscar condomínio ou síndico" aria-label="Buscar condomínio ou síndico" value={busca} onChange={(e) => setBusca(e.target.value)} style={{ width: 320 }} />
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="w-full sm:w-80">
+            <Input icon="search" placeholder="Buscar condomínio ou síndico" aria-label="Buscar condomínio ou síndico" value={busca} onChange={(e) => setBusca(e.target.value)} />
+          </div>
           <div className="flex-1" />
           <Button icon="plus" onClick={() => setDialogo({ tipo: "novo" })}>
             Novo condomínio
@@ -153,7 +155,7 @@ export function CondominiosView() {
       )}
 
       {aviso && (
-        <ToastStack>
+        <ToastStack style={{ bottom: "var(--aviso-bottom, var(--space-6))" }}>
           <Toast tone="ok" title={aviso} onClose={() => setAviso(null)} />
         </ToastStack>
       )}

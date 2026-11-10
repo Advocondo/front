@@ -14,3 +14,58 @@ body {
   color: var(--text-body, #1a1a1a);
   font-family: var(--font-sans, system-ui, sans-serif);
 }
+
+/* Plataforma do escritório no celular (#83). Abaixo de 768px a barra lateral some, a navegação
+   inferior aparece, e os avisos sobem para não ficar atrás dela. */
+.plataforma {
+  --aviso-bottom: var(--space-6, 24px);
+}
+
+@media (max-width: 767px) {
+  .plataforma {
+    --app-pad: 16px;
+    --aviso-bottom: calc(64px + var(--space-4, 16px));
+  }
+}
+
+.navegacao-inferior {
+  height: 64px;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--surface-card, #fff);
+  border-top: 1px solid var(--border-subtle, #e2e0de);
+}
+
+.navegacao-inferior__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--text-muted, #6b6b6b);
+  text-decoration: none;
+  border-top: 2px solid transparent;
+}
+
+.navegacao-inferior__item span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navegacao-inferior__item[aria-current="page"] {
+  color: var(--surface-brand, #0b1f4d);
+  font-weight: 600;
+  border-top-color: var(--surface-brand, #0b1f4d);
+}
+
+/* Tabelas largas: no celular, a tabela rola dentro do próprio quadro, e a página não. O quadro do
+   DataTable corta o que passa da largura (overflow: hidden inline), por isso o !important. As telas
+   ainda vão trocar as tabelas por cartões, uma a uma (#83). */
+@media (max-width: 767px) {
+  .plataforma main div:has(> table) {
+    overflow-x: auto !important;
+  }
+}
