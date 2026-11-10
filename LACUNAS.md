@@ -40,8 +40,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Motivo da alteração do acordo | O protótipo pede o motivo ao editar, mas a rota não recebe esse campo | Sem issue |
 | Quem cancelou e quem reativou o acordo | O back guarda quando e por quê, mas ainda não registra quem | Sem issue |
 | Outros tipos de notificação | O protótipo também avisa de baixa estornada e de contrato próximo da renovação. O back só cria o aviso de parcela em atraso | Sem issue |
-| Trilha de auditoria global | O protótipo tem uma tela única, com indicadores, filtros por autor e período, e exportação. O back só responde por acordo e por usuário, então o histórico fica em cada acordo e em cada usuário | [#72](https://github.com/Advocondo/front/issues/72) |
-| Cancelamento e reativação no histórico financeiro | A rota traz baixas, estornos e edições, mas não os cancelamentos. A data e o motivo aparecem no aviso do acordo, sem o autor | Sem issue |
+| Cancelamento e reativação no histórico financeiro e na trilha de auditoria | As rotas trazem baixas, estornos e edições, mas não os cancelamentos e reativações, que não guardam o autor. A data e o motivo aparecem no aviso do acordo | Sem issue |
 | Histórico das renovações | Registrar uma renovação sobrescreve as datas do contrato, e a anterior se perde. A observação do protótipo não tem campo no back | Sem issue |
 | Comissão de Administrador responsável | Quando o responsável por um acordo é um Administrador, os honorários entram no faturamento, mas a comissão não aparece para ninguém, porque a rota lista só a Equipe Operacional | Sem issue |
 | Situação em inglês na planilha exportada | A coluna Status de `acompanhamento_AAAA_MM.xlsx` traz `open`, `overdue` e `paid`, enquanto o resto da planilha está em português. O PDF do acordo já traduz. Os testes do back conferem o valor em inglês | Sem issue |
@@ -92,6 +91,7 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | Importar inadimplentes | Fica em Devedores, não em Acordos, e aceita só `.xlsx`, não `.csv`. A prévia reenvia o arquivo para confirmar, sem guardar nada entre os passos | Devedores tem tela própria neste sistema, e o back só lê `.xlsx` |
 | Faturas do mês | Sem calendário. A exportação leva o mês, o condomínio, o responsável e a aba, mas não o recorte "sem nota", que a rota não filtra. A nota informada na baixa fica com a data de hoje; para outra data, registra-se depois | O calendário é herança de Prazos. O protótipo só pede o número, e o back exige a data |
 | Metas e comissões | Indicadores do Administrador: faturamento, acordos ativos e inadimplência, em vez de recuperado e acordos fechados; a meta é definida no mês da tela, sem seletor de mês no diálogo | O back não devolve recuperado nem acordos fechados; o seletor do diálogo seria redundante com o da tela |
+| Trilha de auditoria | Sem os indicadores, a busca livre e a exportação para planilha. Filtra por autor, tipo e período em dias, não por "últimos 30 dias". A [#72](https://github.com/Advocondo/front/issues/72) não tem história de usuário, e os critérios são os propostos na issue | O back não conta divergências nem busca por texto, e a exportação ficou fora do escopo da issue |
 
 ## Limitações técnicas
 

@@ -17,6 +17,7 @@ const TELAS = [
   { caminho: "/notificacoes", titulo: "Notificações" },
   { caminho: "/perfil", titulo: "Meu perfil" },
   { caminho: "/institucional", titulo: "Conteúdo institucional" },
+  { caminho: "/auditoria", titulo: "Trilha de auditoria" },
 ];
 
 /**
