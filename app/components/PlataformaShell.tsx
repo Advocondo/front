@@ -1,9 +1,10 @@
 "use client";
 
-import { IconButton, SidebarNav, TopBar } from "edson-alexandre-design-system";
+import { Icon, IconButton, SidebarNav, TopBar } from "edson-alexandre-design-system";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
+import { itensDaBarraInferior, TELAS } from "@/app/components/navegacao";
 import { SinoDeNotificacoes } from "@/app/components/SinoDeNotificacoes";
 import { logOut } from "@/app/lib/auth";
 import { useSession } from "@/app/lib/session";
@@ -29,7 +30,7 @@ const NAV_ADMIN = [
   { id: "institucional", label: "Conteúdo institucional", icon: "panels-top-left" },
 ];
 
-const ROTAS: Record<string, string> = { painel: "/painel", metas: "/metas", usuarios: "/usuarios", institucional: "/institucional", auditoria: "/auditoria", acordos: "/acordos", acompanhamento: "/acompanhamento", condominios: "/condominios", devedores: "/devedores" };
+const ROTAS: Record<string, string> = Object.fromEntries(Object.values(TELAS).map((t) => [t.id, t.href]));
 
 type Props = {
   activeId: string;
@@ -46,8 +47,9 @@ export function PlataformaShell({ activeId, title, subtitle, actions, naoLidas, 
   const router = useRouter();
   const session = useSession();
   return (
-    <div className="flex min-h-screen">
-      <div className="sticky top-0 h-screen">
+    <div className="plataforma flex min-h-screen">
+      {/* No celular, a barra lateral dá lugar à navegação inferior (protótipos mobile). */}
+      <div className="sticky top-0 hidden h-screen md:block">
         <SidebarNav
           items={session?.user.role === "admin" ? [...NAV_ADMIN_TOPO, ...NAV, ...NAV_ADMIN] : NAV}
           activeId={activeId}
@@ -75,8 +77,26 @@ export function PlataformaShell({ activeId, title, subtitle, actions, naoLidas, 
             </span>
           }
         />
-        <main className="flex-1 p-6">{children}</main>
+        <main className="min-w-0 flex-1 p-4 pb-24 md:p-6">{children}</main>
       </div>
+      <NavegacaoInferior activeId={activeId} />
     </div>
+  );
+}
+
+/** Barra fixa no rodapé, só abaixo de 768px. Uma tela fora da barra marca o "Mais". */
+function NavegacaoInferior({ activeId }: { activeId: string }) {
+  const role = useSession()?.user.role;
+  const itens = itensDaBarraInferior(role);
+  const ativo = itens.some((i) => i.id === activeId) ? activeId : "mais";
+  return (
+    <nav aria-label="Navegação inferior" className="navegacao-inferior fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 md:hidden">
+      {itens.map((item) => (
+        <Link key={item.id} href={item.href} aria-current={item.id === ativo ? "page" : undefined} className="navegacao-inferior__item">
+          <Icon name={item.icon} size={20} />
+          <span>{item.label}</span>
+        </Link>
+      ))}
+    </nav>
   );
 }

@@ -10,8 +10,9 @@ function ambiente(): string {
 const nextConfig: NextConfig = {
   // Standalone output is for the Docker image; Vercel uses its own build output.
   output: process.env.VERCEL ? undefined : "standalone",
-  // No canto padrão, o indicador cobre o nome no rodapé do menu, que leva ao perfil.
-  devIndicators: { position: "bottom-right" },
+  // Embaixo, o indicador cobre o nome no rodapé do menu (desktop) ou um item da navegação inferior
+  // (celular). No alto à esquerda, cobre só texto: o nome do sistema ou o título da tela.
+  devIndicators: { position: "top-left" },
   env: {
     NEXT_PUBLIC_AMBIENTE: ambiente(),
     NEXT_PUBLIC_VERSAO: process.env.VERCEL_GIT_COMMIT_SHA ?? "",

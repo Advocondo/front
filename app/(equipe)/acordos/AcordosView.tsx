@@ -168,7 +168,7 @@ export function AcordosView() {
       )}
 
       {aviso && (
-        <ToastStack>
+        <ToastStack style={{ bottom: "var(--aviso-bottom, var(--space-6))" }}>
           <Toast tone={aviso.tom} title={aviso.texto} onClose={() => setAviso(null)} />
         </ToastStack>
       )}

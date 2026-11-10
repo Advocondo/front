@@ -1,0 +1,110 @@
+import { By, type WebDriver } from "selenium-webdriver";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { hojeEmBrasilia } from "../app/lib/dates";
+import { CELULAR, createDriver, waitForElement, waitForPath } from "./support/driver";
+import { env } from "./support/env";
+import { openLogin, submitLogin } from "./support/login";
+import { createAgreement, createCondominium, createDebtor, createUser, payFirstInstallment, type TestUser } from "./support/seed";
+
+// #83: https://github.com/Advocondo/front/issues/83 (critérios propostos na issue)
+type Medida = { largura: number; excesso: number; tabelasCortadas: number };
+
+/**
+ * `excesso`: quanto a página passa da largura da tela (zero é sem rolagem horizontal).
+ * `tabelasCortadas`: tabelas mais largas que o quadro e sem rolagem própria, com colunas fora de alcance.
+ */
+function medir(driver: WebDriver): Promise<Medida> {
+  return driver.executeScript<Medida>(`
+    const largura = document.documentElement.clientWidth;
+    const quadros = [...document.querySelectorAll("main div")].filter((d) => d.querySelector(":scope > table"));
+    return {
+      largura,
+      excesso: document.documentElement.scrollWidth - largura,
+      tabelasCortadas: quadros.filter((q) => q.scrollWidth > q.clientWidth + 1 && getComputedStyle(q).overflowX !== "auto").length,
+    };`);
+}
+
+async function abrirPelaNavegacao(driver: WebDriver, rotulo: string, caminho: string): Promise<void> {
+  await (await waitForElement(driver, By.xpath(`//nav[@aria-label="Navegação inferior"]//a[normalize-space()="${rotulo}"]`))).click();
+  await waitForPath(driver, caminho);
+}
+
+async function abrirPeloMais(driver: WebDriver, rotulo: string, caminho: string): Promise<void> {
+  await abrirPelaNavegacao(driver, "Mais", "/mais");
+  await (await waitForElement(driver, By.xpath(`//ul[@aria-label="Outras telas"]//a[.//span[normalize-space()="${rotulo}"]]`))).click();
+  await waitForPath(driver, caminho);
+}
+
+describe("Telas do escritório no celular", () => {
+  let driver: WebDriver;
+  let operador: TestUser;
+
+  async function entrar(email: string, senha: string, inicio: string): Promise<void> {
+    await openLogin(driver);
+    await submitLogin(driver, email, senha);
+    await waitForPath(driver, inicio);
+  }
+
+  async function conferirTela(caminho: string): Promise<void> {
+    // A tela já carregou quando a barra inferior aparece e o "Carregando" some.
+    await waitForElement(driver, By.css('nav[aria-label="Navegação inferior"]'));
+    await driver.wait(async () => (await driver.findElements(By.xpath('//*[@role="status" and starts-with(normalize-space(), "Carregando")]'))).length === 0, 20_000);
+    expect({ caminho, ...(await medir(driver)) }).toEqual({ caminho, largura: CELULAR.width, excesso: 0, tabelasCortadas: 0 });
+  }
+
+  beforeAll(async () => {
+    driver = await createDriver({ celular: true });
+    const carimbo = Date.now();
+    operador = await createUser("operator", { name: `E2E Celular ${carimbo}` });
+    // Dados para as tabelas terem linhas, com nomes longos como os reais.
+    const condominio = await createCondominium(`E2E Condomínio Residencial Celular ${carimbo}`);
+    const devedor = await createDebtor(condominio.id, `E2E Devedora Com Nome Comprido ${carimbo}`, "Bloco B 1203");
+    const acordo = await createAgreement(condominio.id, devedor.id);
+    await payFirstInstallment(acordo.id, hojeEmBrasilia());
+  });
+
+  afterAll(async () => {
+    await driver?.quit();
+  });
+
+  it("CA01: o Administrador alcança cada tela pela barra inferior ou pelo Mais, sem rolagem horizontal", async () => {
+    await entrar(env.adminEmail, env.adminPassword, "/painel");
+    // A barra lateral do desktop não aparece no celular.
+    expect(await (await waitForElement(driver, By.css('button[aria-label="Sair"]'))).isDisplayed()).toBe(false);
+    await conferirTela("/painel");
+
+    for (const [rotulo, caminho] of [["Acordos", "/acordos"], ["Mês", "/acompanhamento"], ["Condomínios", "/condominios"], ["Painel", "/painel"]]) {
+      await abrirPelaNavegacao(driver, rotulo, caminho);
+      await conferirTela(caminho);
+    }
+    for (const [rotulo, caminho] of [["Devedores", "/devedores"], ["Metas e comissões", "/metas"], ["Notificações", "/notificacoes"], ["Gestão de usuários", "/usuarios"], ["Trilha de auditoria", "/auditoria"], ["Conteúdo institucional", "/institucional"], ["Meu perfil", "/perfil"]]) {
+      await abrirPeloMais(driver, rotulo, caminho);
+      await conferirTela(caminho);
+    }
+  });
+
+  it("CA02: o Mais do Operador não tem os itens do Administrador, e sai da conta", async () => {
+    await entrar(operador.email, operador.password, "/condominios");
+    await abrirPelaNavegacao(driver, "Mais", "/mais");
+    await conferirTela("/mais");
+    const itens = await driver.findElements(By.css('ul[aria-label="Outras telas"] a'));
+    const textos = await Promise.all(itens.map((i) => i.getText()));
+    expect(textos.some((t) => t.includes("Gestão de usuários") || t.includes("Trilha de auditoria"))).toBe(false);
+
+    await (await waitForElement(driver, By.xpath('//button[.//span[normalize-space()="Sair"]]'))).click();
+    await waitForPath(driver, "/login");
+  });
+
+  it("CA03: no desktop, a barra lateral continua e a barra inferior não aparece", async () => {
+    const desktop = await createDriver();
+    try {
+      await openLogin(desktop);
+      await submitLogin(desktop, operador.email, operador.password);
+      await waitForPath(desktop, "/condominios");
+      expect(await (await waitForElement(desktop, By.css('button[aria-label="Sair"]'))).isDisplayed()).toBe(true);
+      expect(await (await waitForElement(desktop, By.css('nav[aria-label="Navegação inferior"]'))).isDisplayed()).toBe(false);
+    } finally {
+      await desktop.quit();
+    }
+  });
+});
