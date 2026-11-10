@@ -1,6 +1,6 @@
 "use client";
 
-import { Alert, Badge, Button, DataTable, EmptyState, MetricCard, Select, Tabs, Tag, Toast, ToastStack } from "edson-alexandre-design-system";
+import { Alert, Badge, Button, DataTable, EmptyState, IconButton, MetricCard, Select, Tabs, Tag, Toast, ToastStack } from "edson-alexandre-design-system";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { PlataformaShell } from "@/app/components/PlataformaShell";
@@ -9,6 +9,7 @@ import { ApiError } from "@/app/lib/api";
 import { salvarArquivo } from "@/app/lib/arquivos";
 import { centsFromApi, formatBRL } from "@/app/lib/money";
 import { useSession } from "@/app/lib/session";
+import { useCelular } from "@/app/lib/useCelular";
 import { listAdvogados } from "@/app/(equipe)/acordos/api";
 import type { Advogado } from "@/app/(equipe)/acordos/types";
 import { listCondominios } from "@/app/(equipe)/condominios/api";
@@ -19,6 +20,7 @@ import { BaixaDialog, textoDaBaixa } from "./BaixaDialog";
 import { NotaFiscalDialog } from "./NotaFiscalDialog";
 import { PagamentosDialog } from "./PagamentosDialog";
 import { PendenciasDeNotaDialog } from "./PendenciasDeNotaDialog";
+import { CartoesDoMes } from "./CartoesDoMes";
 import { SituacaoParcela, temPagamentoParcial } from "./situacao";
 
 type Aba = "todas" | "open" | "overdue" | "paid";
@@ -123,20 +125,50 @@ export function AcompanhamentoView() {
     setRecarregar((n) => n + 1);
   };
 
+  const celular = useCelular();
+  const vazio = <EmptyState icon="calendar-check" title="Nenhuma fatura neste mês" description="Revise o mês, a aba ou os filtros." />;
+
+  const situacao = (p: ParcelaDoMes) => (
+    <span className="inline-flex flex-wrap items-center gap-2">
+      <SituacaoParcela parcela={p} />
+      {p.payment_date && <span className="text-sm">{`pago em ${formatDate(p.payment_date)}`}</span>}
+      {temPagamentoParcial(p) && <span className="text-sm">{`saldo ${formatBRL(p.remaining_amount)}`}</span>}
+      {p.invoice_number && <span className="text-sm">{`NF ${p.invoice_number}`}</span>}
+      {p.status === "paid" && !p.invoice_number && <Badge tone="warn">Sem nota fiscal</Badge>}
+    </span>
+  );
+
+  const acoes = (p: ParcelaDoMes) => (
+    <span className="inline-flex flex-wrap items-center justify-end gap-1">
+      {(p.status === "paid" || temPagamentoParcial(p)) && <Button size="sm" variant="ghost" aria-label={`Pagamentos da parcela ${p.number} de ${p.debtor.name}`} onClick={() => setPagamentos(p)}>Pagamentos</Button>}
+      {p.status === "paid" && (
+        <Button size="sm" variant="ghost" aria-label={`${p.invoice_number ? "Alterar" : "Registrar"} a nota da parcela ${p.number} de ${p.debtor.name}`} onClick={() => setNota(p)}>
+          {p.invoice_number ? "Alterar nota" : "Registrar nota"}
+        </Button>
+      )}
+      {p.status !== "paid" && <Button size="sm" variant="secondary" icon="banknote" aria-label={`Dar baixa na parcela ${p.number} de ${p.debtor.name}`} onClick={() => setBaixa(p)}>Dar baixa</Button>}
+    </span>
+  );
+
   return (
     <PlataformaShell activeId="acompanhamento" title="Faturas do mês" subtitle={`Competência ${String(mes).padStart(2, "0")}/${ano}`}
       // A rota é só do Administrador (US35).
       actions={session?.user.role === "admin" && (
-        <Button size="sm" variant="secondary" icon="download" loading={exportando} onClick={() => void exportar()}>
-          Exportar planilha
-        </Button>
+        // No celular, só o ícone, como no protótipo mobile: o texto empurrava o título para fora.
+        celular ? (
+          <IconButton icon="download" label="Exportar planilha" disabled={exportando} onClick={() => void exportar()} />
+        ) : (
+          <Button size="sm" variant="secondary" icon="download" loading={exportando} onClick={() => void exportar()}>
+            Exportar planilha
+          </Button>
+        )
       )}
     >
       {/* minmax(0, 1fr): no celular, as abas rolam na própria faixa em vez de alargar a página. */}
       <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
         <SeletorDeMes ano={ano} mes={mes} onChange={setPeriodo} />
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
           <MetricCard label="Previsto" value={formatBRL(totais.previsto)} />
           <MetricCard label="Recebido" value={formatBRL(totais.recebido)} />
           <MetricCard label="Em aberto" value={formatBRL(totais.emAberto)} />
@@ -159,11 +191,14 @@ export function AcompanhamentoView() {
         />
 
         <div className="flex flex-wrap items-center gap-3">
-          <div style={{ width: 260 }}>
+          {/* No celular, os dois filtros dividem a linha, como no protótipo mobile. */}
+          <div className="grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto">
+          <div className="min-w-0 sm:w-[260px]">
             <Select id="filtro-condominio" aria-label="Filtrar por condomínio" placeholder="Todos os condomínios" options={condominios.map((c) => ({ value: c.id, label: c.nome }))} value={condominioId} onChange={(e) => setCondominioId(e.target.value)} />
           </div>
-          <div style={{ width: 260 }}>
+          <div className="min-w-0 sm:w-[260px]">
             <Select id="filtro-responsavel" aria-label="Filtrar por responsável" placeholder="Todos os responsáveis" options={advogados.map((a) => ({ value: a.id, label: a.name }))} value={responsavelId} onChange={(e) => setResponsavelId(e.target.value)} />
+          </div>
           </div>
           {aba === "paid" && (
             <button type="button" aria-pressed={soSemNota} aria-label={`Pagas sem nota fiscal · ${pagasSemNota.length}`} onClick={() => setSoSemNota((atual) => !atual)}>
@@ -191,46 +226,26 @@ export function AcompanhamentoView() {
         {visiveis === undefined || visiveis === null ? (
           !erro && <p role="status">Carregando faturas…</p>
         ) : (
-          <DataTable
-            rows={visiveis}
-            empty={<EmptyState icon="calendar-check" title="Nenhuma fatura neste mês" description="Revise o mês, a aba ou os filtros." />}
-            columns={[
-              { key: "devedor", label: "Devedor", strong: true, render: (p: ParcelaDoMes) => <Link href={`/acordos/${p.agreement_id}`}>{p.debtor.name}</Link> },
-              { key: "condominio", label: "Condomínio", render: (p: ParcelaDoMes) => `${p.condominium.name} · ${p.debtor.unit}` },
-              { key: "parcela", label: "Parcela", mono: true, align: "right", render: (p: ParcelaDoMes) => <Link href={`/faturas/${p.id}`} aria-label={`Ver a parcela ${p.number} de ${p.debtor.name}`}>{p.number}</Link> },
-              { key: "vencimento", label: "Vencimento", mono: true, render: (p: ParcelaDoMes) => formatDate(p.due_date) },
-              { key: "valor", label: "Valor", mono: true, align: "right", strong: true, render: (p: ParcelaDoMes) => formatBRL(p.amount) },
-              {
-                key: "situacao",
-                label: "Situação",
-                render: (p: ParcelaDoMes) => (
-                  <span className="inline-flex flex-wrap items-center gap-2">
-                    <SituacaoParcela parcela={p} />
-                    {p.payment_date && <span className="text-sm">{`pago em ${formatDate(p.payment_date)}`}</span>}
-                    {temPagamentoParcial(p) && <span className="text-sm">{`saldo ${formatBRL(p.remaining_amount)}`}</span>}
-                    {p.invoice_number && <span className="text-sm">{`NF ${p.invoice_number}`}</span>}
-                    {p.status === "paid" && !p.invoice_number && <Badge tone="warn">Sem nota fiscal</Badge>}
-                  </span>
-                ),
-              },
-              {
-                key: "acoes",
-                label: "",
-                align: "right",
-                render: (p: ParcelaDoMes) => (
-                  <span className="inline-flex items-center justify-end gap-1">
-                    {(p.status === "paid" || temPagamentoParcial(p)) && <Button size="sm" variant="ghost" aria-label={`Pagamentos da parcela ${p.number} de ${p.debtor.name}`} onClick={() => setPagamentos(p)}>Pagamentos</Button>}
-                    {p.status === "paid" && (
-                      <Button size="sm" variant="ghost" aria-label={`${p.invoice_number ? "Alterar" : "Registrar"} a nota da parcela ${p.number} de ${p.debtor.name}`} onClick={() => setNota(p)}>
-                        {p.invoice_number ? "Alterar nota" : "Registrar nota"}
-                      </Button>
-                    )}
-                    {p.status !== "paid" && <Button size="sm" variant="secondary" icon="banknote" aria-label={`Dar baixa na parcela ${p.number} de ${p.debtor.name}`} onClick={() => setBaixa(p)}>Dar baixa</Button>}
-                  </span>
-                ),
-              },
-            ]}
-          />
+          <>
+            {/* No celular, cartões como no protótipo mobile; no desktop, a tabela. */}
+            {celular ? (
+              <CartoesDoMes parcelas={visiveis} vazio={vazio} situacao={situacao} acoes={acoes} />
+            ) : (
+              <DataTable
+                rows={visiveis}
+                empty={vazio}
+                columns={[
+                  { key: "devedor", label: "Devedor", strong: true, render: (p: ParcelaDoMes) => <Link href={`/acordos/${p.agreement_id}`}>{p.debtor.name}</Link> },
+                  { key: "condominio", label: "Condomínio", render: (p: ParcelaDoMes) => `${p.condominium.name} · ${p.debtor.unit}` },
+                  { key: "parcela", label: "Parcela", mono: true, align: "right", render: (p: ParcelaDoMes) => <Link href={`/faturas/${p.id}`} aria-label={`Ver a parcela ${p.number} de ${p.debtor.name}`}>{p.number}</Link> },
+                  { key: "vencimento", label: "Vencimento", mono: true, render: (p: ParcelaDoMes) => formatDate(p.due_date) },
+                  { key: "valor", label: "Valor", mono: true, align: "right", strong: true, render: (p: ParcelaDoMes) => formatBRL(p.amount) },
+                  { key: "situacao", label: "Situação", render: situacao },
+                  { key: "acoes", label: "", align: "right", render: acoes },
+                ]}
+              />
+            )}
+          </>
         )}
       </div>
 

@@ -7,9 +7,11 @@ import { PlataformaShell } from "@/app/components/PlataformaShell";
 import { ApiError } from "@/app/lib/api";
 import { formatBRL } from "@/app/lib/money";
 import { useSession } from "@/app/lib/session";
+import { useCelular } from "@/app/lib/useCelular";
 import { listCondominios } from "@/app/(equipe)/condominios/api";
 import type { Condominio } from "@/app/(equipe)/condominios/types";
 import { AcordoDialog } from "./AcordoDialog";
+import { CartoesDeAcordo } from "./CartoesDeAcordo";
 import { listAcordos, listAdvogados } from "./api";
 import type { Acordo, Advogado } from "./types";
 
@@ -27,6 +29,7 @@ export function StatusAcordo({ status }: { status: Acordo["status"] }) {
 export function AcordosView() {
   const router = useRouter();
   const session = useSession();
+  const celular = useCelular();
   const [busca, setBusca] = useState("");
   const [status, setStatus] = useState("active");
   const [responsavelId, setResponsavelId] = useState("");
@@ -92,7 +95,7 @@ export function AcordosView() {
     <PlataformaShell activeId="acordos" title="Acordos" subtitle="Acordos extrajudiciais dos condomínios assessorados">
       <div className="grid gap-5">
         <div className="flex flex-wrap items-center gap-3">
-          <div style={{ width: 360 }}>
+          <div className="w-full sm:w-[360px]">
             <Input icon="search" placeholder="Buscar por devedor, condomínio ou responsável" aria-label="Buscar por devedor, condomínio ou responsável" value={busca} onChange={(e) => setBusca(e.target.value)} />
           </div>
           {FILTROS.map((filtro) => (
@@ -100,11 +103,14 @@ export function AcordosView() {
               <Tag selected={status === filtro.status}>{filtro.label}</Tag>
             </button>
           ))}
-          <div style={{ width: 220 }}>
+          {/* No celular, os dois filtros dividem a linha, como no protótipo mobile. */}
+          <div className="grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto">
+          <div className="min-w-0 sm:w-[220px]">
             <Select id="filtro-condominio" aria-label="Filtrar por condomínio" placeholder="Todos os condomínios" options={(condominios ?? []).map((c) => ({ value: c.id, label: c.nome }))} value={condominioId} onChange={(e) => setCondominioId(e.target.value)} />
           </div>
-          <div style={{ width: 220 }}>
+          <div className="min-w-0 sm:w-[220px]">
             <Select id="filtro-responsavel" aria-label="Filtrar por responsável" placeholder="Todos os responsáveis" options={advogados.map((a) => ({ value: a.id, label: a.name }))} value={responsavelId} onChange={(e) => setResponsavelId(e.target.value)} />
+          </div>
           </div>
           {meuId && (
             <button type="button" aria-pressed={responsavelId === meuId} onClick={() => setResponsavelId(responsavelId === meuId ? "" : meuId)}>
@@ -112,7 +118,7 @@ export function AcordosView() {
             </button>
           )}
           <div className="flex-1" />
-          <Button icon="plus" disabled={!condominios || semCondominio} onClick={() => setDialogo(true)}>
+          <Button icon="plus" block={celular} disabled={!condominios || semCondominio} onClick={() => setDialogo(true)}>
             Novo acordo
           </Button>
         </div>
@@ -127,29 +133,33 @@ export function AcordosView() {
           <p role="status">Carregando acordos…</p>
         ) : (
           acordos && (
-            <DataTable
-              rows={acordos}
-              empty={vazio}
-              columns={[
-                { key: "devedor", label: "Devedor", strong: true, render: (a: Acordo) => a.debtor.name },
-                { key: "condominio", label: "Condomínio", render: (a: Acordo) => `${a.condominium.name} · ${a.debtor.unit}` },
-                { key: "total", label: "Valor do acordo", mono: true, align: "right", render: (a: Acordo) => formatBRL(a.total_amount) },
-                { key: "honorarios", label: "Honorários", mono: true, align: "right", render: (a: Acordo) => formatBRL(a.fee_amount) },
-                { key: "parcelas", label: "Parcelas", mono: true, align: "right", render: (a: Acordo) => `${a.installment_count}x` },
-                { key: "responsavel", label: "Responsável", render: (a: Acordo) => a.responsible_lawyer?.name ?? "—" },
-                { key: "status", label: "Status", render: (a: Acordo) => <StatusAcordo status={a.status} /> },
-                {
-                  key: "acoes",
-                  label: "",
-                  align: "right",
-                  render: (a: Acordo) => (
-                    <Button size="sm" variant="ghost" iconEnd="chevron-right" aria-label={`Ver o acordo de ${a.debtor.name}`} onClick={() => router.push(`/acordos/${a.id}`)}>
-                      Ver
-                    </Button>
-                  ),
-                },
-              ]}
-            />
+            celular ? (
+              <CartoesDeAcordo acordos={acordos} vazio={vazio} />
+            ) : (
+              <DataTable
+                rows={acordos}
+                empty={vazio}
+                columns={[
+                  { key: "devedor", label: "Devedor", strong: true, render: (a: Acordo) => a.debtor.name },
+                  { key: "condominio", label: "Condomínio", render: (a: Acordo) => `${a.condominium.name} · ${a.debtor.unit}` },
+                  { key: "total", label: "Valor do acordo", mono: true, align: "right", render: (a: Acordo) => formatBRL(a.total_amount) },
+                  { key: "honorarios", label: "Honorários", mono: true, align: "right", render: (a: Acordo) => formatBRL(a.fee_amount) },
+                  { key: "parcelas", label: "Parcelas", mono: true, align: "right", render: (a: Acordo) => `${a.installment_count}x` },
+                  { key: "responsavel", label: "Responsável", render: (a: Acordo) => a.responsible_lawyer?.name ?? "—" },
+                  { key: "status", label: "Status", render: (a: Acordo) => <StatusAcordo status={a.status} /> },
+                  {
+                    key: "acoes",
+                    label: "",
+                    align: "right",
+                    render: (a: Acordo) => (
+                      <Button size="sm" variant="ghost" iconEnd="chevron-right" aria-label={`Ver o acordo de ${a.debtor.name}`} onClick={() => router.push(`/acordos/${a.id}`)}>
+                        Ver
+                      </Button>
+                    ),
+                  },
+                ]}
+              />
+            )
           )
         )}
       </div>
