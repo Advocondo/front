@@ -33,7 +33,7 @@ function parseError(status: number, body: unknown): ApiError {
         fieldErrors[field] = msg.startsWith("Value error, ") ? msg.replace("Value error, ", "") : "Valor inválido.";
       }
     }
-    return new ApiError(status, "Verifique os campos destacados.", fieldErrors);
+    return new ApiError(status, "Verifique os campos destacados.", fieldErrors, body);
   }
   return new ApiError(status, "Não foi possível concluir a operação. Tente novamente.");
 }

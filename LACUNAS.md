@@ -53,7 +53,6 @@ Tudo o que falta, está pendente ou não foi verificado no sistema. Cada PR que 
 | --- | --- | --- |
 | Relatório de condomínio sem acordos | O botão fica no card do condomínio, e o card só existe quando há acordo. Sem acordo, não há o que baixar pela tela, embora a rota responda | Sem issue |
 | Painel da Equipe Operacional | Depois do login, a pessoa cai em Condomínios. O protótipo mobile tem uma visão própria, com totais do mês, meta, vencimentos da semana e últimas baixas | Sem issue |
-| Edição da landing pelo Administrador | Textos, avaliações e fotos só mudam pela API | [#4](https://github.com/Advocondo/front/issues/4) |
 | Anexar um link como documento | O back aceita um link no lugar de um arquivo, e a tela mostra os que existirem, mas só envia arquivos | Sem issue |
 | PDFs no Painel do Cliente | O Cliente abre o PDF pelo link, mas o painel não lista os PDFs do acordo. O back já permite | Sem issue |
 | Voltar ao link do PDF depois do login | Sem sessão, o link leva ao login, e depois do login a pessoa cai na tela inicial, não no PDF | Sem issue |
