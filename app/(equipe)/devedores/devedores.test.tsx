@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CondominioApi } from "@/app/(equipe)/condominios/types";
+import { simularCelular } from "@/app/lib/celular.test-utils";
 import { DevedoresView } from "./DevedoresView";
 import type { Devedor } from "./types";
 import { validate } from "./validation";
@@ -272,5 +273,24 @@ describe("Edição de devedor", () => {
     const patch = fetchMock.mock.calls.find(([, init]) => init?.method === "PATCH");
     expect(patch?.[0]).toMatch(/\/debtors\/d-1$/);
     expect(JSON.parse(patch?.[1]?.body as string)).toEqual({ name: "Marcelo Lima", unit: "Bloco C 101", phone: "61912345678", email: null });
+  });
+});
+
+describe("#83: devedores no celular", () => {
+  it("mostra um cartão por devedor, com condomínio, unidade, contato e Editar", async () => {
+    simularCelular();
+    mockApi({ devedores: [marcelo, { ...marcelo, id: "d-2", name: "Sem Contato", phone: null }] });
+    const user = userEvent.setup();
+    render(<DevedoresView />);
+    const lista = await screen.findByRole("list", { name: "Devedores" });
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+
+    const cartao = within(lista).getByText("Marcelo Lima").closest("li") as HTMLElement;
+    await waitFor(() => expect(cartao).toHaveTextContent("Res. Villa Verde · Bloco B 302"));
+    expect(cartao).toHaveTextContent("(61) 91234-5678");
+    expect(within(lista).getByText("Sem Contato").closest("li")).toHaveTextContent("Sem contato");
+
+    await user.click(within(cartao).getByRole("button", { name: "Editar Marcelo Lima" }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
 });

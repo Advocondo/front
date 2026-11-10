@@ -1,6 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { simularCelular } from "@/app/lib/celular.test-utils";
 import { CondominiosView } from "./CondominiosView";
 import type { CondominioApi } from "./types";
 
@@ -79,5 +80,33 @@ describe("Listagem de condomínios", () => {
     await userEvent.click(screen.getByRole("button", { name: "Salvar condomínio" }));
     expect(await screen.findByText(/cadastrado|criado com sucesso/)).toBeInTheDocument();
     expect(await screen.findByText("Águas Claras/DF")).toBeInTheDocument();
+  });
+});
+
+describe("#83: condomínios no celular", () => {
+  it("mostra um cartão por condomínio, com localidade, síndico, renovação e Editar", async () => {
+    simularCelular();
+    mockList([villa, parque]);
+    const user = userEvent.setup();
+    render(<CondominiosView />);
+    const lista = await screen.findByRole("list", { name: "Condomínios" });
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+
+    const cartao = within(lista).getByText("Res. Villa Verde").closest("li") as HTMLElement;
+    expect(cartao).toHaveTextContent("Águas Claras/DF · Marcos Tavares");
+    expect(cartao).toHaveTextContent("Renovação 01/01/2027");
+    expect(within(lista).getByText("Cond. Parque das Águas").closest("li")).toHaveTextContent(/^Cond\. Parque das ÁguasSem data de renovação/);
+
+    await user.click(within(cartao).getByRole("button", { name: "Editar Res. Villa Verde" }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("perto da renovação, o cartão avisa e oferece registrar", async () => {
+    simularCelular();
+    mockList([{ ...villa, near_renewal: true, contract_renewal_date: "2999-01-01" }]);
+    render(<CondominiosView />);
+    const cartao = (await screen.findByText("Res. Villa Verde")).closest("li") as HTMLElement;
+    expect(within(cartao).getByText(/^Renova em/)).toBeInTheDocument();
+    expect(within(cartao).getByRole("button", { name: "Registrar renovação de Res. Villa Verde" })).toBeInTheDocument();
   });
 });

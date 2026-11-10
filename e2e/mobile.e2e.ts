@@ -49,6 +49,7 @@ describe("Telas do escritório no celular", () => {
   let driver: WebDriver;
   let operador: TestUser;
   let devedora: string;
+  let condominioNome: string;
 
   async function entrar(email: string, senha: string, inicio: string): Promise<void> {
     await openLogin(driver);
@@ -68,7 +69,8 @@ describe("Telas do escritório no celular", () => {
     const carimbo = Date.now();
     operador = await createUser("operator", { name: `E2E Celular ${carimbo}` });
     // Dados para as tabelas terem linhas, com nomes longos como os reais.
-    const condominio = await createCondominium(`E2E Condomínio Residencial Celular ${carimbo}`);
+    condominioNome = `E2E Condomínio Residencial Celular ${carimbo}`;
+    const condominio = await createCondominium(condominioNome);
     devedora = `E2E Devedora Com Nome Comprido ${carimbo}`;
     const devedor = await createDebtor(condominio.id, devedora, "Bloco B 1203");
     // A 1ª parcela vence neste mês, para Faturas do mês ter o cartão dela.
@@ -121,6 +123,22 @@ describe("Telas do escritório no celular", () => {
     const dialogo = await waitForElement(driver, By.css('[role="dialog"]'));
     const largura = (await dialogo.getRect()).width;
     expect(largura).toBeLessThanOrEqual(CELULAR.width);
+    await (await waitForButton(driver, "Cancelar")).click();
+  });
+
+  it("Devedores e Condomínios mostram cartões, e o Editar abre no celular", async () => {
+    await entrar(operador.email, operador.password, "/condominios");
+    await (await waitForElement(driver, By.css('input[aria-label="Buscar condomínio ou síndico"]'))).sendKeys(condominioNome);
+    await clicarNoMeio(driver, By.css(`ul[aria-label="Condomínios"] button[aria-label="Editar ${condominioNome}"]`));
+    expect((await (await waitForElement(driver, By.css('[role="dialog"]'))).getRect()).width).toBeLessThanOrEqual(CELULAR.width);
+    await (await waitForButton(driver, "Cancelar")).click();
+    expect(await driver.findElements(By.css("table"))).toHaveLength(0);
+
+    await abrirPelaNavegacao(driver, "Devedores", "/devedores");
+    await conferirTela("/devedores");
+    await (await waitForElement(driver, By.css('input[aria-label="Buscar por nome ou unidade"]'))).sendKeys(devedora);
+    await clicarNoMeio(driver, By.css(`ul[aria-label="Devedores"] button[aria-label="Editar ${devedora}"]`));
+    expect((await (await waitForElement(driver, By.css('[role="dialog"]'))).getRect()).width).toBeLessThanOrEqual(CELULAR.width);
     await (await waitForButton(driver, "Cancelar")).click();
   });
 

@@ -1,11 +1,12 @@
 "use client";
 
-import { Alert, Button, DataTable, EmptyState, Input, Select, Toast, ToastStack } from "edson-alexandre-design-system";
+import { Alert, Button, Card, DataTable, EmptyState, Input, Select, Toast, ToastStack } from "edson-alexandre-design-system";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { PlataformaShell } from "@/app/components/PlataformaShell";
 import { ApiError } from "@/app/lib/api";
 import { maskTelefone } from "@/app/lib/masks";
+import { useCelular } from "@/app/lib/useCelular";
 import { listCondominios } from "@/app/(equipe)/condominios/api";
 import type { Condominio } from "@/app/(equipe)/condominios/types";
 import { listDevedores } from "./api";
@@ -26,6 +27,7 @@ export function DevedoresView() {
   const [recarregar, setRecarregar] = useState(0);
   const [dialogo, setDialogo] = useState<Dialogo>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  const celular = useCelular();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -73,14 +75,20 @@ export function DevedoresView() {
     <EmptyState icon="users" title="Nenhum devedor cadastrado" description="Cadastre um devedor para reaproveitar os dados dele nos acordos." action={<Button icon="plus" onClick={() => setDialogo({ tipo: "novo" })}>Novo devedor</Button>} />
   );
 
+  const editar = (d: Devedor) => (
+    <Button size="sm" variant="ghost" icon="pencil" aria-label={`Editar ${d.name}`} onClick={() => setDialogo({ tipo: "editar", devedor: d })}>
+      Editar
+    </Button>
+  );
+
   return (
     <PlataformaShell activeId="devedores" title="Devedores" subtitle="Moradores inadimplentes dos condomínios assessorados">
       <div className="grid gap-5">
         <div className="flex flex-wrap items-center gap-3">
-          <div style={{ width: 320 }}>
+          <div className="w-full sm:w-80">
             <Input icon="search" placeholder="Buscar por nome ou unidade" aria-label="Buscar por nome ou unidade" value={busca} onChange={(e) => setBusca(e.target.value)} />
           </div>
-          <div style={{ width: 260 }}>
+          <div className="w-full sm:w-[260px]">
             <Select
               id="filtro-condominio"
               aria-label="Filtrar por condomínio"
@@ -90,13 +98,16 @@ export function DevedoresView() {
               onChange={(e) => setCondominioId(e.target.value)}
             />
           </div>
-          <div className="flex-1" />
-          <Button variant="secondary" icon="upload" disabled={!condominios || semCondominio} onClick={() => setDialogo({ tipo: "importar" })}>
-            Importar planilha
-          </Button>
-          <Button icon="plus" disabled={!condominios || semCondominio} onClick={() => setDialogo({ tipo: "novo" })}>
-            Novo devedor
-          </Button>
+          <div className="hidden flex-1 sm:block" />
+          {/* No celular, os dois botões dividem a linha. */}
+          <div className="grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto">
+            <Button variant="secondary" icon="upload" disabled={!condominios || semCondominio} onClick={() => setDialogo({ tipo: "importar" })}>
+              Importar planilha
+            </Button>
+            <Button icon="plus" disabled={!condominios || semCondominio} onClick={() => setDialogo({ tipo: "novo" })}>
+              Novo devedor
+            </Button>
+          </div>
         </div>
 
         {semCondominio && (
@@ -115,27 +126,22 @@ export function DevedoresView() {
           <p role="status">Carregando devedores…</p>
         ) : (
           devedores && (
-            <DataTable
-              rows={devedores}
-              empty={vazio}
-              columns={[
-                { key: "name", label: "Devedor", strong: true },
-                { key: "unit", label: "Unidade" },
-                { key: "condominio", label: "Condomínio", render: (d: Devedor) => nomeDoCondominio(d.condominium_id) },
-                { key: "phone", label: "Telefone", mono: true, render: (d: Devedor) => (d.phone ? maskTelefone(d.phone) : "—") },
-                { key: "email", label: "E-mail", render: (d: Devedor) => d.email ?? "—" },
-                {
-                  key: "acoes",
-                  label: "",
-                  align: "right",
-                  render: (d: Devedor) => (
-                    <Button size="sm" variant="ghost" icon="pencil" aria-label={`Editar ${d.name}`} onClick={() => setDialogo({ tipo: "editar", devedor: d })}>
-                      Editar
-                    </Button>
-                  ),
-                },
-              ]}
-            />
+            celular ? (
+              <CartoesDeDevedor devedores={devedores} vazio={vazio} condominio={nomeDoCondominio} editar={editar} />
+            ) : (
+              <DataTable
+                rows={devedores}
+                empty={vazio}
+                columns={[
+                  { key: "name", label: "Devedor", strong: true },
+                  { key: "unit", label: "Unidade" },
+                  { key: "condominio", label: "Condomínio", render: (d: Devedor) => nomeDoCondominio(d.condominium_id) },
+                  { key: "phone", label: "Telefone", mono: true, render: (d: Devedor) => (d.phone ? maskTelefone(d.phone) : "—") },
+                  { key: "email", label: "E-mail", render: (d: Devedor) => d.email ?? "—" },
+                  { key: "acoes", label: "", align: "right", render: editar },
+                ]}
+              />
+            )
           )
         )}
       </div>
@@ -178,5 +184,30 @@ export function DevedoresView() {
         </ToastStack>
       )}
     </PlataformaShell>
+  );
+}
+
+type CartoesProps = { devedores: Devedor[]; vazio: ReactNode; condominio: (id: string) => string; editar: (d: Devedor) => ReactNode };
+
+/** Devedores no celular: um cartão por devedor, com o contato e o Editar. */
+function CartoesDeDevedor({ devedores, vazio, condominio, editar }: CartoesProps) {
+  if (devedores.length === 0) return <>{vazio}</>;
+  return (
+    <ul className="grid gap-3" aria-label="Devedores">
+      {devedores.map((d) => (
+        <li key={d.id}>
+          <Card padding="sm">
+            <div className="flex items-start justify-between gap-3">
+              <span className="grid min-w-0">
+                <span className="font-semibold">{d.name}</span>
+                <span className="text-sm">{`${condominio(d.condominium_id)} · ${d.unit}`}</span>
+                <span className="text-sm break-all">{[d.phone && maskTelefone(d.phone), d.email].filter(Boolean).join(" · ") || "Sem contato"}</span>
+              </span>
+              {editar(d)}
+            </div>
+          </Card>
+        </li>
+      ))}
+    </ul>
   );
 }
