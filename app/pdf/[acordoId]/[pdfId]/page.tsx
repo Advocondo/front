@@ -8,7 +8,10 @@ export const metadata: Metadata = { title: "PDF do acordo · Advocondo" };
 export default async function PdfPage({ params }: { params: Promise<{ acordoId: string; pdfId: string }> }) {
   const { acordoId, pdfId } = await params;
   return (
-    <RequireAuth roles={["admin", "operator", "client"]}>
+    <RequireAuth
+      roles={["admin", "operator", "client"]}
+      returnTo={`/pdf/${encodeURIComponent(acordoId)}/${encodeURIComponent(pdfId)}`}
+    >
       <PdfView acordoId={acordoId} pdfId={pdfId} />
     </RequireAuth>
   );

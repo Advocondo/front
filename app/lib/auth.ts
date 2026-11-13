@@ -13,6 +13,21 @@ export function homeForRole(role: Role): string {
   return role === "client" ? "/painel-cliente" : "/condominios";
 }
 
+/** Só a rota local de PDFs pode substituir a tela inicial como destino após o login. */
+export function destinationAfterLogin(role: Role, next: string | null): string {
+  if (!next?.startsWith("/") || next.startsWith("//")) return homeForRole(role);
+
+  try {
+    const destination = new URL(next, "https://advocondo.invalid");
+    if (destination.origin !== "https://advocondo.invalid" || !destination.pathname.startsWith("/pdf/")) {
+      return homeForRole(role);
+    }
+    return `${destination.pathname}${destination.search}${destination.hash}`;
+  } catch {
+    return homeForRole(role);
+  }
+}
+
 export async function logIn(email: string, password: string, manterConectado: boolean): Promise<void> {
   const resposta = await apiFetch<LoginResponse>("/auth/login", {
     method: "POST",

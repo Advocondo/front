@@ -93,12 +93,15 @@ describe("Documentos e PDF do acordo", () => {
     await waitForText(driver, "PDF não encontrado");
   });
 
-  it("sem sessão, o link leva ao login", async () => {
+  it("sem sessão, o login volta ao PDF solicitado", async () => {
     await (await waitForElement(driver, By.xpath('//a[normalize-space()="Ir para a tela inicial"]'))).click();
     await (await waitForElement(driver, By.xpath('//button[contains(normalize-space(), "Sair")]'))).click();
     await waitForPath(driver, "/login");
     await visit(driver, linkDoPdf);
-    await waitForPath(driver, "/login");
+    await waitForElement(driver, By.id("email"));
+    await driver.wait(async () => new URL(await driver.getCurrentUrl()).searchParams.get("next") === linkDoPdf, 10_000);
+    await submitLogin(driver, dono.email, dono.password);
+    await waitForButton(driver, "Baixar PDF");
   });
 
   it("US21-CA02: os documentos continuam depois do cancelamento", async () => {
