@@ -5,22 +5,24 @@ import { useEffect, type ReactNode } from "react";
 import { homeForRole } from "@/app/lib/auth";
 import { useSession, type Role } from "@/app/lib/session";
 
-type Props = { roles: Role[]; children: ReactNode };
+type Props = { roles: Role[]; children: ReactNode; returnTo?: string };
 
 /**
  * Leva ao login quem não tem sessão, e ao próprio painel quem não tem o perfil exigido.
  * Só organiza a navegação: quem protege os dados é o back, em cada rota.
  */
-export function RequireAuth({ roles, children }: Props) {
+export function RequireAuth({ roles, children, returnTo }: Props) {
   const router = useRouter();
   const session = useSession();
   const role = session?.user.role;
   const permitido = role !== undefined && roles.includes(role);
 
   useEffect(() => {
-    if (session === null) router.replace("/login");
-    else if (role !== undefined && !permitido) router.replace(homeForRole(role));
-  }, [session, role, permitido, router]);
+    if (session === null) {
+      const parametros = returnTo ? new URLSearchParams({ next: returnTo }) : null;
+      router.replace(parametros ? `/login?${parametros}` : "/login");
+    } else if (role !== undefined && !permitido) router.replace(homeForRole(role));
+  }, [session, role, permitido, returnTo, router]);
 
   return permitido ? children : null;
 }

@@ -7,7 +7,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { AuthShell } from "@/app/components/AuthShell";
 import { Field } from "@/app/components/FormField";
 import { ApiError } from "@/app/lib/api";
-import { homeForRole, logIn } from "@/app/lib/auth";
+import { destinationAfterLogin, logIn } from "@/app/lib/auth";
 import { useSession } from "@/app/lib/session";
 import styles from "./login.module.css";
 
@@ -24,10 +24,12 @@ export function LoginView() {
   const [erro, setErro] = useState<ApiError | null>(null);
 
   // Vale para o login recém-feito e para quem abre /login já com sessão.
-  const destino = session ? homeForRole(session.user.role) : null;
   useEffect(() => {
-    if (destino) router.replace(destino);
-  }, [destino, router]);
+    if (session) {
+      const next = new URLSearchParams(window.location.search).get("next");
+      router.replace(destinationAfterLogin(session.user.role, next));
+    }
+  }, [session, router]);
 
   async function entrar(event: FormEvent) {
     event.preventDefault();
@@ -42,7 +44,7 @@ export function LoginView() {
     }
   }
 
-  if (destino) return null;
+  if (session) return null;
 
   // US02-CA02: credenciais recusadas marcam os dois campos, sem indicar qual está errado.
   const recusado = erro?.status === 401;

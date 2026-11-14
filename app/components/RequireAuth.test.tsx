@@ -26,6 +26,17 @@ describe("RequireAuth", () => {
     expect(screen.queryByText("Conteúdo")).not.toBeInTheDocument();
   });
 
+  it("preserva o destino solicitado no parâmetro do login", async () => {
+    render(
+      <RequireAuth roles={["admin", "operator"]} returnTo="/pdf/acordo-1/pdf-1">
+        <p>Conteúdo</p>
+      </RequireAuth>,
+    );
+    await waitFor(() => {
+      expect(replace).toHaveBeenCalledWith("/login?next=%2Fpdf%2Facordo-1%2Fpdf-1");
+    });
+  });
+
   it("com o perfil exigido, mostra o conteúdo", () => {
     entrarComo("operator");
     render(tela);

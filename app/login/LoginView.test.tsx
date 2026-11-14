@@ -30,10 +30,14 @@ async function preencherEEnviar() {
   return user;
 }
 
-beforeEach(() => replace.mockClear());
+beforeEach(() => {
+  replace.mockClear();
+  window.history.replaceState(null, "", "/login");
+});
 afterEach(() => {
   vi.unstubAllGlobals();
   clearSession();
+  window.history.replaceState(null, "", "/login");
 });
 
 describe("Login", () => {
@@ -46,6 +50,21 @@ describe("Login", () => {
     render(<LoginView />);
     await preencherEEnviar();
     await waitFor(() => expect(replace).toHaveBeenCalledWith(destino));
+  });
+
+  it("depois de entrar, volta ao PDF solicitado", async () => {
+    window.history.replaceState(null, "", "/login?next=%2Fpdf%2Facordo-1%2Fpdf-1");
+    loginOk("client");
+    render(<LoginView />);
+    await preencherEEnviar();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/pdf/acordo-1/pdf-1"));
+  });
+
+  it.each(["https://exemplo.com", "//exemplo.com"])("ignora o destino externo %s e mantém a tela inicial", async (next) => {
+    window.history.replaceState(null, "", `/login?next=${encodeURIComponent(next)}`);
+    saveSession({ token: "abc", expiresAt: "2999-01-01T00:00:00Z", user: { id: "1", name: "Ana", email: "a@b.c", role: "client" } }, true);
+    render(<LoginView />);
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/painel-cliente"));
   });
 
   it("envia e-mail, senha e Manter conectado para a API", async () => {
