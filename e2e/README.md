@@ -1,6 +1,8 @@
 # Testes E2E
 
-Testes de ponta a ponta com [Selenium](https://www.selenium.dev/documentation/webdriver/), escritos em TypeScript e executados pelo Vitest. Eles abrem um navegador de verdade e usam o front como um usuário.
+Testes de ponta a ponta com [Selenium](https://www.selenium.dev/documentation/webdriver/), escritos em TypeScript e executados pelo Vitest. Eles abrem um navegador de verdade e usam o front como uma pessoa usaria: entram, cadastram, dão baixa, criam dados de verdade.
+
+A mesma suíte roda em dois lugares, escolhidos por `E2E_TARGET`: no **ambiente local** (o padrão) e na **homologação**. Nunca é apontada para uma produção com dados reais.
 
 **Não rodam no CI.** O passo `npm run test` do CI só coleta `*.test.ts(x)`, e estes arquivos terminam em `.e2e.ts`. Como precisam do front, do back e de um banco no ar, são executados manualmente. O CI ainda passa `eslint` e `tsc` neles, então erros de compilação aparecem no PR.
 
@@ -8,9 +10,19 @@ Testes de ponta a ponta com [Selenium](https://www.selenium.dev/documentation/we
 
 - Node 22 e `npm install` feito.
 - Chrome ou Firefox instalado. O Selenium Manager baixa o driver na primeira execução, então é preciso ter internet.
-- Docker, para o back. Nunca use dados de produção na suíte comum.
+- No ambiente local, Docker, para o back.
 
-## Como rodar
+## Variáveis em arquivo
+
+As variáveis podem ficar em `.env.e2e`, na raiz do front, que fica fora do git. Copie o modelo:
+
+```bash
+cp .env.e2e.example .env.e2e
+```
+
+O arquivo é lido por `npm run test:e2e`. Uma variável definida no terminal vale mais que a do arquivo, e uma linha sem valor é ignorada.
+
+## Como rodar no ambiente local
 
 **1. Suba o back** pelo Docker Compose, com o banco vazio e um `SETUP_TOKEN` de pelo menos 32 caracteres no `.env` do `back`:
 
@@ -51,14 +63,17 @@ Os usuários de teste são criados pelo fluxo real de convite. Sem SMTP, o back 
 
 | Variável | Padrão | O que faz |
 | --- | --- | --- |
-| `E2E_BASE_URL` | `http://localhost:3000` | Endereço do front. Em `npm run test:e2e`, só aceita `localhost`, `127.0.0.1` ou `[::1]`: qualquer outro host interrompe a execução. Em `npm run test:e2e:prod`, é obrigatória |
+| `E2E_TARGET` | `local` | `local` ou `homologacao`. Ver [Homologação](#homologação) |
+| `E2E_BASE_URL` | `http://localhost:3000` | Endereço do front. No ambiente local, só aceita `localhost`, `127.0.0.1` ou `[::1]`: qualquer outro host interrompe a execução. Na homologação, é obrigatória |
 | `E2E_BROWSER` | `chrome` | `chrome` ou `firefox` |
 | `E2E_HEADLESS` | ligado | `false` abre a janela do navegador |
 | `E2E_API_URL` | `http://localhost:8000` | Endereço da API. Mesma regra de `E2E_BASE_URL` |
 | `E2E_DELAY_MS` | `1000`, ou `0` com `CI` definida | Pausa, em milissegundos, antes de cada ação no navegador |
-| `E2E_BACK_DIR` | `../back` | Pasta do repositório `back`, de onde os testes leem os logs |
-| `E2E_SETUP_TOKEN` | vazio | Valor de `SETUP_TOKEN` do back. Necessário só para criar o primeiro Administrador |
-| `E2E_ADMIN_EMAIL`, `E2E_ADMIN_PASSWORD` | valores de teste em `support/env.ts` | Administrador usado nos testes. Em `npm run test:e2e:prod`, são obrigatórios |
+| `E2E_BACK_DIR` | `../back` | Pasta do repositório `back`, de onde os testes leem os logs. Só no ambiente local |
+| `E2E_SETUP_TOKEN` | vazio | Valor de `SETUP_TOKEN` do back. Necessário só para criar o primeiro Administrador, no ambiente local |
+| `E2E_ADMIN_EMAIL`, `E2E_ADMIN_PASSWORD` | valores de teste em `support/env.ts` | Administrador usado nos testes. Na homologação, são obrigatórios |
+| `E2E_OPERADOR_EMAIL`, `E2E_OPERADOR_PASSWORD` | vazio | Conta fixa da Equipe Operacional. Obrigatória na homologação |
+| `E2E_CLIENTE_EMAIL`, `E2E_CLIENTE_PASSWORD`, `E2E_CLIENTE2_EMAIL`, `E2E_CLIENTE2_PASSWORD` | vazio | As duas contas fixas de Cliente. Obrigatórias na homologação |
 
 Com o `.next` recém-apagado, o servidor de desenvolvimento compila cada rota na primeira visita, e um teste pode estourar a espera de 10 segundos. Se a primeira execução falhar por tempo limite, rode de novo antes de investigar.
 
@@ -74,29 +89,28 @@ E2E_DELAY_MS=0 npm run test:e2e                    # sem pausa
 
 Com a variável `CI` definida, o padrão passa a ser 0, mas `E2E_DELAY_MS` continua valendo. Os tempos limite dos testes crescem junto, então uma pausa maior não causa falha por tempo. Um clique feito por script não pausa.
 
-## Produção
+## Homologação
 
-`npm run test:e2e:prod` confere o ambiente real, da sua máquina. Ele roda só `e2e/producao/`, uma suíte **de leitura**:
+Com `E2E_TARGET=homologacao`, o mesmo `npm run test:e2e` roda contra a homologação, simulando uma pessoa: cria condomínios, devedores e acordos, dá baixas, vincula Clientes. Os dados ficam lá, com nomes que começam por `E2E`.
+
+A homologação manda e-mail de verdade e o log da API não está na sua máquina, então ali a suíte não lê e-mail. Isso muda duas coisas:
+
+**Contas fixas.** Sem ler o convite, não há como ativar um usuário novo. Crie uma vez, à mão, pela tela de Usuários: uma conta da Equipe Operacional e duas de Cliente. São dois Clientes porque alguns testes conferem que um Cliente não vê o que é do outro. Os testes entram com essas contas onde, no ambiente local, convidariam um usuário. No começo de cada arquivo, os vínculos dos Clientes com condomínios são apagados, como se fossem recém-convidados. Não use essas contas para outra coisa.
+
+**Testes só do ambiente local.** Os que dependem de e-mail, do Docker do back ou de um usuário novo ficam marcados com `skipIf(emHomologacao)`, e aparecem como pulados:
+
+- arquivos inteiros: `usuarios` (convite), `recuperar-senha`, `responsavel` e `auditoria` (usuários novos), `metas` (totais que acumulariam entre execuções), `notificacoes` e `importar-devedores` (comandos no Docker do back);
+- casos: o formulário de contato em `landing`, a edição de nome, e-mail e senha em `perfil`, o usuário inativado em `login` e `historicos`, e o advogado responsável em `acordos`.
 
 ```bash
-export E2E_BASE_URL=https://endereco-do-front
-export E2E_API_URL=https://endereco-da-api
-export E2E_ADMIN_EMAIL=seu-email-de-administrador
-read -rs E2E_ADMIN_PASSWORD && export E2E_ADMIN_PASSWORD    # não fica no histórico do terminal
-npm run test:e2e:prod
+cp .env.e2e.example .env.e2e
+# no .env.e2e: E2E_TARGET=homologacao, os endereços, o Administrador e as três contas fixas
+npm run test:e2e                                # todos
+npm run test:e2e -- e2e/painel-cliente.e2e.ts   # um arquivo
+npm run test:e2e -- e2e/telas.e2e.ts            # só confere que o ambiente está no ar
 ```
 
-O que ele confere: a API responde, a página inicial e a recuperação de senha abrem, o login recusa um e-mail desconhecido e aceita o Administrador, cada tela interna carrega os dados sem erro, e Sair encerra a sessão. Isso também prova que `NEXT_PUBLIC_API_URL` e o CORS estão certos.
-
-O que ele faz em produção: abre uma sessão com o seu login, encerrada no fim, e tenta um login com um e-mail inexistente. Não grava mais nada nem manda e-mail. Use um Administrador: as outras contas não abrem todas as telas.
-
-**A suíte comum não roda em produção, de propósito.** `npm run test:e2e` aceita só endereços locais, mesmo com `E2E_TARGET` definida, porque:
-
-- ela cria condomínios, devedores, acordos e usuários, e parte disso não tem como apagar, como os documentos;
-- ela manda e-mails de verdade: convites e avisos aos Clientes;
-- ela lê os links de convite com `docker compose logs`, que só existem no ambiente local.
-
-Ao acrescentar um teste em `e2e/producao/`, mantenha a regra: nada que grave dados ou mande e-mail. `support/seed.ts` recusa ser usado nessa suíte.
+`e2e/telas.e2e.ts` é a conferência rápida depois de um deploy: a API responde, o front alcança a API (o que prova que `NEXT_PUBLIC_API_URL` e o CORS estão certos) e cada tela do Administrador carrega.
 
 ## Monitoramento
 
@@ -138,5 +152,6 @@ describe("Minha tela", () => {
 - Use as esperas de `support/driver.ts`, nunca um tempo fixo. Depois de uma busca, use `waitForFilteredRows`: o termo já aparecia na lista completa, então ver o termo não prova que ela filtrou.
 - Datas de hoje vêm de `hojeEmBrasilia()`, como no back. Em UTC, a suíte falha toda noite.
 - Cada arquivo abre o próprio navegador. Os arquivos rodam um de cada vez.
-- Uma tela nova entra também na lista `TELAS` de `e2e/producao/producao.e2e.ts`, se abrir sem parâmetros.
+- Uma tela nova entra também na lista `TELAS` de `e2e/telas.e2e.ts`, se abrir sem parâmetros.
+- O teste roda nos dois ambientes. Para um usuário, use `createUser`, que na homologação devolve uma conta fixa. Só marque com `it.skipIf(emHomologacao)` o que depende de e-mail, do Docker do back ou de um usuário novo, e diga o motivo num comentário.
 - Para testar no celular, use `createDriver({ celular: true })`: o Chrome emula uma tela de 390×844, como os protótipos mobile. Mudar o tamanho da janela não basta, porque o Chrome sem janela não fica mais estreito que 500px. Uma tela nova do escritório entra na lista de `e2e/mobile.e2e.ts`, que confere que ela abre sem rolagem horizontal.

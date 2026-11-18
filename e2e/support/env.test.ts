@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { exigirDeProducao, resolveApiUrl, resolveBaseUrl, resolveBrowser } from "./env";
+import { exigirDaHomologacao, resolveAlvo, resolveApiUrl, resolveBaseUrl, resolveBrowser } from "./env";
 
 describe("resolveApiUrl", () => {
   it("usa a API local por padrão", () => {
     expect(resolveApiUrl()).toBe("http://localhost:8000");
   });
 
-  it("recusa a API de produção", () => {
+  it("no ambiente local, recusa uma API externa", () => {
     expect(() => resolveApiUrl("https://api.advocondo.com.br")).toThrow("E2E_API_URL precisa ser um endereço local");
   });
 });
@@ -28,19 +28,33 @@ describe("resolveBaseUrl", () => {
   );
 });
 
-describe("alvo de produção", () => {
-  it("só aceita um endereço externo quando a suíte de produção pede", () => {
-    expect(resolveBaseUrl("https://advocondo.com.br/", true)).toBe("https://advocondo.com.br");
-    expect(resolveApiUrl("https://api.advocondo.com.br", true)).toBe("https://api.advocondo.com.br");
+describe("resolveAlvo", () => {
+  it.each([undefined, "", "local"])("%s é o ambiente local", (raw) => {
+    expect(resolveAlvo(raw)).toBe("local");
   });
 
-  it("a recusa da suíte comum indica o comando certo", () => {
-    expect(() => resolveBaseUrl("https://advocondo.com.br")).toThrow("npm run test:e2e:prod");
+  it("aceita a homologação", () => {
+    expect(resolveAlvo("homologacao")).toBe("homologacao");
+  });
+
+  it("recusa um alvo desconhecido, em vez de cair no local", () => {
+    expect(() => resolveAlvo("prod")).toThrow("local ou homologacao");
+  });
+});
+
+describe("alvo de homologação", () => {
+  it("aceita um endereço externo", () => {
+    expect(resolveBaseUrl("https://advocondo.com.br/", "homologacao")).toBe("https://advocondo.com.br");
+    expect(resolveApiUrl("https://api.advocondo.com.br", "homologacao")).toBe("https://api.advocondo.com.br");
+  });
+
+  it("a recusa do ambiente local indica como apontar para a homologação", () => {
+    expect(() => resolveBaseUrl("https://advocondo.com.br")).toThrow("E2E_TARGET=homologacao");
   });
 
   it("exige as variáveis, em vez de cair nos padrões locais", () => {
-    expect(() => exigirDeProducao({ E2E_BASE_URL: "https://x", E2E_API_URL: undefined, E2E_ADMIN_EMAIL: "", E2E_ADMIN_PASSWORD: "y" })).toThrow("E2E_API_URL, E2E_ADMIN_EMAIL");
-    expect(() => exigirDeProducao({ E2E_BASE_URL: "https://x" })).not.toThrow();
+    expect(() => exigirDaHomologacao({ E2E_BASE_URL: "https://x", E2E_API_URL: undefined, E2E_CLIENTE2_EMAIL: "" })).toThrow("E2E_API_URL, E2E_CLIENTE2_EMAIL");
+    expect(() => exigirDaHomologacao({ E2E_BASE_URL: "https://x" })).not.toThrow();
   });
 });
 

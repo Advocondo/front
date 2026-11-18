@@ -9,8 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "vitest run --config vitest.e2e.config.mts",
-    "test:e2e:prod": "vitest run --config vitest.e2e.producao.config.mts"
+    "test:e2e": "vitest run --config vitest.e2e.config.mts"
   },
   "dependencies": {
     "@sentry/nextjs": "^11.11.0",

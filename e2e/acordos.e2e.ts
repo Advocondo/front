@@ -1,7 +1,7 @@
 import { By, type WebDriver } from "selenium-webdriver";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createDriver, replaceValue, setDateValue, visit, waitForButton, waitForElement, waitForPath, waitForText, waitForTextGone } from "./support/driver";
-import { env } from "./support/env";
+import { emHomologacao, env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
 import { createAgreement, createCondominium, createDebtor, createLawyer, type TestCondominium, type TestDebtor, type TestLawyer } from "./support/seed";
 
@@ -55,7 +55,8 @@ describe("Acordos", () => {
 
   beforeAll(async () => {
     condominio = await createCondominium(`E2E Acordos ${Date.now()}`);
-    advogado = await createLawyer(`E2E Advogada ${Date.now()}`);
+    // O advogado precisa de OAB, que só se informa no convite.
+    if (!emHomologacao) advogado = await createLawyer(`E2E Advogada ${Date.now()}`);
     driver = await createDriver();
     await openLogin(driver);
     await submitLogin(driver, env.adminEmail, env.adminPassword);
@@ -99,7 +100,7 @@ describe("Acordos", () => {
       await waitForText(driver, procurado.name);
     });
 
-    it("CA02: combina condomínio, status e responsável", async () => {
+    it.skipIf(emHomologacao)("CA02: combina condomínio, status e responsável", async () => {
       const outroCondominio = await createCondominium(`E2E Busca Outro ${Date.now()}`);
       const aqui = await acordoCom(condominio.id);
       const la = await acordoCom(outroCondominio.id);
@@ -135,7 +136,7 @@ describe("Acordos", () => {
     await waitForText(driver, "R$ 440,00 para o condomínio + R$ 110,00 de honorários");
   });
 
-  it("atribui o advogado responsável escolhido no cadastro", async () => {
+  it.skipIf(emHomologacao)("atribui o advogado responsável escolhido no cadastro", async () => {
     const devedor = await novoDevedor();
     await preencherNovoAcordo(devedor);
     await escolher("acordo-advogado", advogado.id);

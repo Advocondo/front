@@ -2,6 +2,7 @@ import { By, type WebDriver } from "selenium-webdriver";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createDriver, visit, waitForButton, waitForElement, waitForHydration, waitForPath, waitForText } from "./support/driver";
 import { contactEmailWasLogged } from "./support/seed";
+import { emHomologacao } from "./support/env";
 
 // US01: https://advocondo.github.io/docs/historias/ep01-portal-autenticacao/#us01
 describe("Landing page", () => {
@@ -65,7 +66,8 @@ describe("Landing page", () => {
     await waitForPath(driver, "/");
   });
 
-  it("envia o formulário de contato e o e-mail sai para o escritório", async () => {
+  // Os três de contato leem o e-mail no log da API, e na homologação o captcha é real.
+  it.skipIf(emHomologacao)("envia o formulário de contato e o e-mail sai para o escritório", async () => {
     const mensagem = `Mensagem E2E ${Date.now()}`;
     await preencher("Visitante E2E", mensagem);
     await clicarEnviar();
@@ -75,7 +77,7 @@ describe("Landing page", () => {
     expect(await contactEmailWasLogged(mensagem)).toBe(true);
   });
 
-  it("não envia o formulário com o e-mail inválido", async () => {
+  it.skipIf(emHomologacao)("não envia o formulário com o e-mail inválido", async () => {
     const mensagem = `Mensagem inválida E2E ${Date.now()}`;
     await preencher("Visitante E2E", mensagem);
     await driver.findElement(By.id("contato-email")).sendKeys("-sem-dominio@");
@@ -85,7 +87,7 @@ describe("Landing page", () => {
     expect(await contactEmailWasLogged(mensagem)).toBe(false);
   });
 
-  it("um robô que preenche a armadilha recebe a resposta normal, e nenhum e-mail sai", async () => {
+  it.skipIf(emHomologacao)("um robô que preenche a armadilha recebe a resposta normal, e nenhum e-mail sai", async () => {
     const mensagem = `Mensagem de robô E2E ${Date.now()}`;
     await preencher("Robô E2E", mensagem);
     await driver.executeScript(

@@ -1,14 +1,15 @@
 import { By, type WebDriver } from "selenium-webdriver";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createDriver, replaceValue, visit, waitForButton, waitForElement, waitForPath, waitForText } from "./support/driver";
-import { env } from "./support/env";
+import { emHomologacao, env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
 import { createCondominium, createDebtor, createUser, payFirstInstallment, type TestUser, createAgreementAs } from "./support/seed";
 
 const hoje = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
 
 // US32 e US36: https://advocondo.github.io/docs/historias/ep05-comissoes-metas/
-describe("Metas e comissões", () => {
+// Só no ambiente local: compara totais de usuários novos, que na homologação acumulariam de uma execução para outra. Ver e2e/README.md.
+describe.skipIf(emHomologacao)("Metas e comissões", () => {
   let driver: WebDriver;
   let colaborador: TestUser;
   let colega: TestUser;

@@ -1,12 +1,13 @@
 import { By, type WebDriver } from "selenium-webdriver";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createDriver, visit, waitForButton, waitForElement, waitForPath, waitForText, waitForTextGone } from "./support/driver";
-import { env } from "./support/env";
+import { emHomologacao, env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
 import { createAgreement, createCondominium, createDebtor, createLawyer, createUser, type TestLawyer, type TestUser } from "./support/seed";
 
 // US18: https://advocondo.github.io/docs/historias/ep03-cadastro-acordos/#us18
-describe("Advogado responsável", () => {
+// Só no ambiente local: precisa de advogados novos, com OAB, que só se cria por convite. Ver e2e/README.md.
+describe.skipIf(emHomologacao)("Advogado responsável", () => {
   let driver: WebDriver;
   let primeiro: TestLawyer;
   let segundo: TestLawyer;

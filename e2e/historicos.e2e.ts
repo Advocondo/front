@@ -2,9 +2,9 @@ import { By, type WebDriver } from "selenium-webdriver";
 import { hojeEmBrasilia } from "../app/lib/dates";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createDriver, waitForFilteredRows, visit, waitForElement, waitForPath, waitForText } from "./support/driver";
-import { env } from "./support/env";
+import { emHomologacao, env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
-import { createAgreement, createCondominium, createDebtor, createUser, deactivateUser, payFirstInstallment, type TestUser } from "./support/seed";
+import { createAgreement, createCondominium, createDebtor, createUser, deactivateUser, nomeDoAdmin, payFirstInstallment, type TestUser } from "./support/seed";
 
 // US31 e US11: https://advocondo.github.io/docs/historias/ep04-parcelas/#us31
 describe("Históricos para o Administrador", () => {
@@ -12,6 +12,7 @@ describe("Históricos para o Administrador", () => {
   let acordo: string;
   let operador: TestUser;
   let inativado: TestUser;
+  let admin: string;
 
   async function entrar(email: string, senha: string, destino: string): Promise<void> {
     await openLogin(driver);
@@ -26,8 +27,12 @@ describe("Históricos para o Administrador", () => {
     acordo = (await createAgreement(condominio.id, devedor.id)).id;
     await payFirstInstallment(acordo, hojeEmBrasilia());
     operador = await createUser("operator");
-    inativado = await createUser("operator");
-    await deactivateUser(inativado.id);
+    admin = await nomeDoAdmin();
+    // Inativar uma conta fixa quebraria as execuções seguintes.
+    if (!emHomologacao) {
+      inativado = await createUser("operator");
+      await deactivateUser(inativado.id);
+    }
   });
 
   afterAll(async () => {
@@ -39,11 +44,11 @@ describe("Históricos para o Administrador", () => {
     await visit(driver, `/acordos/${acordo}`);
     await waitForText(driver, "Histórico financeiro");
     const linha = await (await waitForElement(driver, By.xpath('//tr[contains(., "Baixa da parcela 1")]'))).getText();
-    expect(linha).toContain("Admin E2E");
+    expect(linha).toContain(admin);
     expect(linha).toContain("+ R$ 300,00");
   });
 
-  it("US11-CA01: o usuário mostra o convite e a inativação, com o autor", async () => {
+  it.skipIf(emHomologacao)("US11-CA01: o usuário mostra o convite e a inativação, com o autor", async () => {
     await entrar(env.adminEmail, env.adminPassword, "/painel");
     await visit(driver, "/usuarios");
     await (await waitForElement(driver, By.css('input[aria-label="Buscar por nome ou e-mail"]'))).sendKeys(inativado.email);
@@ -52,7 +57,7 @@ describe("Históricos para o Administrador", () => {
     await waitForText(driver, "Histórico de acesso");
     await waitForText(driver, "Convite enviado");
     await waitForText(driver, "De Ativo para Inativo");
-    await waitForText(driver, "por Admin E2E");
+    await waitForText(driver, `por ${admin}`);
   });
 
   it("US31-CA02: a Equipe Operacional não vê o histórico financeiro", async () => {

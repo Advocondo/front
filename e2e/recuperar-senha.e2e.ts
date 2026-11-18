@@ -1,14 +1,15 @@
 import { By, type WebDriver } from "selenium-webdriver";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createDriver, visit, waitForButton, waitForElement, waitForHydration, waitForPath, waitForText } from "./support/driver";
-import { env } from "./support/env";
+import { emHomologacao, env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
 import { apiToken, createUser, readEmailToken, type TestUser } from "./support/seed";
 
 const NOVA_SENHA = `e2e-${Date.now()}-nova`;
 
 // US03: https://advocondo.github.io/docs/historias/ep01-portal-autenticacao/#us03
-describe("Recuperação de senha", () => {
+// Só no ambiente local: lê o link de redefinição no log da API. Ver e2e/README.md.
+describe.skipIf(emHomologacao)("Recuperação de senha", () => {
   let driver: WebDriver;
   let usuario: TestUser;
 
