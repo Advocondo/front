@@ -2,10 +2,7 @@ import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { promisify } from "node:util";
-import { emProducao, env } from "./env";
-
-// Este arquivo cria usuários, condomínios e acordos: nunca pode entrar na suíte de produção.
-if (emProducao) throw new Error("e2e/support/seed.ts grava dados e não pode ser usado em produção.");
+import { emHomologacao, env } from "./env";
 
 const executar = promisify(execFile);
 
@@ -32,10 +29,16 @@ async function tokenDoAdmin(): Promise<string | null> {
   return ((await resposta.json()) as { access_token: string }).access_token;
 }
 
+/** Para o que só existe no ambiente local: o log e os comandos do back no Docker. */
+function soNoLocal(acao: string): void {
+  if (emHomologacao) throw new Error(`${acao} só funciona no ambiente local. Marque o teste com it.skipIf(emHomologacao).`);
+}
+
 /** Garante o Administrador de teste. POST /setup só funciona com o banco sem usuários. */
 export async function ensureAdmin(): Promise<string> {
   const existente = await tokenDoAdmin();
   if (existente) return existente;
+  if (emHomologacao) throw new Error("O Administrador da homologação não entrou: confira E2E_ADMIN_EMAIL e E2E_ADMIN_PASSWORD.");
 
   if (!env.setupToken) {
     throw new Error("Defina E2E_SETUP_TOKEN com o mesmo valor de SETUP_TOKEN do back. Ver e2e/README.md.");
@@ -54,6 +57,7 @@ export async function ensureAdmin(): Promise<string> {
 
 /** Sem SMTP em ambiente local, o back escreve os e-mails no log (docs/auth.md do back). */
 async function logDaApi(): Promise<string> {
+  soNoLocal("Ler os e-mails no log da API");
   const { stdout } = await executar("docker", ["compose", "logs", "--no-log-prefix", "api"], {
     cwd: env.backDir,
     maxBuffer: 50 * 1024 * 1024,
@@ -74,8 +78,40 @@ export async function readEmailToken(email: string): Promise<string> {
   return decodeURIComponent(achado[1]);
 }
 
-/** Cria um usuário ativo pelo fluxo real: o Administrador convida e o convidado define a senha. */
-export async function createUser(role: "operator" | "client", extras: Record<string, unknown> = {}): Promise<TestUser> {
+/** O nome do Administrador, que aparece como autor nos históricos. */
+export async function nomeDoAdmin(): Promise<string> {
+  const resposta = await chamarApi("/auth/me", { headers: { Authorization: `Bearer ${await ensureAdmin()}` } });
+  return (await esperarSucesso<{ name: string }>(resposta, "Ler o Administrador")).name;
+}
+
+type Perfil = "operator" | "client";
+
+/** Quantas vezes cada perfil já foi pedido neste arquivo: o Vitest isola os módulos por arquivo. */
+const pedidos: Record<Perfil, number> = { operator: 0, client: 0 };
+
+/**
+ * Na homologação não há como ler o convite, então os testes entram com as contas fixas, uma de cada vez,
+ * em rodízio: com dois Clientes, pedidos seguidos dão contas diferentes. O Cliente volta sem vínculos,
+ * como um recém-convidado.
+ */
+async function contaFixa(role: Perfil, extras: Record<string, unknown>): Promise<TestUser> {
+  const outros = Object.keys(extras).filter((campo) => campo !== "name");
+  if (outros.length > 0) throw new Error(`Na homologação, as contas fixas não aceitam ${outros.join(", ")}. Marque o teste com it.skipIf(emHomologacao).`);
+  const contas = env.contasFixas[role];
+  const { email, password } = contas[pedidos[role]++ % contas.length];
+  const resposta = await chamarApi("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
+  const { user } = await esperarSucesso<{ user: { id: string; role: string } }>(resposta, `Entrar com a conta fixa ${email}`);
+  if (user.role !== role) throw new Error(`A conta fixa ${email} precisa ter o perfil ${role}; tem ${user.role}.`);
+  if (role === "client") await linkCondominiums(user.id, []);
+  return { id: user.id, email, password };
+}
+
+/**
+ * Cria um usuário ativo pelo fluxo real: o Administrador convida e o convidado define a senha.
+ * Na homologação, devolve uma das contas fixas; ali, `extras` só aceita `name`, que é ignorado.
+ */
+export async function createUser(role: Perfil, extras: Record<string, unknown> = {}): Promise<TestUser> {
+  if (emHomologacao) return contaFixa(role, extras);
   const admin = await ensureAdmin();
   const email = `e2e-${role}-${Date.now()}-${randomUUID().slice(0, 8)}@example.com`;
   const convite = await chamarApi("/users/invites", {
@@ -176,11 +212,13 @@ export async function cancelAgreement(id: string): Promise<void> {
 
 /** O comando diário que cria as notificações de parcela em atraso (docs/notificacoes.md do back). */
 export async function runOverdueNotifications(): Promise<void> {
+  soNoLocal("Rodar o comando de notificações");
   await executar("docker", ["compose", "exec", "-T", "api", "uv", "run", "python", "-m", "advocondo.notificacoes.overdue"], { cwd: env.backDir });
 }
 
 /** Monta um .xlsx de verdade com a mesma biblioteca do back, para o teste enviar um arquivo real. */
 export async function createSpreadsheet(caminho: string, linhas: string[][]): Promise<void> {
+  soNoLocal("Montar a planilha com o Python do back");
   const script = [
     "import base64, io, json, sys",
     "from openpyxl import Workbook",
@@ -197,6 +235,8 @@ export async function createSpreadsheet(caminho: string, linhas: string[][]): Pr
 }
 
 export async function deactivateUser(id: string): Promise<void> {
+  // Inativar uma conta fixa quebraria as execuções seguintes.
+  soNoLocal("Inativar usuário");
   const resposta = await chamarApi(`/users/${id}/status`, {
     method: "PATCH",
     headers: { Authorization: `Bearer ${await ensureAdmin()}` },

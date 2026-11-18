@@ -1,14 +1,15 @@
 import { By, type WebDriver } from "selenium-webdriver";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createDriver, waitForFilteredRows, visit, waitForButton, waitForElement, waitForHydration, waitForPath, waitForText } from "./support/driver";
-import { env } from "./support/env";
+import { emHomologacao, env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
 import { createUser, readEmailToken, type TestUser } from "./support/seed";
 
 const SENHA = `e2e-${Date.now()}-acesso`;
 
 // US07, US08 e US09: https://advocondo.github.io/docs/historias/ep02-usuarios-perfis/
-describe("Gestão de usuários", () => {
+// Só no ambiente local: convida usuários e lê o link do convite no log da API. Ver e2e/README.md.
+describe.skipIf(emHomologacao)("Gestão de usuários", () => {
   let driver: WebDriver;
   let sequencia = 0;
 

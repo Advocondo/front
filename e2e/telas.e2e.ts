@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { By, type WebDriver } from "selenium-webdriver";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createDriver, visit, waitForElement, waitForPath, waitForText } from "../support/driver";
-import { env } from "../support/env";
-import { openLogin, submitLogin } from "../support/login";
+import { createDriver, visit, waitForElement, waitForPath, waitForText } from "./support/driver";
+import { env } from "./support/env";
+import { openLogin, submitLogin } from "./support/login";
 
-/** Só o que o Administrador abre e lê. Nenhuma destas telas é salva, enviada ou alterada aqui. */
+/** As telas do Administrador que abrem sem parâmetros. Aqui elas só são abertas e lidas. */
 const TELAS = [
   { caminho: "/painel", titulo: "Painel" },
   { caminho: "/acordos", titulo: "Acordos" },
@@ -21,10 +21,10 @@ const TELAS = [
 ];
 
 /**
- * Conferência do ambiente real, só de leitura. O único envio é o do login, que abre uma sessão,
- * encerrada no fim. NUNCA acrescente aqui nada que grave dados ou mande e-mail: ver e2e/README.md.
+ * Conferência rápida de que o ambiente está de pé: a API responde, o front a alcança (NEXT_PUBLIC_API_URL
+ * e CORS) e cada tela do Administrador carrega. Útil logo depois de um deploy na homologação.
  */
-describe("Produção, só leitura", () => {
+describe("Ambiente no ar", () => {
   let driver: WebDriver;
 
   beforeAll(async () => {

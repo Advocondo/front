@@ -1,7 +1,7 @@
 import { By, type WebDriver } from "selenium-webdriver";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createDriver, visit, waitForElement, waitForPath } from "./support/driver";
-import { env } from "./support/env";
+import { emHomologacao, env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
 import { createUser, deactivateUser, ensureAdmin, type TestUser } from "./support/seed";
 
@@ -22,8 +22,11 @@ describe("Login", () => {
     await ensureAdmin();
     operator = await createUser("operator");
     client = await createUser("client");
-    inativo = await createUser("operator");
-    await deactivateUser(inativo.id);
+    // Inativar uma conta fixa quebraria as execuções seguintes.
+    if (!emHomologacao) {
+      inativo = await createUser("operator");
+      await deactivateUser(inativo.id);
+    }
     driver = await createDriver();
   });
 
@@ -65,7 +68,7 @@ describe("Login", () => {
     });
   });
 
-  it("US02-CA03: usuário inativo não entra, mesmo com a senha correta", async () => {
+  it.skipIf(emHomologacao)("US02-CA03: usuário inativo não entra, mesmo com a senha correta", async () => {
     await submitLogin(driver, inativo.email, inativo.password);
     expect(await erroMostrado()).toContain(ERRO_GENERICO);
     expect(new URL(await driver.getCurrentUrl()).pathname).toBe("/login");

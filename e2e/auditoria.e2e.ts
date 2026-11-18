@@ -2,12 +2,13 @@ import { By, type WebDriver } from "selenium-webdriver";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { hojeEmBrasilia } from "../app/lib/dates";
 import { createDriver, setDateValue, visit, waitForButton, waitForElement, waitForPath, waitForText } from "./support/driver";
-import { env } from "./support/env";
+import { emHomologacao, env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
 import { apiToken, createAgreement, createCondominium, createDebtor, createUser, payFirstInstallment, type TestUser } from "./support/seed";
 
 // #72: https://github.com/Advocondo/front/issues/72 (ainda sem história de usuário; critérios propostos na issue)
-describe("Trilha de auditoria", () => {
+// Só no ambiente local: filtra pelo convite de um usuário novo. Ver e2e/README.md.
+describe.skipIf(emHomologacao)("Trilha de auditoria", () => {
   let driver: WebDriver;
   let operador: TestUser;
   let nomeDoOperador: string;

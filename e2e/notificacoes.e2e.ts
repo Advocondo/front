@@ -1,12 +1,13 @@
 import { By, type WebDriver } from "selenium-webdriver";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createDriver, visit, waitForButton, waitForElement, waitForPath, waitForText } from "./support/driver";
-import { env } from "./support/env";
+import { emHomologacao, env } from "./support/env";
 import { openLogin, submitLogin } from "./support/login";
 import { apiToken, createAgreement, createCondominium, createDebtor, createUser, runOverdueNotifications, type TestDebtor, type TestUser } from "./support/seed";
 
 // US30: https://advocondo.github.io/docs/historias/ep04-parcelas/#us30
-describe("Notificações de parcela em atraso", () => {
+// Só no ambiente local: roda o comando diário no Docker do back e precisa de um usuário novo, sem acordos. Ver e2e/README.md.
+describe.skipIf(emHomologacao)("Notificações de parcela em atraso", () => {
   let driver: WebDriver;
   let devedor: TestDebtor;
   let semAcordos: TestUser;
